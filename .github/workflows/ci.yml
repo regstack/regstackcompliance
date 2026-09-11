@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: regstack
+          POSTGRES_PASSWORD: regstack_ci
+          POSTGRES_DB: regstack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U regstack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://regstack:regstack_ci@localhost:5432/regstack?schema=public"
+      JWT_SECRET: "ci-secret-min-32-characters-long-value"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

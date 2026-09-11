@@ -1,0 +1,372 @@
+// RegStack — Auslagerungsmanagement gem. MaRisk AT 9 (BA 54, 30.06.2026)
+// Datenmodell-Verifikation siehe claude/AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md (Projekt-Docs)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  GESCHAEFTSLEITUNG
+  COMPLIANCE
+  RISIKOCONTROLLING
+  INTERNE_REVISION
+  AUSLAGERUNGSBEAUFTRAGTER
+  ADMIN
+  VIEWER
+}
+
+enum SizeClass {
+  SEHR_KLEIN // SNCI, ≤ ca. 5 Mrd. €
+  KLEIN
+  MITTEL
+  GROSS
+}
+
+enum CalculationModel {
+  CSC // Materialitäts-Score UND Umfassender-Auswirkungs-Score, zwei unabhängige Schwellen
+  TESLA // Materialitäts-Score × Anbieter-Risiko-Score, ODER/UND, ein gemeinsamer Schwellenwert
+}
+
+enum ScopeType {
+  AUSLAGERUNG
+  SONSTIGER_FREMDBEZUG
+  IKT_DORA
+}
+
+enum SpecialFunction {
+  KEINE
+  RISIKOCONTROLLING
+  COMPLIANCE
+  INTERNE_REVISION
+  KERNBANKBEREICH
+}
+
+enum ActivityStatus {
+  ENTWURF
+  AKTIV
+}
+
+// Absichtlich NUR zwei Werte für die gesetzliche Einstufung (AT 9 Tz. 3) — "kritisch" ist
+// KEIN dritter Zustand von Wesentlichkeit, sondern das unabhängige Zusatzmerkmal aus Tz. 4/5.
+enum CriticalityAssessment {
+  OFFEN
+  KRITISCH
+  NICHT_KRITISCH
+}
+
+enum ErsetzbarkeitOption {
+  LEICHT
+  SCHWIERIG
+  UNMOEGLICH
+}
+
+// Exakt drei Werte gem. Tz. 6 S. 3 — BCM_LINKED ist der gesetzlich vorgesehene Fallback,
+// nicht "keine Angabe". Ein Activity-Datensatz ohne einen dieser drei Werte ist nicht aktivierbar.
+enum HandlungsoptionStatus {
+  ADOPTED_OPTIONS
+  EXIT_STRATEGY
+  BCM_LINKED
+}
+
+enum ContractItemStatus {
+  ERFUELLT
+  NICHT_ERFORDERLICH
+  OFFEN
+}
+
+enum MonitoringType {
+  EVIDENCE_LOG
+  KPI
+}
+
+enum ReportFormat {
+  SCHRIFTLICHER_BERICHT
+  VORSTANDSSITZUNGSPROTOKOLL // Erleichterung für sehr kleine Institute, Tz. 13 S. 4
+}
+
+enum ReportStatus {
+  ENTWURF
+  GENEHMIGT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model InstitutionProfile {
+  id                     String    @id @default(uuid())
+  name                   String
+  sizeClass              SizeClass @default(KLEIN)
+  groupRelief            Boolean   @default(false) // Tz. 14 d — institutsweiter Schalter
+  reviewCycleYears        Int      @default(3) // aus sizeClass abgeleitet, aber überschreibbar
+  calculationModel       CalculationModel @default(CSC)
+  cscMaterialityThreshold Float    @default(2.5)
+  cscImpactThreshold      Float    @default(2.75)
+  teslaLogicAnd          Boolean   @default(false)
+  teslaThreshold         Float     @default(3.0)
+  revisionsbeauftragterName          String?
+  revisionsbeauftragterIstGeschaeftsleiter Boolean @default(false) // zulässig bei sehr kleinen Instituten, Tz. 10
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  users                  User[]
+  activities             OutsourcingActivity[]
+  reports                Report[]
+
+  @@map("institution_profiles")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          Role
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  auditEvents   AuditLogEvent[]
+
+  @@map("users")
+  @@index([institutionId])
+}
+
+model OutsourcingActivity {
+  id                    String    @id @default(uuid())
+  institutionId         String
+  institution           InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  name                  String
+  category              String    // BaFin-Kategorie
+  provider              String?
+  bafinReferenceNumber  String?
+
+  scope                 ScopeType
+  scopeJustification    String?   // Pflicht, sobald scope != AUSLAGERUNG (Tz. 1)
+
+  contractStart         DateTime?
+  contractEnd           DateTime?
+  terminationNoticeMonths Int?
+  serviceLocations      String?
+  dataCategories        String?
+
+  isCloud               Boolean   @default(false)
+  isSubOutsourcing      Boolean   @default(false)
+  groupInternal         Boolean   @default(false) // Tz. 14 d, nur wirksam wenn institution.groupRelief=true
+  specialFunction       SpecialFunction @default(KEINE) // Tz. 4/5 Hard-Trigger
+
+  deepDive              Boolean   @default(false) // volle 15+12 EBA/GL-Kriterien (Tesla-Modell)
+  status                ActivityStatus @default(ENTWURF)
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  riskAnalysis          RiskAnalysis?
+  contract              Contract?
+  handlungsoption       HandlungsoptionRecord?
+  registryEntries       RegistryEntry[]
+  monitoringRecords     MonitoringRecord[]
+
+  @@map("outsourcing_activities")
+  @@index([institutionId])
+}
+
+model RiskAnalysis {
+  id            String   @id @default(uuid())
+  activityId    String   @unique
+  activity      OutsourcingActivity @relation(fields: [activityId], references: [id])
+
+  quickTriggers Json     @default("{}") // { t1: bool, ... t6: bool } — Hard-Trigger Quick-Check
+  materialityRatings Json @default("{}") // Kriterium-ID -> 1..5
+  secondDimensionRatings Json @default("{}") // CSC: Umfassender-Auswirkungs-Kriterien; Tesla: Anbieter-Risiko-Kriterien
+
+  materialityScore Float?
+  secondScore      Float?  // impactScore (CSC) oder providerScore (Tesla)
+  inherentScore    Float?
+  computedMaterial Boolean?
+  criticalSuggestion Boolean?
+
+  // Finale Werte — NIEMALS rein aus dem Score abgeleitet gespeichert; das ist das "FIX" aus der
+  // Vollständigkeitsprüfung: materiality und criticality sind zwei unabhängig speicherbare Felder.
+  materiality      Boolean? // finale Wesentlichkeits-Einstufung (Score-Ergebnis oder Override)
+  criticality      CriticalityAssessment @default(OFFEN) // eigenständige Einschätzung, Tz. 4/5
+  criticalityReason String?
+
+  overrideActive   Boolean  @default(false)
+  overrideMaterial Boolean?
+  overrideCritical Boolean?
+  overrideReason   String?
+  overrideApprover String?
+  overrideDate     DateTime?
+
+  integrationFeasibilityAnswers Json?  // CSC-Modell Schritt 4, nur relevant wenn materiality=true
+  integrationFeasibilityNotes   String?
+
+  scenarioPerformed Boolean  @default(false) // Tz. 2 — qualitativer Ansatz für kleine Institute
+  scenarioNotes     String?
+  adHocTrigger      Boolean  @default(false) // Tz. 2 — außerplanmäßige Neubewertung
+  adHocNote         String?
+
+  lastReviewedAt   DateTime?
+  nextReviewDueAt  DateTime?
+  classifiedByUserId String?
+  classifiedAt     DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("risk_analyses")
+}
+
+model Contract {
+  id                String   @id @default(uuid())
+  activityId        String   @unique
+  activity          OutsourcingActivity @relation(fields: [activityId], references: [id])
+
+  // Objektspeicher-Referenz (z. B. S3/Hetzner-Object-Storage-Key), NIEMALS Inline-Blob in der DB.
+  fileObjectKey     String?
+  fileName          String?
+  fileSize          Int?
+  fileMime          String?
+  uploadedAt        DateTime?
+  uploadedByUserId  String?
+
+  // a)–n) gem. §25b Abs.3 S.3 KWG / AT 9 Tz. 7 — je Punkt Status + Begründung bei "nicht erforderlich"
+  clauseChecklist         Json @default("{}")
+  // nur relevant wenn activity.isSubOutsourcing = true (Tz. 8)
+  subOutsourcingChecklist Json?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("contracts")
+}
+
+model HandlungsoptionRecord {
+  id            String   @id @default(uuid())
+  activityId    String   @unique
+  activity      OutsourcingActivity @relation(fields: [activityId], references: [id])
+
+  status              HandlungsoptionStatus?
+  strategyDescription  String? // Transitionsplan bei EXIT_STRATEGY
+  ersetzbarkeit        ErsetzbarkeitOption?
+  transitionMonths     Int?
+  reviewDate           DateTime?
+
+  depApprover   String? // Dependency-Acceptance-Genehmiger (Geschäftsleitung) bei BCM_LINKED
+  depDate       DateTime?
+  depControls   String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("handlungsoption_records")
+}
+
+// Punkt-in-Zeit-Schnappschuss der an BaFin gemeldeten/exportierten Registerfelder (EBA/GL 54-55 ∩
+// MVP-Portal-Formular). Getrennt von OutsourcingActivity, damit historische Meldestände erhalten bleiben.
+model RegistryEntry {
+  id           String   @id @default(uuid())
+  activityId   String
+  activity     OutsourcingActivity @relation(fields: [activityId], references: [id])
+  snapshotDate DateTime @default(now())
+  exportedFields Json
+  exportedByUserId String?
+  format       String   @default("CSV")
+
+  createdAt    DateTime @default(now())
+
+  @@map("registry_entries")
+  @@index([activityId])
+}
+
+model MonitoringRecord {
+  id           String   @id @default(uuid())
+  activityId   String
+  activity     OutsourcingActivity @relation(fields: [activityId], references: [id])
+  type         MonitoringType
+
+  // EVIDENCE_LOG (Tz. 9, Pflichtbasis für alle Auslagerungen)
+  evidenceDate        DateTime?
+  evidenceDescription String?
+  reviewedByUserId    String?
+  reviewedAt          DateTime?
+  confirmedAt         DateTime?
+  escalationNeeded    Boolean  @default(false)
+  escalationNote      String?
+  assuranceReportDueDate DateTime?
+
+  // KPI (optional, aus der Tesla-FS-Praxis — nur für Anbieter mit tatsächlichem Steuerungsbedarf)
+  kpiName      String?
+  kpiTarget    String?
+  kpiAchieved  String?
+  kpiComment   String?
+
+  createdAt    DateTime @default(now())
+
+  @@map("monitoring_records")
+  @@index([activityId])
+}
+
+model Report {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  period                String
+  createdDate           DateTime @default(now())
+  conclusionContract      String // Drei Pflichtaussagen, Tz. 13
+  conclusionSteuerbarkeit String
+  conclusionMassnahmen    String
+  format                ReportFormat @default(SCHRIFTLICHER_BERICHT) // von sizeClass abgeleitet
+  includedActivityIds   Json
+
+  status        ReportStatus @default(ENTWURF)
+  approvedByUserId String?
+  approvedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("reports")
+  @@index([institutionId])
+}
+
+// Unveränderlicher Audit-Trail — wird serverseitig in derselben Transaktion wie der fachliche
+// Write geschrieben (siehe src/middleware/audit.ts), niemals vom Client gesetzt oder überspringbar.
+model AuditLogEvent {
+  id             String      @id @default(uuid())
+  entityType     String
+  entityId       String
+  action         AuditAction
+  actorUserId    String?
+  actor          User?       @relation(fields: [actorUserId], references: [id])
+  actorRole      Role?
+  changedFields  Json?
+  previousValues Json?
+  newValues      Json?
+  ipAddress      String?
+  timestamp      DateTime    @default(now())
+
+  @@map("audit_log_events")
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+}

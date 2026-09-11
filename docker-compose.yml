@@ -1,0 +1,22 @@
+# Local development only. Production Postgres runs on AWS EU (RDS) or Hetzner per the
+# hosting decision in RegStack_Businessplan.md — this compose file is not used in prod.
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: regstack
+      POSTGRES_PASSWORD: regstack_dev
+      POSTGRES_DB: regstack
+    ports:
+      - "5432:5432"
+    volumes:
+      - regstack_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U regstack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  regstack_db_data:
