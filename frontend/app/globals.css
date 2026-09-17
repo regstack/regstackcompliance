@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/*
+  RegStack design system — "Warm Graphite & Copper"
+  A dark, warm-toned graphite base (not cool blue-gray) with copper as the
+  single accent color. Built for long compliance/audit review sessions —
+  low-glare surfaces, copper reserved for action and status emphasis only.
+*/
+
+:root {
+  /* Graphite scale — warm-tinted neutrals (slight brown, not blue) */
+  --graphite-950: #15130f;
+  --graphite-900: #1c1914;
+  --graphite-850: #221e18;
+  --graphite-800: #29241d;
+  --graphite-700: #3a332a;
+  --graphite-600: #4d443788;
+  --graphite-600-solid: #4d4437;
+  --graphite-500: #6b5f4e;
+  --graphite-400: #8c8069;
+  --graphite-300: #afa38b;
+  --graphite-200: #d2c6ac;
+  --graphite-100: #e8e0cf;
+  --graphite-50: #f5f1e8;
+
+  /* Copper scale — the single accent */
+  --copper-700: #8a4a20;
+  --copper-600: #a15c2e;
+  --copper-500: #bf7b45;
+  --copper-400: #d2925c;
+  --copper-300: #e0ac7e;
+  --copper-200: #f0d9c2;
+  --copper-100: #f8ead9;
+
+  /* Status colors — muted, warm-compatible, never neon */
+  --status-success: #6a8f5c;
+  --status-success-bg: #24291f;
+  --status-warning: #c99a3f;
+  --status-warning-bg: #2e2717;
+  --status-danger: #b5573f;
+  --status-danger-bg: #2e1e1a;
+  --status-open: #8c8069;
+  --status-open-bg: #262219;
+
+  /* Semantic tokens (dark, primary theme) */
+  --background: var(--graphite-950);
+  --surface: var(--graphite-900);
+  --surface-raised: var(--graphite-850);
+  --border-subtle: var(--graphite-700);
+  --border-strong: var(--graphite-600-solid);
+  --foreground: var(--graphite-100);
+  --muted-foreground: var(--graphite-400);
+  --accent: var(--copper-500);
+  --accent-strong: var(--copper-400);
+  --accent-foreground: #1c1108;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-graphite-950: var(--graphite-950);
+  --color-graphite-900: var(--graphite-900);
+  --color-graphite-850: var(--graphite-850);
+  --color-graphite-800: var(--graphite-800);
+  --color-graphite-700: var(--graphite-700);
+  --color-graphite-600: var(--graphite-600-solid);
+  --color-graphite-500: var(--graphite-500);
+  --color-graphite-400: var(--graphite-400);
+  --color-graphite-300: var(--graphite-300);
+  --color-graphite-200: var(--graphite-200);
+  --color-graphite-100: var(--graphite-100);
+  --color-graphite-50: var(--graphite-50);
+
+  --color-copper-700: var(--copper-700);
+  --color-copper-600: var(--copper-600);
+  --color-copper-500: var(--copper-500);
+  --color-copper-400: var(--copper-400);
+  --color-copper-300: var(--copper-300);
+  --color-copper-200: var(--copper-200);
+  --color-copper-100: var(--copper-100);
+
+  --color-status-success: var(--status-success);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-open: var(--status-open);
+  --color-status-open-bg: var(--status-open-bg);
+
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--copper-600);
+  color: var(--graphite-50);
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
+/* Thin, warm-toned scrollbars to match the surface */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--graphite-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--graphite-700);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--graphite-600-solid);
+}
