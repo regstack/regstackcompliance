@@ -45,7 +45,7 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
 
       <div className="mt-2 mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{activity.name}</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">{activity.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {activity.provider ?? "Anbieter nicht erfasst"}
             {activity.category ? ` · ${activity.category}` : ""}

@@ -1,5 +1,4 @@
 import { getBackendSession, canWriteRevisions } from "@/lib/regstack/backend-session";
-import { RevisionNav } from "@/components/revisions/revision-nav";
 import { Banner } from "@/components/ui/banner";
 import { Card } from "@/components/ui/card";
 
@@ -23,13 +22,12 @@ export default async function RevisionLayout({ children }: { children: React.Rea
 
   return (
     <div>
-      <div className="mb-1">
-        <h1 className="text-xl font-semibold text-foreground">Revisions-Cockpit</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Revisions-Cockpit</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Interne Revision nach MaRisk AT 4.4.3
         </p>
       </div>
-      <RevisionNav />
       {readOnly && (
         <div className="mb-6">
           <Banner tone="warn" title="Nur-Lese-Zugang">

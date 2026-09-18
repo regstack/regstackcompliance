@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Geschäftsleitung — Übersicht</h1>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Geschäftsleitung — Übersicht</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Aktuelle Berichte, Prüfungsplan-Genehmigung und eskalierte Normzuweisungen aus allen drei Modulen.
         </p>
