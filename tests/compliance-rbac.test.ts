@@ -1,58 +1,61 @@
 import { describe, expect, it, vi } from "vitest";
+import type { Request, Response } from "express";
 import { requirePermission } from "../src/middleware/rbac";
 import { ForbiddenError } from "../src/utils/errors";
 import { canRespondToHandshake } from "../src/modules/compliance/handshake";
 
-function mockReq(role?: string) {
-  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as any;
+function mockReq(role?: string): Request {
+  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as unknown as Request;
 }
+
+const mockRes = {} as unknown as Response;
 
 describe("requirePermission — compliance resources", () => {
   it("allows COMPLIANCE to write a complianceRecord (Quelle/Norm/Feststellung/...)", () => {
     const next = vi.fn();
-    requirePermission("complianceRecord", "write")(mockReq("COMPLIANCE"), {} as any, next);
+    requirePermission("complianceRecord", "write")(mockReq("COMPLIANCE"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("rejects RISIKOCONTROLLING writing a complianceRecord, but allows read", () => {
-    expect(() => requirePermission("complianceRecord", "write")(mockReq("RISIKOCONTROLLING"), {} as any, vi.fn())).toThrow(
+    expect(() => requirePermission("complianceRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())).toThrow(
       ForbiddenError
     );
     const next = vi.fn();
-    requirePermission("complianceRecord", "read")(mockReq("RISIKOCONTROLLING"), {} as any, next);
+    requirePermission("complianceRecord", "read")(mockReq("RISIKOCONTROLLING"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("only GESCHAEFTSLEITUNG/ADMIN may decide a disputed Normzuweisung-Handshake", () => {
     expect(() =>
-      requirePermission("complianceHandshake.decide", "write")(mockReq("COMPLIANCE"), {} as any, vi.fn())
+      requirePermission("complianceHandshake.decide", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
     const next = vi.fn();
-    requirePermission("complianceHandshake.decide", "write")(mockReq("GESCHAEFTSLEITUNG"), {} as any, next);
+    requirePermission("complianceHandshake.decide", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("COMPLIANCE (matching the frontend's own gate) may govern compliance settings, but RISIKOCONTROLLING may not", () => {
     const next = vi.fn();
-    requirePermission("complianceGovernance", "write")(mockReq("COMPLIANCE"), {} as any, next);
+    requirePermission("complianceGovernance", "write")(mockReq("COMPLIANCE"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
     expect(() =>
-      requirePermission("complianceGovernance", "write")(mockReq("RISIKOCONTROLLING"), {} as any, vi.fn())
+      requirePermission("complianceGovernance", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
   });
 
   it("only GESCHAEFTSLEITUNG/ADMIN may acknowledge a report", () => {
     expect(() =>
-      requirePermission("complianceReport.acknowledge", "write")(mockReq("COMPLIANCE"), {} as any, vi.fn())
+      requirePermission("complianceReport.acknowledge", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
     const next = vi.fn();
-    requirePermission("complianceReport.acknowledge", "write")(mockReq("ADMIN"), {} as any, next);
+    requirePermission("complianceReport.acknowledge", "write")(mockReq("ADMIN"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("complianceReference is read-only for everyone with access, no role may write", () => {
     const next = vi.fn();
-    requirePermission("complianceReference", "read")(mockReq("VIEWER"), {} as any, next);
+    requirePermission("complianceReference", "read")(mockReq("VIEWER"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 });

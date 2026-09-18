@@ -1,45 +1,48 @@
 import { describe, expect, it, vi } from "vitest";
+import type { Request, Response } from "express";
 import { requirePermission } from "../src/middleware/rbac";
 import { ForbiddenError } from "../src/utils/errors";
 import { canReportMassnahmeErledigt } from "../src/modules/revisions/ownership";
 import { isSelfReview, auditCloseBlocked } from "../src/modules/revisions/paper-checks";
 
-function mockReq(role?: string) {
-  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as any;
+function mockReq(role?: string): Request {
+  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as unknown as Request;
 }
+
+const mockRes = {} as unknown as Response;
 
 describe("requirePermission — revision resources", () => {
   it("allows INTERNE_REVISION to write a revisionRecord, but not RISIKOCONTROLLING", () => {
     const next = vi.fn();
-    requirePermission("revisionRecord", "write")(mockReq("INTERNE_REVISION"), {} as any, next);
+    requirePermission("revisionRecord", "write")(mockReq("INTERNE_REVISION"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
-    expect(() => requirePermission("revisionRecord", "write")(mockReq("RISIKOCONTROLLING"), {} as any, vi.fn())).toThrow(
+    expect(() => requirePermission("revisionRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())).toThrow(
       ForbiddenError
     );
   });
 
   it("revisionGovernance write is INTERNE_REVISION/ADMIN, not Geschäftsleitung-restricted", () => {
     const next = vi.fn();
-    requirePermission("revisionGovernance", "write")(mockReq("INTERNE_REVISION"), {} as any, next);
+    requirePermission("revisionGovernance", "write")(mockReq("INTERNE_REVISION"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
     expect(() =>
-      requirePermission("revisionGovernance", "write")(mockReq("GESCHAEFTSLEITUNG"), {} as any, vi.fn())
+      requirePermission("revisionGovernance", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
   });
 
   it("only GESCHAEFTSLEITUNG/ADMIN may approve the Jahresplan or acknowledge a report", () => {
-    expect(() => requirePermission("revisionPlan.approve", "write")(mockReq("INTERNE_REVISION"), {} as any, vi.fn())).toThrow(
+    expect(() => requirePermission("revisionPlan.approve", "write")(mockReq("INTERNE_REVISION"), mockRes, vi.fn())).toThrow(
       ForbiddenError
     );
     const next1 = vi.fn();
-    requirePermission("revisionPlan.approve", "write")(mockReq("GESCHAEFTSLEITUNG"), {} as any, next1);
+    requirePermission("revisionPlan.approve", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, next1);
     expect(next1).toHaveBeenCalledOnce();
 
     expect(() =>
-      requirePermission("revisionReport.acknowledge", "write")(mockReq("INTERNE_REVISION"), {} as any, vi.fn())
+      requirePermission("revisionReport.acknowledge", "write")(mockReq("INTERNE_REVISION"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
     const next2 = vi.fn();
-    requirePermission("revisionReport.acknowledge", "write")(mockReq("ADMIN"), {} as any, next2);
+    requirePermission("revisionReport.acknowledge", "write")(mockReq("ADMIN"), mockRes, next2);
     expect(next2).toHaveBeenCalledOnce();
   });
 });

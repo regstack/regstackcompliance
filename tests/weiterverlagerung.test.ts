@@ -1,31 +1,34 @@
 import { describe, expect, it, vi } from "vitest";
+import type { Request, Response } from "express";
 import { requirePermission } from "../src/middleware/rbac";
 import { ForbiddenError } from "../src/utils/errors";
 import { collectRemovalIds } from "../src/modules/weiterverlagerung/tree";
 
-function mockReq(role?: string) {
-  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as any;
+function mockReq(role?: string): Request {
+  return { user: role ? { userId: "u1", institutionId: "i1", role } : undefined } as unknown as Request;
 }
+
+const mockRes = {} as unknown as Response;
 
 describe("requirePermission — weiterverlagerung resource", () => {
   it("allows AUSLAGERUNGSBEAUFTRAGTER to write a chain node", () => {
     const next = vi.fn();
-    requirePermission("weiterverlagerung", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), {} as any, next);
+    requirePermission("weiterverlagerung", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("rejects VIEWER writing a chain node, but allows read", () => {
-    expect(() => requirePermission("weiterverlagerung", "write")(mockReq("VIEWER"), {} as any, vi.fn())).toThrow(
+    expect(() => requirePermission("weiterverlagerung", "write")(mockReq("VIEWER"), mockRes, vi.fn())).toThrow(
       ForbiddenError
     );
     const next = vi.fn();
-    requirePermission("weiterverlagerung", "read")(mockReq("VIEWER"), {} as any, next);
+    requirePermission("weiterverlagerung", "read")(mockReq("VIEWER"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("rejects RISIKOCONTROLLING writing a chain node (only Auslagerungsbeauftragte/Compliance/Admin may)", () => {
     expect(() =>
-      requirePermission("weiterverlagerung", "write")(mockReq("RISIKOCONTROLLING"), {} as any, vi.fn())
+      requirePermission("weiterverlagerung", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())
     ).toThrow(ForbiddenError);
   });
 });
