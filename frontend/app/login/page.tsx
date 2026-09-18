@@ -29,7 +29,7 @@ function LoginForm() {
       return;
     }
 
-    await loginToBackend(email, password);
+    await loginToBackend();
 
     router.replace(searchParams.get("next") ?? "/outsourcing");
     router.refresh();

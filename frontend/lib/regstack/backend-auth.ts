@@ -1,23 +1,39 @@
 "use server";
 
 import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+import { createClient } from "@/lib/supabase/server";
 import { BACKEND_TOKEN_COOKIE } from "@/lib/regstack/backend-client";
 
 const BASE_URL = process.env.BACKEND_URL ?? "http://localhost:4000/api";
 
 /**
- * Best-effort login against the Express/Prisma backend, using the same credentials the user
- * just gave Supabase Auth. The two systems have separate user tables during this migration —
- * not every Supabase-authenticated user has a matching backend account yet — so a failure here
- * is swallowed rather than blocking sign-in: it just means the Outsourcing pages (the only
- * module wired to the new backend so far) show a "not linked" state for that user.
+ * Best-effort exchange of the just-established Supabase session for an Express/Prisma backend
+ * session. The two systems have separate user tables during this migration — not every
+ * Supabase-authenticated user has a matching backend account yet — so a failure here is
+ * swallowed rather than blocking sign-in: it just means backend-wired pages show a "not linked"
+ * state for that user.
+ *
+ * This does not re-send the user's password: frontend and backend share JWT_SECRET, so a
+ * short-lived token signed with it proves "Supabase already verified this email" to the
+ * backend's /auth/exchange route, which looks up the matching account and issues its own
+ * session token. That avoids keeping two password stores in sync.
  */
-export async function loginToBackend(email: string, password: string): Promise<void> {
+export async function loginToBackend(): Promise<void> {
   try {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user?.email) return;
+
+    const exchangeToken = jwt.sign({ email: user.email, purpose: "backend-exchange" }, process.env.JWT_SECRET!, {
+      expiresIn: "60s",
+    });
+
+    const res = await fetch(`${BASE_URL}/auth/exchange`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      headers: { Authorization: `Bearer ${exchangeToken}` },
     });
     if (!res.ok) return;
 

@@ -41,7 +41,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // A Server Action request (e.g. the login form's own loginToBackend call, made right after
+  // Supabase sign-in succeeds) is also a request to /login and would otherwise get redirected
+  // away here before it ever reaches the action handler — breaking the backend-session bridge.
+  const isServerAction = request.headers.get("next-action") !== null;
+
+  if (user && isAuthRoute && !isServerAction) {
     const url = request.nextUrl.clone();
     url.pathname = "/outsourcing";
     url.search = "";

@@ -1,10 +1,13 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ForbiddenError, ValidationError } from "../../utils/errors";
 import { signToken } from "../../middleware/auth";
+import { env } from "../../config/env";
+import type { User } from "@prisma/client";
 
 const router = Router();
 
@@ -12,6 +15,11 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
+
+function sessionResponse(user: User) {
+  const token = signToken({ userId: user.id, institutionId: user.institutionId, role: user.role, name: user.name });
+  return { token, user: { id: user.id, name: user.name, role: user.role, institutionId: user.institutionId } };
+}
 
 router.post(
   "/login",
@@ -25,8 +33,40 @@ router.post(
     const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!ok) throw new ForbiddenError("Ungültige Anmeldedaten");
 
-    const token = signToken({ userId: user.id, institutionId: user.institutionId, role: user.role, name: user.name });
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, institutionId: user.institutionId } });
+    res.json(sessionResponse(user));
+  })
+);
+
+/**
+ * Exchanges an already-verified Supabase session for a backend session, without a password:
+ * the frontend and backend share JWT_SECRET, so a short-lived token signed with it proves
+ * "Supabase already authenticated this email" without the two systems needing matching
+ * passwords. Kept separate from /login (which still authenticates by password) because it
+ * trusts a different thing — a signature, not credentials — and must not accept one for the
+ * other.
+ */
+router.post(
+  "/exchange",
+  asyncHandler(async (req, res) => {
+    const header = req.header("authorization");
+    if (!header?.startsWith("Bearer ")) throw new ForbiddenError("Fehlender Authorization-Header");
+
+    let payload: jwt.JwtPayload;
+    try {
+      const verified = jwt.verify(header.slice(7), env.jwtSecret);
+      if (typeof verified === "string") throw new Error("unexpected string payload");
+      payload = verified;
+    } catch {
+      throw new ForbiddenError("Ungültiges oder abgelaufenes Austausch-Token");
+    }
+    if (payload.purpose !== "backend-exchange" || typeof payload.email !== "string") {
+      throw new ForbiddenError("Ungültiges Austausch-Token");
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: payload.email } });
+    if (!user || !user.active) throw new ForbiddenError("Kein verknüpftes Backend-Konto");
+
+    res.json(sessionResponse(user));
   })
 );
 
