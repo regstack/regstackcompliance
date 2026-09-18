@@ -73,9 +73,15 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- DORA-Registermodul (Art. 28–30) — Scaffold vorhanden (`src/modules/dora/`, `DoraIctArrangement` +
-  `DoraWeiterverlagerung` in `prisma/schema.prisma`, RBAC-Ressource `doraRegister`, gemountet unter
-  `/api/dora/arrangements`); die fachliche Klassifizierungs-/Scoring-Logik analog `classify.ts`
-  fehlt bewusst noch, siehe `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- DORA-Registermodul (Art. 28–30) — Scaffold vorhanden als eigenständiges Modul (`src/modules/dora/`,
+  `DoraIctArrangement` + `DoraWeiterverlagerung` in `prisma/schema.prisma`, RBAC-Ressource
+  `doraRegister`, gemountet unter `/api/dora/arrangements`). Kein Pflicht-Link zu einer
+  `OutsourcingActivity` — `activityId` ist rein optionale Querverlinkung; das Modul funktioniert
+  komplett unabhängig vom AT9-Modul. Die fachliche Klassifizierungs-/Scoring-Logik analog
+  `classify.ts` fehlt bewusst noch, siehe
+  `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- BAIT-Modul (Bankaufsichtliche Anforderungen an die IT) — eigenständiges 4. Compliance-Modul neben
+  AT9/Compliance/Interne Revision, Schwerpunkt IT-Prüfung (IT-Revision) und
+  Informationsrisikomanagement; siehe `src/modules/bait/`.
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.

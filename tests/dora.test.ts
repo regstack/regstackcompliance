@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criticalityRationaleMissing, isDoraScopedActivity } from "../src/modules/dora/validation";
+import { criticalityRationaleMissing } from "../src/modules/dora/validation";
 import { collectRemovalIds } from "../src/modules/weiterverlagerung/tree";
 
 describe("criticalityRationaleMissing — 'kritisch/wichtig' braucht eine Begründung, keine reine Behauptung", () => {
@@ -16,19 +16,6 @@ describe("criticalityRationaleMissing — 'kritisch/wichtig' braucht eine Begrü
   it("never requires a rationale when the function is not flagged critical/important", () => {
     expect(criticalityRationaleMissing(false, undefined)).toBe(false);
     expect(criticalityRationaleMissing(undefined, undefined)).toBe(false);
-  });
-});
-
-describe("isDoraScopedActivity — a DORA arrangement may only link an IKT_DORA-scoped activity", () => {
-  it("accepts an activity with scope IKT_DORA", () => {
-    expect(isDoraScopedActivity({ scope: "IKT_DORA" })).toBe(true);
-  });
-
-  it("rejects any other scope, and a missing activity", () => {
-    expect(isDoraScopedActivity({ scope: "AUSLAGERUNG" })).toBe(false);
-    expect(isDoraScopedActivity({ scope: "SONSTIGER_FREMDBEZUG" })).toBe(false);
-    expect(isDoraScopedActivity(null)).toBe(false);
-    expect(isDoraScopedActivity(undefined)).toBe(false);
   });
 });
 

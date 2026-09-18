@@ -6,7 +6,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
-import { criticalityRationaleMissing, isDoraScopedActivity } from "./validation";
+import { criticalityRationaleMissing } from "./validation";
 
 const router = Router();
 
@@ -41,15 +41,13 @@ const baseSchema = z.object({
 
 const createSchema = baseSchema;
 
-// Verifies (if given) that activityId belongs to the caller's institution and actually carries
-// scope=IKT_DORA — the register entry is meant to sit on top of that existing flag, not on an
-// arbitrary Auslagerung (see activities.routes.ts, ScopeType.IKT_DORA).
-async function requireDoraScopedActivity(activityId: string, institutionId: string) {
+// The DORA register is its own standalone module — activityId is purely an optional
+// cross-reference to an AT9 Auslagerung for institutions that want to keep the two linked, never
+// a requirement. The only rule enforced here is tenant isolation: a given activityId must belong
+// to the caller's own institution, same as every other cross-entity reference in this codebase.
+async function requireActivityInSameInstitution(activityId: string, institutionId: string) {
   const activity = await prisma.outsourcingActivity.findFirst({ where: { id: activityId, institutionId } });
   if (!activity) throw new NotFoundError("Auslagerungsaktivität nicht gefunden");
-  if (!isDoraScopedActivity(activity)) {
-    throw new ValidationError('Verknüpfte Aktivität muss scope="IKT_DORA" haben');
-  }
   return activity;
 }
 
@@ -65,7 +63,7 @@ router.post(
       throw new ValidationError("criticalityRationale ist Pflicht, sobald criticalOrImportantFunction gesetzt ist");
     }
     if (parsed.data.activityId) {
-      await requireDoraScopedActivity(parsed.data.activityId, req.user!.institutionId);
+      await requireActivityInSameInstitution(parsed.data.activityId, req.user!.institutionId);
     }
 
     const { contractStart, contractEnd, ...rest } = parsed.data;
@@ -127,7 +125,7 @@ router.patch(
       throw new ValidationError("criticalityRationale ist Pflicht, sobald criticalOrImportantFunction gesetzt ist");
     }
     if (parsed.data.activityId) {
-      await requireDoraScopedActivity(parsed.data.activityId, req.user!.institutionId);
+      await requireActivityInSameInstitution(parsed.data.activityId, req.user!.institutionId);
     }
 
     const data: Record<string, unknown> = { ...parsed.data };
