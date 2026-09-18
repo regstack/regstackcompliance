@@ -25,7 +25,8 @@ export type Resource =
   | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
-  | "revisionPlan.approve"; // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "doraRegister"; // DORA Art. 28-30 — IKT-Drittdienstleister-Register (Arrangements + Sub-Kette)
 
 export type Action = "read" | "write" | "delete";
 
@@ -119,6 +120,13 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
   "revisionPlan.approve": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  // Mirrors outsourcingActivity's matrix — same roles care about ICT third-party arrangements as
+  // about Auslagerungen generally, since the DORA register builds directly on that same data.
+  doraRegister: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
+    delete: ["ADMIN"],
   },
 };
 
