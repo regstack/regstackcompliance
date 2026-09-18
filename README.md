@@ -73,9 +73,6 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- Objektspeicher-Anbindung für `Contract.fileObjectKey` (S3-kompatibel — AWS S3 EU oder Hetzner
-  Object Storage) inkl. Pre-Signed-Upload-Endpoint; aktuell nimmt die API nur die Metadaten
-  entgegen (siehe `contracts.routes.ts`).
 - DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
   `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
