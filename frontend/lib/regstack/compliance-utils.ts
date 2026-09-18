@@ -32,10 +32,9 @@ export function toNameMap(persons: { id: string; full_name: string }[]): Map<str
   return new Map(persons.map((p) => [p.id, p.full_name]));
 }
 
-export type ReportRecipient = { name: string; ack_at: string | null };
 export type ReportContent = {
   name?: string; rating?: string; defizite?: string; gegenmassnahmen?: string;
-  recipients?: ReportRecipient[]; weiterleitung_revision?: string;
+  weiterleitung_revision?: string;
 };
 
 /** reports.content is a generic Json column (shared across modules) — narrow it to the

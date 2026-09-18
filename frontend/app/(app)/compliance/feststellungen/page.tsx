@@ -1,14 +1,14 @@
 import { listFeststellungen } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { Banner } from "@/components/ui/banner";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardBody } from "@/components/ui/card";
 import { FeststellungenRegister } from "@/components/compliance/feststellungen-register";
 
 export default async function FeststellungenPage() {
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const feststellungen = await listFeststellungen();
-  const canWrite = ctx ? canWriteCompliance(ctx) : false;
+  const canWrite = session ? canWriteCompliance(session.role) : false;
 
   const open = feststellungen.filter((f) => f.status !== "geschlossen" && f.status !== "akzeptiertes_risiko").length;
   const today = new Date().toISOString().slice(0, 10);

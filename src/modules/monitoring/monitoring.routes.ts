@@ -32,6 +32,12 @@ const evidenceSchema = z.object({
   escalationNeeded: z.boolean().optional(),
   escalationNote: z.string().optional(),
   assuranceReportDueDate: z.string().datetime().optional(),
+  assuranceType: z.string().optional(),
+  bridgeCoverage: z.string().optional(),
+  reviewerName: z.string().optional(),
+  reviewedAt: z.string().datetime().optional(),
+  materialChange: z.boolean().optional(),
+  changeNote: z.string().optional(),
 });
 const kpiSchema = z.object({
   type: z.literal("KPI"),
@@ -64,12 +70,21 @@ router.post(
             evidenceDate: new Date(parsed.data.evidenceDate),
             evidenceDescription: parsed.data.evidenceDescription,
             reviewedByUserId: parsed.data.reviewedByUserId,
-            reviewedAt: parsed.data.reviewedByUserId ? new Date() : undefined,
+            reviewedAt: parsed.data.reviewedAt
+              ? new Date(parsed.data.reviewedAt)
+              : parsed.data.reviewedByUserId
+                ? new Date()
+                : undefined,
             escalationNeeded: parsed.data.escalationNeeded ?? false,
             escalationNote: parsed.data.escalationNote,
             assuranceReportDueDate: parsed.data.assuranceReportDueDate
               ? new Date(parsed.data.assuranceReportDueDate)
               : undefined,
+            assuranceType: parsed.data.assuranceType,
+            bridgeCoverage: parsed.data.bridgeCoverage,
+            reviewerName: parsed.data.reviewerName,
+            materialChange: parsed.data.materialChange ?? false,
+            changeNote: parsed.data.changeNote,
           }
         : {
             activityId: activity.id,

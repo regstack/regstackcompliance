@@ -58,6 +58,108 @@ export type Database = {
           },
         ]
       }
+      arbeitspapiere: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ergebnis: string | null
+          ersteller_person_id: string | null
+          erstellt_am: string | null
+          handlung: string | null
+          id: string
+          inhalt: string | null
+          nummer: string | null
+          quelle: string | null
+          review_am: string | null
+          review_kommentar: string | null
+          review_status: string
+          reviewer_person_id: string | null
+          schritt_id: string
+          stichprobe: Json
+          tenant_id: string
+          titel: string
+          typ: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ergebnis?: string | null
+          ersteller_person_id?: string | null
+          erstellt_am?: string | null
+          handlung?: string | null
+          id?: string
+          inhalt?: string | null
+          nummer?: string | null
+          quelle?: string | null
+          review_am?: string | null
+          review_kommentar?: string | null
+          review_status?: string
+          reviewer_person_id?: string | null
+          schritt_id: string
+          stichprobe?: Json
+          tenant_id: string
+          titel: string
+          typ?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ergebnis?: string | null
+          ersteller_person_id?: string | null
+          erstellt_am?: string | null
+          handlung?: string | null
+          id?: string
+          inhalt?: string | null
+          nummer?: string | null
+          quelle?: string | null
+          review_am?: string | null
+          review_kommentar?: string | null
+          review_status?: string
+          reviewer_person_id?: string | null
+          schritt_id?: string
+          stichprobe?: Json
+          tenant_id?: string
+          titel?: string
+          typ?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arbeitspapiere_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arbeitspapiere_ersteller_person_id_fkey"
+            columns: ["ersteller_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arbeitspapiere_reviewer_person_id_fkey"
+            columns: ["reviewer_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arbeitspapiere_schritt_id_fkey"
+            columns: ["schritt_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungsschritte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arbeitspapiere_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_handshakes: {
         Row: {
           confirmed_at: string | null
@@ -1494,14 +1596,212 @@ export type Database = {
           },
         ]
       }
+      pruefung_zuweisungen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          person_id: string
+          pruefung_id: string
+          role: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          person_id: string
+          pruefung_id: string
+          role: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          person_id?: string
+          pruefung_id?: string
+          role?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pruefung_zuweisungen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefung_zuweisungen_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefung_zuweisungen_pruefung_id_fkey"
+            columns: ["pruefung_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefung_zuweisungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pruefungen: {
+        Row: {
+          actual_days: number
+          budget_days: number
+          created_at: string
+          created_by: string | null
+          durchfuehrung: string
+          extern_ablage: string | null
+          extern_dienstleister: string | null
+          extern_einsicht: Json
+          id: string
+          overall_rating: string | null
+          period_from: string | null
+          period_to: string | null
+          prepared_by: string | null
+          presented_date: string | null
+          presented_to: string | null
+          pruefungsobjekt_id: string
+          qs_checkliste: Json
+          qs_completed_at: string | null
+          qs_completed_by: string | null
+          qs_reviewed_at: string | null
+          qs_reviewed_by: string | null
+          report_date: string | null
+          status: string
+          subject: string
+          tenant_id: string
+          workpaper_ref: string | null
+        }
+        Insert: {
+          actual_days?: number
+          budget_days?: number
+          created_at?: string
+          created_by?: string | null
+          durchfuehrung?: string
+          extern_ablage?: string | null
+          extern_dienstleister?: string | null
+          extern_einsicht?: Json
+          id?: string
+          overall_rating?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          prepared_by?: string | null
+          presented_date?: string | null
+          presented_to?: string | null
+          pruefungsobjekt_id: string
+          qs_checkliste?: Json
+          qs_completed_at?: string | null
+          qs_completed_by?: string | null
+          qs_reviewed_at?: string | null
+          qs_reviewed_by?: string | null
+          report_date?: string | null
+          status?: string
+          subject: string
+          tenant_id: string
+          workpaper_ref?: string | null
+        }
+        Update: {
+          actual_days?: number
+          budget_days?: number
+          created_at?: string
+          created_by?: string | null
+          durchfuehrung?: string
+          extern_ablage?: string | null
+          extern_dienstleister?: string | null
+          extern_einsicht?: Json
+          id?: string
+          overall_rating?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          prepared_by?: string | null
+          presented_date?: string | null
+          presented_to?: string | null
+          pruefungsobjekt_id?: string
+          qs_checkliste?: Json
+          qs_completed_at?: string | null
+          qs_completed_by?: string | null
+          qs_reviewed_at?: string | null
+          qs_reviewed_by?: string | null
+          report_date?: string | null
+          status?: string
+          subject?: string
+          tenant_id?: string
+          workpaper_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pruefungen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungen_prepared_by_fkey"
+            columns: ["prepared_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungen_pruefungsobjekt_id_fkey"
+            columns: ["pruefungsobjekt_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungsobjekte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungen_qs_completed_by_fkey"
+            columns: ["qs_completed_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungen_qs_reviewed_by_fkey"
+            columns: ["qs_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pruefungsobjekte: {
         Row: {
           bereich: string | null
           bezeichnung: string
+          category: string | null
           created_at: string
           created_by: string
           id: string
+          last_audit_date: string | null
+          materiality: string
+          outsourced: boolean
+          plan_year: number | null
+          reg_anker: string | null
           risikokriterien: Json
+          risk_rationale: Json
+          risk_review_date: string | null
+          risk_review_reviewer_person_id: string | null
           status: string
           tenant_id: string
           verantwortlicher_person_id: string | null
@@ -1509,10 +1809,19 @@ export type Database = {
         Insert: {
           bereich?: string | null
           bezeichnung: string
+          category?: string | null
           created_at?: string
           created_by: string
           id?: string
+          last_audit_date?: string | null
+          materiality?: string
+          outsourced?: boolean
+          plan_year?: number | null
+          reg_anker?: string | null
           risikokriterien?: Json
+          risk_rationale?: Json
+          risk_review_date?: string | null
+          risk_review_reviewer_person_id?: string | null
           status?: string
           tenant_id: string
           verantwortlicher_person_id?: string | null
@@ -1520,10 +1829,19 @@ export type Database = {
         Update: {
           bereich?: string | null
           bezeichnung?: string
+          category?: string | null
           created_at?: string
           created_by?: string
           id?: string
+          last_audit_date?: string | null
+          materiality?: string
+          outsourced?: boolean
+          plan_year?: number | null
+          reg_anker?: string | null
           risikokriterien?: Json
+          risk_rationale?: Json
+          risk_review_date?: string | null
+          risk_review_reviewer_person_id?: string | null
           status?: string
           tenant_id?: string
           verantwortlicher_person_id?: string | null
@@ -1532,6 +1850,13 @@ export type Database = {
           {
             foreignKeyName: "pruefungsobjekte_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungsobjekte_risk_review_reviewer_person_id_fkey"
+            columns: ["risk_review_reviewer_person_id"]
             isOneToOne: false
             referencedRelation: "persons"
             referencedColumns: ["id"]
@@ -1548,6 +1873,76 @@ export type Database = {
             columns: ["verantwortlicher_person_id"]
             isOneToOne: false
             referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pruefungsschritte: {
+        Row: {
+          bereich: string | null
+          beurteilung: string
+          created_at: string
+          created_by: string | null
+          ergebnis: string | null
+          handlung: string | null
+          id: string
+          nummer: number
+          pruefung_id: string
+          risiko: string | null
+          soll_aussage: string | null
+          tenant_id: string
+          testschritte: string | null
+        }
+        Insert: {
+          bereich?: string | null
+          beurteilung?: string
+          created_at?: string
+          created_by?: string | null
+          ergebnis?: string | null
+          handlung?: string | null
+          id?: string
+          nummer?: number
+          pruefung_id: string
+          risiko?: string | null
+          soll_aussage?: string | null
+          tenant_id: string
+          testschritte?: string | null
+        }
+        Update: {
+          bereich?: string | null
+          beurteilung?: string
+          created_at?: string
+          created_by?: string | null
+          ergebnis?: string | null
+          handlung?: string | null
+          id?: string
+          nummer?: number
+          pruefung_id?: string
+          risiko?: string | null
+          soll_aussage?: string | null
+          tenant_id?: string
+          testschritte?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pruefungsschritte_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungsschritte_pruefung_id_fkey"
+            columns: ["pruefung_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pruefungsschritte_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1751,51 +2146,758 @@ export type Database = {
           },
         ]
       }
+      revision_einstellungen: {
+        Row: {
+          angemessene_zeit_tage: number
+          conflict_measures: string | null
+          direct_subordination: boolean
+          disproportionality_reason: string | null
+          head_of_audit_person_id: string | null
+          independence_confirmed: boolean
+          org_form: string
+          qs_intervall_monate: number
+          risiko_review_intervall_monate: number
+          severity_settings: Json
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          angemessene_zeit_tage?: number
+          conflict_measures?: string | null
+          direct_subordination?: boolean
+          disproportionality_reason?: string | null
+          head_of_audit_person_id?: string | null
+          independence_confirmed?: boolean
+          org_form?: string
+          qs_intervall_monate?: number
+          risiko_review_intervall_monate?: number
+          severity_settings?: Json
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          angemessene_zeit_tage?: number
+          conflict_measures?: string | null
+          direct_subordination?: boolean
+          disproportionality_reason?: string | null
+          head_of_audit_person_id?: string | null
+          independence_confirmed?: boolean
+          org_form?: string
+          qs_intervall_monate?: number
+          risiko_review_intervall_monate?: number
+          severity_settings?: Json
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_einstellungen_head_of_audit_person_id_fkey"
+            columns: ["head_of_audit_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_einstellungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_einstellungen_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_gl_mitteilungen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          decision: string
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          decision: string
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          decision?: string
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_gl_mitteilungen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_gl_mitteilungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_personal: {
+        Row: {
+          advisory_active: boolean
+          advisory_safeguard: string | null
+          non_audit_tasks: string | null
+          person_id: string
+          qualifikation: string | null
+          soll_fortbildung_tage: number
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          advisory_active?: boolean
+          advisory_safeguard?: string | null
+          non_audit_tasks?: string | null
+          person_id: string
+          qualifikation?: string | null
+          soll_fortbildung_tage?: number
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          advisory_active?: boolean
+          advisory_safeguard?: string | null
+          non_audit_tasks?: string | null
+          person_id?: string
+          qualifikation?: string | null
+          soll_fortbildung_tage?: number
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_personal_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: true
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_personal_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_personal_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_projektbegleitung: {
+        Row: {
+          access_granted: boolean
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          ir_contact_person_id: string | null
+          name: string
+          notes: string | null
+          role: string
+          start_date: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          access_granted?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          ir_contact_person_id?: string | null
+          name: string
+          notes?: string | null
+          role?: string
+          start_date?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          access_granted?: boolean
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          ir_contact_person_id?: string | null
+          name?: string
+          notes?: string | null
+          role?: string
+          start_date?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_projektbegleitung_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_projektbegleitung_ir_contact_person_id_fkey"
+            columns: ["ir_contact_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_projektbegleitung_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_qualitaetssicherung: {
+        Row: {
+          anlass: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          next_due: string | null
+          result: string | null
+          reviewer: string | null
+          scope: Json
+          tenant_id: string
+          type: string
+        }
+        Insert: {
+          anlass?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          next_due?: string | null
+          result?: string | null
+          reviewer?: string | null
+          scope?: Json
+          tenant_id: string
+          type?: string
+        }
+        Update: {
+          anlass?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          next_due?: string | null
+          result?: string | null
+          reviewer?: string | null
+          scope?: Json
+          tenant_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_qualitaetssicherung_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_qualitaetssicherung_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_schulungen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          datum: string | null
+          id: string
+          nachweis_id: string | null
+          nachweis_text: string | null
+          person_id: string
+          tenant_id: string
+          titel: string
+          umfang: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          datum?: string | null
+          id?: string
+          nachweis_id?: string | null
+          nachweis_text?: string | null
+          person_id: string
+          tenant_id: string
+          titel: string
+          umfang?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          datum?: string | null
+          id?: string
+          nachweis_id?: string | null
+          nachweis_text?: string | null
+          person_id?: string
+          tenant_id?: string
+          titel?: string
+          umfang?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_schulungen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_schulungen_nachweis_id_fkey"
+            columns: ["nachweis_id"]
+            isOneToOne: false
+            referencedRelation: "nachweise"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_schulungen_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_schulungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_sonderauftraege: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          ordered_by: string | null
+          reason: string | null
+          subject: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          ordered_by?: string | null
+          reason?: string | null
+          subject: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          ordered_by?: string | null
+          reason?: string | null
+          subject?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_sonderauftraege_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sonderauftraege_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_sonderwissen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_text: string | null
+          from_unit: string | null
+          id: string
+          name: string | null
+          person_id: string | null
+          pruefung_id: string | null
+          tenant_id: string
+          topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_text?: string | null
+          from_unit?: string | null
+          id?: string
+          name?: string | null
+          person_id?: string | null
+          pruefung_id?: string | null
+          tenant_id: string
+          topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_text?: string | null
+          from_unit?: string | null
+          id?: string
+          name?: string | null
+          person_id?: string | null
+          pruefung_id?: string | null
+          tenant_id?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_sonderwissen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sonderwissen_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sonderwissen_pruefung_id_fkey"
+            columns: ["pruefung_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sonderwissen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_sperrfristen: {
+        Row: {
+          bar_end_date: string | null
+          barred_areas: string | null
+          created_at: string
+          created_by: string | null
+          deviation: boolean
+          deviation_reason: string | null
+          from_unit: string | null
+          id: string
+          name: string | null
+          person_id: string | null
+          tenant_id: string
+          transfer_date: string | null
+        }
+        Insert: {
+          bar_end_date?: string | null
+          barred_areas?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation?: boolean
+          deviation_reason?: string | null
+          from_unit?: string | null
+          id?: string
+          name?: string | null
+          person_id?: string | null
+          tenant_id: string
+          transfer_date?: string | null
+        }
+        Update: {
+          bar_end_date?: string | null
+          barred_areas?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation?: boolean
+          deviation_reason?: string | null
+          from_unit?: string | null
+          id?: string
+          name?: string | null
+          person_id?: string | null
+          tenant_id?: string
+          transfer_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_sperrfristen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sperrfristen_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_sperrfristen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_zugriffsvorfaelle: {
+        Row: {
+          area: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string | null
+          escalated_to: string | null
+          id: string
+          resolved_date: string | null
+          tenant_id: string
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string | null
+          escalated_to?: string | null
+          id?: string
+          resolved_date?: string | null
+          tenant_id: string
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string | null
+          escalated_to?: string | null
+          id?: string
+          resolved_date?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_zugriffsvorfaelle_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_zugriffsvorfaelle_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revisionsfeststellung_fristverlaengerungen: {
+        Row: {
+          alt: string | null
+          antragsteller: string | null
+          begruendung: string | null
+          created_at: string
+          created_by: string | null
+          datum: string
+          feststellung_id: string
+          genehmiger: string | null
+          id: string
+          neu: string
+          tenant_id: string
+        }
+        Insert: {
+          alt?: string | null
+          antragsteller?: string | null
+          begruendung?: string | null
+          created_at?: string
+          created_by?: string | null
+          datum?: string
+          feststellung_id: string
+          genehmiger?: string | null
+          id?: string
+          neu: string
+          tenant_id: string
+        }
+        Update: {
+          alt?: string | null
+          antragsteller?: string | null
+          begruendung?: string | null
+          created_at?: string
+          created_by?: string | null
+          datum?: string
+          feststellung_id?: string
+          genehmiger?: string | null
+          id?: string
+          neu?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revisionsfeststellung_fristverlaengerungen_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revisionsfeststellung_fristverlaengerungen_feststellung_id_fkey"
+            columns: ["feststellung_id"]
+            isOneToOne: false
+            referencedRelation: "revisionsbericht_feststellungen"
+            referencedColumns: ["feststellung_id"]
+          },
+          {
+            foreignKeyName: "revisionsfeststellung_fristverlaengerungen_feststellung_id_fkey"
+            columns: ["feststellung_id"]
+            isOneToOne: false
+            referencedRelation: "revisionsfeststellungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revisionsfeststellung_fristverlaengerungen_genehmiger_fkey"
+            columns: ["genehmiger"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revisionsfeststellung_fristverlaengerungen_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revisionsfeststellungen: {
         Row: {
+          abschluss: Json
+          abschluss_art: string | null
           beschreibung: string | null
           created_at: string
           created_by: string
+          escalation: Json
+          exec_escalation: Json
+          executive_target: boolean
+          frist_urspruenglich: string | null
           geschlossen_am: string | null
           geschlossen_von: string | null
           id: string
           massnahme_erledigt_am: string | null
           massnahme_erledigt_von: string | null
+          nachschau_date: string | null
+          nachschau_needed: boolean
+          pruefung_id: string | null
           pruefungsobjekt_id: string
           schweregrad: string | null
           status: string
+          stellungnahme: Json
           tenant_id: string
           titel: string
+          verantwortlich_person_id: string | null
         }
         Insert: {
+          abschluss?: Json
+          abschluss_art?: string | null
           beschreibung?: string | null
           created_at?: string
           created_by: string
+          escalation?: Json
+          exec_escalation?: Json
+          executive_target?: boolean
+          frist_urspruenglich?: string | null
           geschlossen_am?: string | null
           geschlossen_von?: string | null
           id?: string
           massnahme_erledigt_am?: string | null
           massnahme_erledigt_von?: string | null
+          nachschau_date?: string | null
+          nachschau_needed?: boolean
+          pruefung_id?: string | null
           pruefungsobjekt_id: string
           schweregrad?: string | null
           status?: string
+          stellungnahme?: Json
           tenant_id: string
           titel: string
+          verantwortlich_person_id?: string | null
         }
         Update: {
+          abschluss?: Json
+          abschluss_art?: string | null
           beschreibung?: string | null
           created_at?: string
           created_by?: string
+          escalation?: Json
+          exec_escalation?: Json
+          executive_target?: boolean
+          frist_urspruenglich?: string | null
           geschlossen_am?: string | null
           geschlossen_von?: string | null
           id?: string
           massnahme_erledigt_am?: string | null
           massnahme_erledigt_von?: string | null
+          nachschau_date?: string | null
+          nachschau_needed?: boolean
+          pruefung_id?: string | null
           pruefungsobjekt_id?: string
           schweregrad?: string | null
           status?: string
+          stellungnahme?: Json
           tenant_id?: string
           titel?: string
+          verantwortlich_person_id?: string | null
         }
         Relationships: [
           {
@@ -1820,6 +2922,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "revisionsfeststellungen_pruefung_id_fkey"
+            columns: ["pruefung_id"]
+            isOneToOne: false
+            referencedRelation: "pruefungen"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "revisionsfeststellungen_pruefungsobjekt_id_fkey"
             columns: ["pruefungsobjekt_id"]
             isOneToOne: false
@@ -1831,6 +2940,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revisionsfeststellungen_verantwortlich_person_id_fkey"
+            columns: ["verantwortlich_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
             referencedColumns: ["id"]
           },
         ]
@@ -2390,6 +3506,10 @@ export type Database = {
           p_old_value?: Json
           p_tenant_id: string
         }
+        Returns: string
+      }
+      materialize_outsourcing_draft: {
+        Args: { p_draft_id: string }
         Returns: string
       }
       reject_draft: {

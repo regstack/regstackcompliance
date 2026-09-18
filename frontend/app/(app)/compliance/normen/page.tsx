@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listNormen } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Banner } from "@/components/ui/banner";
@@ -14,9 +14,9 @@ function classify(n: { relevanz: string | null; wesentlichkeit: string | null })
 }
 
 export default async function NormenPage() {
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const normen = await listNormen();
-  const canWrite = ctx ? canWriteCompliance(ctx) : false;
+  const canWrite = session ? canWriteCompliance(session.role) : false;
 
   return (
     <div className="space-y-6">

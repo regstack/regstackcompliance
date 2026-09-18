@@ -4,8 +4,8 @@ import { BACKEND_TOKEN_COOKIE } from "@/lib/regstack/backend-client";
 
 // Mirrors the Prisma `Role` enum in prisma/schema.prisma — the Express backend's flat,
 // one-role-per-user model. This is intentionally NOT the same shape as the Supabase-based
-// per-module `internal_role`/`module_type` roles in lib/regstack/session.ts: only the
-// Outsourcing module talks to the new backend so far, so only Outsourcing reads this.
+// per-module `internal_role`/`module_type` roles in lib/regstack/session.ts: it now covers all
+// three modules (Outsourcing, Compliance, Interne Revision), while Dashboard still bridges both.
 export type BackendRole =
   | "GESCHAEFTSLEITUNG"
   | "COMPLIANCE"
@@ -49,4 +49,37 @@ const OUTSOURCING_WRITE_ROLES: BackendRole[] = [
 
 export function canWriteOutsourcing(role: BackendRole): boolean {
   return OUTSOURCING_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.contract.write, which is also identical to
+// handlungsoption.write and weiterverlagerung.write — deliberately narrower than
+// OUTSOURCING_WRITE_ROLES above (excludes RISIKOCONTROLLING: contractual/exit-strategy/
+// sub-outsourcing-chain edits are not a risk-controlling task).
+const OUTSOURCING_CONTRACT_WRITE_ROLES: BackendRole[] = ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "ADMIN"];
+
+export function canWriteOutsourcingContract(role: BackendRole): boolean {
+  return OUTSOURCING_CONTRACT_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.complianceRecord.write.
+const COMPLIANCE_WRITE_ROLES: BackendRole[] = ["COMPLIANCE", "ADMIN"];
+
+export function canWriteCompliance(role: BackendRole): boolean {
+  return COMPLIANCE_WRITE_ROLES.includes(role);
+}
+
+// Every GESCHAEFTSLEITUNG-only backend resource (complianceHandshake.decide,
+// complianceReport.acknowledge, revisionReport.acknowledge, revisionPlan.approve,
+// handlungsoption.approve, report.approve) also allows ADMIN as an override — mirrored here so
+// an Admin isn't shown a "not authorized" UI for something the backend would actually accept.
+export function isGeschaeftsleitung(role: BackendRole): boolean {
+  return role === "GESCHAEFTSLEITUNG" || role === "ADMIN";
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.revisionRecord.write (and revisionGovernance.write,
+// which uses the same role list).
+const REVISION_WRITE_ROLES: BackendRole[] = ["INTERNE_REVISION", "ADMIN"];
+
+export function canWriteRevisions(role: BackendRole): boolean {
+  return REVISION_WRITE_ROLES.includes(role);
 }

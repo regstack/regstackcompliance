@@ -221,35 +221,46 @@ router.put(
   })
 );
 
+const statusSchema = z.object({ status: z.enum(["ENTWURF", "AKTIV", "BEENDET"]) });
+
 // Aktivierungs-Gate — exact server-side mirror of activationBlockers() in regstack_cockpit.html:
-// a materially-outsourced activity cannot go ACTIVE without either group relief, or both a
-// Handlungsoption/Ausstiegsstrategie AND a complete Tz.7 contract checklist.
-router.post(
-  "/:id/activate",
+// a materially-outsourced activity cannot go ENTWURF -> AKTIV without either group relief, or
+// both a Handlungsoption/Ausstiegsstrategie AND a complete Tz.7 contract checklist. Every other
+// transition (AKTIV -> BEENDET, or a correction back to ENTWURF) is unrestricted.
+router.patch(
+  "/:id/status",
   requirePermission("outsourcingActivity", "write"),
   asyncHandler(async (req, res) => {
+    const parsed = statusSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError(parsed.error.message);
+
     const activity = await prisma.outsourcingActivity.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },
       include: { riskAnalysis: true, handlungsoption: true, contract: true },
     });
     if (!activity) throw new NotFoundError("Auslagerung nicht gefunden");
 
-    if (activity.scope === "AUSLAGERUNG" && activity.riskAnalysis?.materiality) {
+    if (
+      activity.status === "ENTWURF" &&
+      parsed.data.status === "AKTIV" &&
+      activity.scope === "AUSLAGERUNG" &&
+      activity.riskAnalysis?.materiality
+    ) {
       const institution = await prisma.institutionProfile.findUniqueOrThrow({ where: { id: req.user!.institutionId } });
       const relief = institution.groupRelief && activity.groupInternal;
       if (!relief) {
         const blockers: string[] = [];
         if (!activity.handlungsoption?.status) blockers.push("Handlungsoption/Ausstiegsstrategie fehlt (Tz. 6)");
         const checklist = (activity.contract?.clauseChecklist as Record<string, string>) ?? {};
-        const openCount = Object.values(checklist).filter((v) => v === "OFFEN").length;
-        if (openCount > 0) blockers.push(`${openCount} Vertragspunkt(e) gem. Tz. 7 noch offen`);
+        const openCount = Object.values(checklist).filter((v) => v !== "ERFUELLT").length;
+        if (openCount > 0) blockers.push(`${openCount} Vertragspunkt(e) gem. Tz. 7 noch nicht erfüllt`);
         if (blockers.length) throw new ForbiddenError(`Aktivierung nicht gedeckt: ${blockers.join(" · ")}`);
       }
     }
 
     const updated = await withAudit(
       { entityType: "OutsourcingActivity", entityId: activity.id, action: "UPDATE", actor: req.user, ipAddress: req.ip, before: activity },
-      (tx) => tx.outsourcingActivity.update({ where: { id: activity.id }, data: { status: "AKTIV" } })
+      (tx) => tx.outsourcingActivity.update({ where: { id: activity.id }, data: { status: parsed.data.status } })
     );
     res.json(updated);
   })

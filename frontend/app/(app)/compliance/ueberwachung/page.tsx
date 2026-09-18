@@ -1,13 +1,13 @@
 import { listQuellen, listAenderungen, listAllPersons } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { Banner } from "@/components/ui/banner";
 import { QuellenPanel } from "@/components/compliance/quellen-panel";
 import { AenderungenPanel } from "@/components/compliance/aenderungen-panel";
 
 export default async function UeberwachungPage() {
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const [quellen, aenderungen, personen] = await Promise.all([listQuellen(), listAenderungen(), listAllPersons()]);
-  const canWrite = ctx ? canWriteCompliance(ctx) : false;
+  const canWrite = session ? canWriteCompliance(session.role) : false;
 
   return (
     <div className="space-y-6">

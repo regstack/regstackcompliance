@@ -99,3 +99,22 @@ export function hasComplianceAccess(ctx: SessionContext): boolean {
 export function isGeschaeftsleitung(ctx: SessionContext): boolean {
   return ctx.roles.some((r) => r.role === "geschaeftsleitung");
 }
+
+/** Interne Revision write access (Revisionsleiter): power_user or institution_admin. */
+export function canWriteRevisions(ctx: SessionContext): boolean {
+  return hasModuleRole(ctx, "internal_audit", "power_user");
+}
+
+/** True if the person holds a `fachbereich` role for internal_audit — the Prüfungsobjekt-
+ * Verantwortliche side of a Feststellung (report `massnahme_erledigt`, nothing else). */
+export function isRevisionsFachbereich(ctx: SessionContext): boolean {
+  return hasModuleRole(ctx, "internal_audit", "fachbereich");
+}
+
+/** Everyone with any internal_audit-module role (or admin) can read; RLS enforces row scope. */
+export function hasRevisionsAccess(ctx: SessionContext): boolean {
+  return (
+    ctx.roles.some((r) => r.role === "institution_admin") ||
+    ctx.roles.some((r) => r.module === "internal_audit")
+  );
+}

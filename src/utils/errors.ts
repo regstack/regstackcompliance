@@ -21,3 +21,9 @@ export class ValidationError extends HttpError {
     super(422, message);
   }
 }
+
+export class TooManyRequestsError extends HttpError {
+  constructor(message = "Zu viele Versuche, bitte später erneut versuchen") {
+    super(429, message);
+  }
+}

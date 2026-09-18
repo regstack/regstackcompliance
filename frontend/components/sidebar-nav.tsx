@@ -8,7 +8,7 @@ import type { InternalRole, ModuleType } from "@/lib/regstack/session";
 const NAV_ITEMS: { href: string; label: string; module: ModuleType; active: boolean }[] = [
   { href: "/outsourcing", label: "Outsourcing", module: "outsourcing", active: true },
   { href: "/compliance", label: "Compliance", module: "compliance", active: true },
-  { href: "/interne-revision", label: "Interne Revision", module: "internal_audit", active: false },
+  { href: "/interne-revision", label: "Interne Revision", module: "internal_audit", active: true },
 ];
 
 const ROLE_LABELS: Record<InternalRole, string> = {
@@ -30,6 +30,7 @@ export function SidebarNav({
   roles: { module: ModuleType | null; role: InternalRole }[];
 }) {
   const pathname = usePathname();
+  const isGeschaeftsleitung = roles.some((r) => r.role === "geschaeftsleitung");
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-border-subtle bg-surface">
@@ -41,6 +42,18 @@ export function SidebarNav({
       </div>
 
       <nav className="flex-1 space-y-0.5 px-3 py-4">
+        {isGeschaeftsleitung && (
+          <Link
+            href="/dashboard"
+            className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+              pathname.startsWith("/dashboard")
+                ? "bg-copper-500/10 text-copper-300 font-medium"
+                : "text-muted-foreground hover:bg-surface-raised hover:text-foreground"
+            }`}
+          >
+            Dashboard
+          </Link>
+        )}
         {NAV_ITEMS.map((item) => {
           const isCurrent = pathname.startsWith(item.href);
           if (!item.active) {
