@@ -6,6 +6,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
+import { criticalityRationaleMissing, isDoraScopedActivity } from "./validation";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ const createSchema = baseSchema;
 async function requireDoraScopedActivity(activityId: string, institutionId: string) {
   const activity = await prisma.outsourcingActivity.findFirst({ where: { id: activityId, institutionId } });
   if (!activity) throw new NotFoundError("Auslagerungsaktivität nicht gefunden");
-  if (activity.scope !== "IKT_DORA") {
+  if (!isDoraScopedActivity(activity)) {
     throw new ValidationError('Verknüpfte Aktivität muss scope="IKT_DORA" haben');
   }
   return activity;
@@ -60,7 +61,7 @@ router.post(
     if (!parsed.success) throw new ValidationError(parsed.error.message);
     // Analog zu scopeJustification bei OutsourcingActivity: eine als "kritisch oder wichtig"
     // markierte Funktion braucht eine nachvollziehbare Begründung, sonst bleibt es Behauptung.
-    if (parsed.data.criticalOrImportantFunction && !parsed.data.criticalityRationale) {
+    if (criticalityRationaleMissing(parsed.data.criticalOrImportantFunction, parsed.data.criticalityRationale)) {
       throw new ValidationError("criticalityRationale ist Pflicht, sobald criticalOrImportantFunction gesetzt ist");
     }
     if (parsed.data.activityId) {
@@ -122,7 +123,7 @@ router.patch(
 
     const criticalOrImportantFunction = parsed.data.criticalOrImportantFunction ?? before.criticalOrImportantFunction;
     const criticalityRationale = parsed.data.criticalityRationale ?? before.criticalityRationale;
-    if (criticalOrImportantFunction && !criticalityRationale) {
+    if (criticalityRationaleMissing(criticalOrImportantFunction, criticalityRationale)) {
       throw new ValidationError("criticalityRationale ist Pflicht, sobald criticalOrImportantFunction gesetzt ist");
     }
     if (parsed.data.activityId) {
