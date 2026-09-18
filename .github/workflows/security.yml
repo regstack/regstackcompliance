@@ -1,0 +1,51 @@
+name: Security
+
+# Dependency and static-analysis scanning, kept separate from ci.yml (lint/typecheck/test/build)
+# so a dev-tooling-only advisory (see the informational npm audit step below) never blocks that
+# pipeline. Neither job needs any repo setting beyond this file — no branch protection or GitHub
+# Advanced Security config required.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Catches newly published advisories against unchanged dependencies.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      # Blocking: production dependencies must not ship known high/critical vulnerabilities.
+      - name: npm audit — production dependencies (blocking)
+        run: npm audit --omit=dev --audit-level=high
+      # Informational: devDependencies currently carry moderate/high findings from transitional
+      # build tooling (vitest/vite/esbuild's dev-server-only advisories). They never ship to
+      # production, so this step surfaces them without failing the build.
+      - name: npm audit — including devDependencies (informational)
+        run: npm audit
+        continue-on-error: true
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
