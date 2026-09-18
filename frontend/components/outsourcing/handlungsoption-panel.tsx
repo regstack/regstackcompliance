@@ -3,24 +3,36 @@
 import { useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { saveHandlungsoption } from "@/app/(app)/outsourcing/actions";
+import { saveHandlungsoption, approveHandlungsoption } from "@/app/(app)/outsourcing/actions";
 import { HANDLUNGSOPTION_OPTS, ERSETZBARKEIT_OPTS, type Handlungsoption } from "@/lib/regstack/classification";
 
 export function HandlungsoptionPanel({
-  auslagerungId, initial, canWrite,
+  auslagerungId, initial, canWrite, canApprove,
 }: {
   auslagerungId: string;
   initial: Handlungsoption;
   canWrite: boolean;
+  /** Dependency-Acceptance-Bestätigung (Tz. 6 S.3) — Geschäftsleitung/Admin only, independent of
+   * canWrite: someone who can write the rest of this record may not hold this specific step, and
+   * a Geschäftsleitung user holds only this step, not general write access to the record. */
+  canApprove: boolean;
 }) {
   const [h, setH] = useState<Handlungsoption>(initial);
   const [dirty, setDirty] = useState(false);
+  const [approverDirty, setApproverDirty] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [approvePending, startApproveTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
 
   function update(patch: Partial<Handlungsoption>) {
     setH((prev) => ({ ...prev, ...patch }));
     setDirty(true);
+  }
+
+  function updateApprover(patch: Partial<Handlungsoption>) {
+    setH((prev) => ({ ...prev, ...patch }));
+    setApproverDirty(true);
   }
 
   function save() {
@@ -35,7 +47,20 @@ export function HandlungsoptionPanel({
     });
   }
 
+  function approve() {
+    setApproveError(null);
+    startApproveTransition(async () => {
+      try {
+        await approveHandlungsoption(auslagerungId, h.depApprover);
+        setApproverDirty(false);
+      } catch (e) {
+        setApproveError(e instanceof Error ? e.message : "Genehmigung fehlgeschlagen.");
+      }
+    });
+  }
+
   const disabled = !canWrite || pending;
+  const approveDisabled = !canApprove || approvePending;
 
   return (
     <div className="space-y-6">
@@ -99,15 +124,23 @@ export function HandlungsoptionPanel({
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Akzeptiert durch (Geschäftsleitung)
-                  <input value={h.depApprover} disabled={disabled} onChange={(e) => update({ depApprover: e.target.value })}
+                  <input value={h.depApprover} disabled={approveDisabled} onChange={(e) => updateApprover({ depApprover: e.target.value })}
                     className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm normal-case text-foreground disabled:opacity-50" />
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Datum
-                  <input type="date" value={h.depDate} disabled={disabled} onChange={(e) => update({ depDate: e.target.value })}
-                    className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm normal-case text-foreground disabled:opacity-50" />
+                  <input type="date" value={h.depDate} disabled className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm normal-case text-foreground opacity-50" />
                 </label>
               </div>
+              {canApprove && (
+                <div className="flex items-center gap-3">
+                  <Button onClick={approve} disabled={!h.depApprover || approveDisabled}>
+                    {approvePending ? "Genehmigt…" : "Dependency-Acceptance genehmigen"}
+                  </Button>
+                  {approverDirty && !approvePending && <span className="text-xs text-status-warning">Noch nicht genehmigt</span>}
+                  {approveError && <span className="text-xs text-status-danger">{approveError}</span>}
+                </div>
+              )}
               <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Verknüpfung zur Notfallplanung / kompensierende Kontrollen
                 <textarea value={h.depControls} disabled={disabled} rows={3}

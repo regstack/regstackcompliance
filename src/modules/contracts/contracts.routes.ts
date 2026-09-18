@@ -9,8 +9,9 @@ import { NotFoundError, ValidationError } from "../../utils/errors";
 const router = Router({ mergeParams: true });
 
 const clauseSchema = z.object({
-  clauseChecklist: z.record(z.enum(["ERFUELLT", "NICHT_ERFORDERLICH", "OFFEN"])).optional(),
-  subOutsourcingChecklist: z.record(z.unknown()).optional(),
+  clauseChecklist: z.record(z.enum(["ERFUELLT", "NICHT_ERFUELLT", "IN_UEBERARBEITUNG"])).optional(),
+  clauseJustifications: z.record(z.string()).optional(),
+  subOutsourcingChecklist: z.record(z.any()).optional(),
   // Registered after the caller has uploaded the file directly to object storage (S3/Hetzner) via
   // a pre-signed URL obtained out-of-band — the file bytes never pass through this API.
   fileObjectKey: z.string().optional(),
@@ -57,11 +58,13 @@ router.put(
           create: {
             activityId: activity.id,
             clauseChecklist: parsed.data.clauseChecklist ?? {},
+            clauseJustifications: parsed.data.clauseJustifications ?? {},
             subOutsourcingChecklist: parsed.data.subOutsourcingChecklist,
             ...fileFields,
           },
           update: {
             clauseChecklist: parsed.data.clauseChecklist ?? undefined,
+            clauseJustifications: parsed.data.clauseJustifications ?? undefined,
             subOutsourcingChecklist: parsed.data.subOutsourcingChecklist ?? undefined,
             ...fileFields,
           },

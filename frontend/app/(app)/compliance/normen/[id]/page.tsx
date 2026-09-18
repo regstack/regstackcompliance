@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import {
   getNorm, getNormZuweisungHandshake, listFeststellungenForNorm, listAllPersons,
 } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance, isGeschaeftsleitung } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { Card, CardBody } from "@/components/ui/card";
 import { Kv } from "@/components/ui/kv";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -19,7 +19,7 @@ function classify(n: { relevanz: string | null; wesentlichkeit: string | null })
 
 export default async function NormDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const norm = await getNorm(id);
   if (!norm) notFound();
 
@@ -29,8 +29,8 @@ export default async function NormDetailPage({ params }: { params: Promise<{ id:
     listAllPersons(),
   ]);
 
-  const canWrite = ctx ? canWriteCompliance(ctx) : false;
-  const isGL = ctx ? isGeschaeftsleitung(ctx) : false;
+  const canWrite = session ? canWriteCompliance(session.role) : false;
+  const isGL = session ? isGeschaeftsleitung(session.role) : false;
   const cls = classify(norm);
 
   return (
@@ -77,7 +77,7 @@ export default async function NormDetailPage({ params }: { params: Promise<{ id:
         personen={personen}
         canWrite={canWrite}
         isGL={isGL}
-        currentPersonId={ctx?.personId ?? ""}
+        currentPersonId={session?.userId ?? ""}
       />
     </div>
   );

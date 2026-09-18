@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "RegStack Auslagerungsmanagement — MaRisk AT 9 backend (Node.js/Express + PostgreSQL/Prisma)",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc -p tsconfig.json",
@@ -44,5 +46,11 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4",
     "vitest": "^2.1.1"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "prisma@5.22.0": true,
+    "@prisma/client@5.22.0": true,
+    "@prisma/engines@5.22.0": true
   }
 }

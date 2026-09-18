@@ -1,10 +1,27 @@
-import { getSessionContext, canWriteCompliance, hasComplianceAccess } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { ComplianceNav } from "@/components/compliance/compliance-nav";
 import { Banner } from "@/components/ui/banner";
+import { Card } from "@/components/ui/card";
 
 export default async function ComplianceLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await getSessionContext();
-  const readOnly = ctx ? hasComplianceAccess(ctx) && !canWriteCompliance(ctx) : false;
+  const session = await getBackendSession();
+
+  // Every Compliance page below fetches through the backend — without a session those calls
+  // would all 401, so this is checked once here rather than repeated in all eleven pages.
+  if (!session) {
+    return (
+      <Card className="px-6 py-12 text-center">
+        <p className="text-sm text-foreground">Ihr Konto ist nicht mit dem RegStack-Backend verknüpft.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Bitte melden Sie sich erneut an, oder wenden Sie sich an einen Administrator.
+        </p>
+      </Card>
+    );
+  }
+
+  // Everyone with a valid backend session can read (RBAC's complianceRecord.read covers every
+  // role) — this banner is purely a UI convenience for roles that can view but not write.
+  const readOnly = !canWriteCompliance(session.role);
 
   return (
     <div>

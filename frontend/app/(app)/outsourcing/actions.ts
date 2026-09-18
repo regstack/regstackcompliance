@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
-import type { ClauseStatus, ContractRecord, HandlungsoptionRecord, MonitoringRecord } from "@/lib/regstack/outsourcing";
+import type { ClauseStatus, ContractRecord, HandlungsoptionRecord, MonitoringRecord, WeiterverlagerungNode } from "@/lib/regstack/outsourcing";
 import type { Handlungsoption } from "@/lib/regstack/classification";
 
 export type ChecklistStatus = "erfuellt" | "nicht_erfuellt" | "in_ueberarbeitung";
@@ -31,8 +31,13 @@ export async function setChecklistStatus(activityId: string, code: string, statu
   revalidatePath(`/outsourcing/${activityId}`);
 }
 
-export async function activateActivity(activityId: string) {
-  await apiFetch(`/activities/${activityId}/activate`, { method: "POST" });
+export type ActivityStatus = "ENTWURF" | "AKTIV" | "BEENDET";
+
+export async function setActivityStatus(activityId: string, status: ActivityStatus) {
+  await apiFetch(`/activities/${activityId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
   revalidatePath(`/outsourcing/${activityId}`);
   revalidatePath("/outsourcing");
 }
@@ -52,9 +57,13 @@ const ERSETZBARKEIT_TO_BACKEND: Record<string, string> = {
 /**
  * Saves the Tz. 6 Handlungsoption/Ausstiegsstrategie. Note: the backend's HandlungsoptionRecord
  * has no columns for the frontend's supplementary altProvider/altTransition/testDate fields —
- * only status, strategyDescription, ersetzbarkeit, transitionMonths, reviewDate, and the
- * depApprover/depDate/depControls (BCM_LINKED) cluster persist. The other three are UI-only
- * until the schema grows a place for them.
+ * only status, strategyDescription, ersetzbarkeit, transitionMonths, reviewDate, and depControls
+ * persist here. The other three are UI-only until the schema grows a place for them.
+ *
+ * Deliberately does NOT touch depApprover/depDate — the dependency-acceptance confirmation is a
+ * separate, Geschäftsleitung/Admin-only step (see approveHandlungsoption below), enforced
+ * server-side via the "handlungsoption.approve" RBAC resource, which this endpoint's caller may
+ * not hold even when they can write everything else on this record.
  */
 export async function saveHandlungsoption(activityId: string, handlungsoption: Handlungsoption) {
   if (!handlungsoption.status) throw new Error("Bitte eine der drei Optionen wählen.");
@@ -71,12 +80,20 @@ export async function saveHandlungsoption(activityId: string, handlungsoption: H
     }),
   });
 
-  if (handlungsoption.status === "bcm_linked" && handlungsoption.depApprover) {
-    await apiFetch(`/activities/${activityId}/handlungsoption/approve`, {
-      method: "POST",
-      body: JSON.stringify({ depApprover: handlungsoption.depApprover }),
-    });
-  }
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
+/** Dependency-Acceptance-Bestätigung (Tz. 6 S.3, BCM_LINKED-Pfad) — Geschäftsleitung/Admin only,
+ * enforced server-side ("handlungsoption.approve"). Kept as its own action so it can be called
+ * independently of saveHandlungsoption, which a Geschäftsleitung-role user cannot call (they
+ * don't hold "handlungsoption" write, only the approve step). */
+export async function approveHandlungsoption(activityId: string, depApprover: string) {
+  if (!depApprover.trim()) throw new Error("Bitte den Namen der genehmigenden Person angeben.");
+
+  await apiFetch(`/activities/${activityId}/handlungsoption/approve`, {
+    method: "POST",
+    body: JSON.stringify({ depApprover }),
+  });
 
   revalidatePath(`/outsourcing/${activityId}`);
 }
@@ -93,8 +110,10 @@ export type RiskAnalysisInput = {
   overrideApprover: string;
 };
 
-// CSC model only (see csc-criteria.ts) — submits straight to the server-authoritative
-// PUT .../risk-analysis, which recomputes materialityScore/secondScore/computedMaterial itself.
+// Submits straight to the server-authoritative PUT .../risk-analysis, which recomputes
+// materialityScore/secondScore/computedMaterial itself using the institution's CSC or Tesla-FS
+// model (classify.ts) — the criteria ids depend on which model applies (see csc-criteria.ts /
+// tesla-criteria.ts), never on a fixed set chosen here.
 export async function saveRiskAnalysis(activityId: string, input: RiskAnalysisInput) {
   if (input.overrideActive && input.overrideMaterial === null) {
     throw new Error("Override aktiv, aber keine finale Einstufung angegeben.");
@@ -116,6 +135,7 @@ export async function saveRiskAnalysis(activityId: string, input: RiskAnalysisIn
   });
 
   revalidatePath(`/outsourcing/${activityId}`);
+  revalidatePath("/outsourcing");
 }
 
 export type MonitoringInput =
@@ -123,12 +143,21 @@ export type MonitoringInput =
       type: "EVIDENCE_LOG";
       evidenceDate: string;
       evidenceDescription: string;
+      assuranceType: string;
+      bridgeCoverage: string;
+      reviewerName: string;
+      reviewedAt: string;
+      materialChange: boolean;
+      changeNote: string;
       escalationNeeded: boolean;
       escalationNote: string;
       assuranceReportDueDate: string;
     }
   | { type: "KPI"; kpiName: string; kpiTarget: string; kpiAchieved: string; kpiComment: string };
 
+// Every call APPENDS a new MonitoringRecord — the backend models Tz. 9 monitoring as a history of
+// evidence-log/KPI entries, not a single mutable form, so there is no "load current state and
+// overwrite" here.
 export async function addMonitoringRecord(activityId: string, input: MonitoringInput) {
   const body =
     input.type === "EVIDENCE_LOG"
@@ -136,6 +165,12 @@ export async function addMonitoringRecord(activityId: string, input: MonitoringI
           type: "EVIDENCE_LOG",
           evidenceDate: new Date(input.evidenceDate).toISOString(),
           evidenceDescription: input.evidenceDescription,
+          assuranceType: input.assuranceType || undefined,
+          bridgeCoverage: input.bridgeCoverage || undefined,
+          reviewerName: input.reviewerName || undefined,
+          reviewedAt: input.reviewedAt ? new Date(input.reviewedAt).toISOString() : undefined,
+          materialChange: input.materialChange,
+          changeNote: input.materialChange ? input.changeNote || undefined : undefined,
           escalationNeeded: input.escalationNeeded,
           escalationNote: input.escalationNote || undefined,
           assuranceReportDueDate: input.assuranceReportDueDate ? new Date(input.assuranceReportDueDate).toISOString() : undefined,
@@ -153,5 +188,30 @@ export async function addMonitoringRecord(activityId: string, input: MonitoringI
     body: JSON.stringify(body),
   });
 
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
+export type ChainNodeInput = { provider: string; country?: string; description?: string };
+
+export async function addWeiterverlagerungNode(activityId: string, parentId: string | null, fields: ChainNodeInput) {
+  await apiFetch<WeiterverlagerungNode>(`/activities/${activityId}/weiterverlagerung`, {
+    method: "POST",
+    body: JSON.stringify({ parentId, ...fields }),
+  });
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
+export async function updateWeiterverlagerungNode(nodeId: string, activityId: string, fields: ChainNodeInput) {
+  await apiFetch<WeiterverlagerungNode>(`/activities/${activityId}/weiterverlagerung/${nodeId}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+  });
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
+// Soft-delete: the backend walks the node's descendants itself (never trusts a client-supplied id
+// list) and sets status=ENTFERNT on the whole subtree.
+export async function removeWeiterverlagerungNode(activityId: string, nodeId: string) {
+  await apiFetch(`/activities/${activityId}/weiterverlagerung/${nodeId}/remove`, { method: "POST" });
   revalidatePath(`/outsourcing/${activityId}`);
 }

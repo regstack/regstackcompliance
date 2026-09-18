@@ -2,7 +2,7 @@ import {
   listBeauftragte, listFunktionswechsel, listErleichterungen, listStellenbeschreibungen,
   getGovernanceSettings, governanceWarnings, isOverdue,
 } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { Banner } from "@/components/ui/banner";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -16,11 +16,11 @@ const ACCESS_CLASSES = [
 ];
 
 export default async function GovernancePage() {
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const [beauftragte, funktionswechsel, erleichterungen, stellenbeschreibungen, settings] = await Promise.all([
     listBeauftragte(), listFunktionswechsel(), listErleichterungen(), listStellenbeschreibungen(), getGovernanceSettings(),
   ]);
-  const canWrite = ctx ? canWriteCompliance(ctx) : false;
+  const canWrite = session ? canWriteCompliance(session.role) : false;
   const warnings = governanceWarnings(beauftragte, erleichterungen, stellenbeschreibungen);
 
   return (

@@ -51,7 +51,7 @@ export default async function CompliancePage() {
 
   const inhDist = distribute(risiken.map((r) => r.inhaerent ?? "—"));
   const resDist = distribute(risiken.map((r) => r.restrisiko ?? "—"));
-  const ctrlDist = distribute(kontrollen.map((k) => k.wirksamkeit));
+  const ctrlDist = distribute(kontrollen.map((k) => k.wirksamkeit ?? "—"));
 
   return (
     <div className="space-y-8">

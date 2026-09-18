@@ -1,182 +1,200 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/lib/database.types";
+import { apiFetch } from "@/lib/regstack/backend-client";
 
-async function requirePerson() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Nicht angemeldet.");
+/* =====================================================================
+ * Quellenregister (Tz. 2)
+ * ===================================================================*/
 
-  const { data: person } = await supabase
-    .from("persons")
-    .select("id, tenant_id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-  if (!person) throw new Error("Kein Stammdaten-Eintrag für diesen Nutzer.");
+export type QuelleInput = {
+  bezeichnung: string;
+  bezugsweg: string;
+  turnus: string;
+  verantwortlich_person_id: string | null;
+  letzte_durchsicht: string | null;
+};
 
-  return { supabase, person };
+function quelleBody(fields: QuelleInput) {
+  return {
+    bezeichnung: fields.bezeichnung,
+    bezugsweg: fields.bezugsweg || undefined,
+    turnus: fields.turnus || undefined,
+    verantwortlichUserId: fields.verantwortlich_person_id,
+    letzteDurchsicht: fields.letzte_durchsicht ? new Date(fields.letzte_durchsicht).toISOString() : null,
+  };
 }
 
-export type QuelleInput = { bezeichnung: string; bezugsweg: string; turnus: string; verantwortlich_person_id: string | null; letzte_durchsicht: string | null };
-
 export async function addQuelle(fields: QuelleInput) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase.from("quellen").insert({ ...fields, tenant_id: person.tenant_id, created_by: person.id });
-  if (error) throw new Error(error.message);
-  revalidatePath("/compliance/quellen");
+  await apiFetch("/compliance/quellen", { method: "POST", body: JSON.stringify(quelleBody(fields)) });
+  revalidatePath("/compliance/ueberwachung");
 }
 
 export async function updateQuelle(id: string, fields: QuelleInput) {
-  const { supabase } = await requirePerson();
-  const { error } = await supabase.from("quellen").update(fields).eq("id", id);
-  if (error) throw new Error(error.message);
-  revalidatePath("/compliance/quellen");
+  await apiFetch(`/compliance/quellen/${id}`, { method: "PUT", body: JSON.stringify(quelleBody(fields)) });
+  revalidatePath("/compliance/ueberwachung");
 }
 
+/* =====================================================================
+ * Regulatorische Änderungen (Tz. 2)
+ * ===================================================================*/
+
 export type AenderungInput = {
-  quelle_id: string | null; erfasst_am: string; gegenstand: string; kritikalitaet: string;
-  inkrafttreten: string; zugewiesen_an_person_id: string | null;
+  quelle_id: string | null;
+  erfasst_am: string;
+  gegenstand: string;
+  kritikalitaet: string;
+  inkrafttreten: string;
+  zugewiesen_an_person_id: string | null;
 };
 
 export async function addAenderung(fields: AenderungInput) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase.from("regulatorische_aenderungen").insert({ ...fields, tenant_id: person.tenant_id, created_by: person.id });
-  if (error) throw new Error(error.message);
-  revalidatePath("/compliance/aenderungen");
+  await apiFetch("/compliance/aenderungen", {
+    method: "POST",
+    body: JSON.stringify({
+      quelleId: fields.quelle_id,
+      erfasstAm: new Date(fields.erfasst_am).toISOString(),
+      gegenstand: fields.gegenstand,
+      kritikalitaet: fields.kritikalitaet || undefined,
+      inkrafttreten: fields.inkrafttreten || undefined,
+      zugewiesenAnUserId: fields.zugewiesen_an_person_id,
+    }),
+  });
+  revalidatePath("/compliance/ueberwachung");
 }
 
 export type Disposition = "offen" | "geprueft" | "kenntnis" | "angewandt" | "projekt";
 
 export async function setAenderungDisposition(id: string, disposition: Disposition) {
-  const { supabase } = await requirePerson();
-  const { error } = await supabase.from("regulatorische_aenderungen").update({ disposition }).eq("id", id);
-  if (error) throw new Error(error.message);
-  revalidatePath("/compliance/aenderungen");
+  await apiFetch(`/compliance/aenderungen/${id}/disposition`, { method: "PATCH", body: JSON.stringify({ disposition }) });
+  revalidatePath("/compliance/ueberwachung");
 }
 
+/* =====================================================================
+ * Rechtsnormenkataster
+ * ===================================================================*/
+
 export type NormInput = {
-  bezeichnung: string; quelle: string; sachgebiet: string; relevanz: "relevant" | "nicht_relevant";
-  relevanz_begruendung: string; wesentlichkeit: string; wesentlichkeit_begruendung: string; risiko: string;
+  bezeichnung: string;
+  quelle: string;
+  sachgebiet: string;
+  relevanz: "relevant" | "nicht_relevant";
+  relevanz_begruendung: string;
+  wesentlichkeit: string;
+  wesentlichkeit_begruendung: string;
+  risiko: string;
 };
 
-export async function addNorm(fields: NormInput) {
-  const { supabase, person } = await requirePerson();
-  const { data, error } = await supabase
-    .from("normen")
-    .insert({ ...fields, tenant_id: person.tenant_id, created_by: person.id })
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
+function normBody(fields: NormInput) {
+  return {
+    bezeichnung: fields.bezeichnung,
+    quelle: fields.quelle || undefined,
+    sachgebiet: fields.sachgebiet || undefined,
+    relevanz: fields.relevanz,
+    relevanzBegruendung: fields.relevanz_begruendung || undefined,
+    wesentlichkeit: fields.wesentlichkeit || undefined,
+    wesentlichkeitBegruendung: fields.wesentlichkeit_begruendung || undefined,
+    risiko: fields.risiko || undefined,
+  };
+}
+
+export async function addNorm(fields: NormInput): Promise<string> {
+  const created = await apiFetch<{ id: string }>("/compliance/normen", { method: "POST", body: JSON.stringify(normBody(fields)) });
   revalidatePath("/compliance/normen");
-  return data.id as string;
+  return created.id;
 }
 
 export async function updateNorm(id: string, fields: NormInput) {
-  const { supabase } = await requirePerson();
-  const { error } = await supabase.from("normen").update(fields).eq("id", id);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/normen/${id}`, { method: "PATCH", body: JSON.stringify(normBody(fields)) });
   revalidatePath(`/compliance/normen/${id}`);
   revalidatePath("/compliance/normen");
 }
 
 /** Vorschlag: Compliance proposes which Fachbereich is responsible for a norm. `fachbereich_person_id`
- * on the norm itself is a DB-trigger-derived mirror of this handshake — never written directly. */
+ * on the norm itself is a backend-derived mirror of this handshake — never written directly. */
 export async function proposeNormZuweisung(normId: string, targetPersonId: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase.from("assignment_handshakes").insert({
-    tenant_id: person.tenant_id,
-    module: "compliance",
-    entity_type: "norm_zuweisung",
-    entity_id: normId,
-    target_person_id: targetPersonId,
-    proposed_by: person.id,
-    status: "vorschlag",
-  });
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/normen/${normId}/handshake`, { method: "POST", body: JSON.stringify({ assignedUserId: targetPersonId }) });
   revalidatePath(`/compliance/normen/${normId}`);
 }
 
-/** The target Fachbereich person confirms or disputes a proposed assignment. */
+/** The target Fachbereich person confirms or disputes a proposed assignment — an ownership check
+ * on the backend (is this the assigned user?), not a role check. */
 export async function respondNormZuweisung(handshakeId: string, normId: string, response: "bestaetigt" | "widersprochen", disputeReason?: string) {
-  const { supabase } = await requirePerson();
-  const patch: Database["public"]["Tables"]["assignment_handshakes"]["Update"] = { status: response };
-  if (response === "bestaetigt") patch.confirmed_at = new Date().toISOString();
-  else {
-    patch.dispute_reason = disputeReason || null;
-    patch.disputed_at = new Date().toISOString();
-  }
-  const { error } = await supabase.from("assignment_handshakes").update(patch).eq("id", handshakeId);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/normen/${normId}/handshake/${handshakeId}/respond`, {
+    method: "POST",
+    body: JSON.stringify({ response, disputeReason }),
+  });
   revalidatePath(`/compliance/normen/${normId}`);
 }
 
 /** Geschäftsleitung resolves a disputed assignment. */
 export async function decideNormZuweisung(handshakeId: string, normId: string, note: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("assignment_handshakes")
-    .update({ status: "entschieden", decision_by: person.id, decision_at: new Date().toISOString(), decision_note: note })
-    .eq("id", handshakeId);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/normen/${normId}/handshake/${handshakeId}/decide`, {
+    method: "POST",
+    body: JSON.stringify({ decisionNote: note }),
+  });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/dashboard");
 }
 
+/* =====================================================================
+ * Feststellungen
+ * ===================================================================*/
+
 export type FeststellungInput = {
-  titel: string; beschreibung: string; schweregrad: string; frist: string | null;
-  massnahme: string; quelle: string; verantwortlich_person_id: string | null;
+  titel: string;
+  beschreibung: string;
+  schweregrad: string;
+  frist: string | null;
+  massnahme: string;
+  quelle: string;
+  verantwortlich_person_id: string | null;
 };
 
 export async function addFeststellung(normId: string, fields: FeststellungInput) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase.from("feststellungen").insert({ ...fields, norm_id: normId, tenant_id: person.tenant_id, created_by: person.id });
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/feststellungen/for-norm/${normId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      titel: fields.titel,
+      beschreibung: fields.beschreibung || undefined,
+      schweregrad: fields.schweregrad || undefined,
+      frist: fields.frist ? new Date(fields.frist).toISOString() : null,
+      massnahme: fields.massnahme || undefined,
+      quelle: fields.quelle || undefined,
+      verantwortlichUserId: fields.verantwortlich_person_id,
+    }),
+  });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/compliance/feststellungen");
 }
 
 /** Fachbereich reports its remediation done — a separate step from Compliance confirming
  * effectiveness (`wirksamkeit_bestaetigt`), never the same action. */
 export async function setFeststellungFachbereichErledigt(id: string, normId: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("feststellungen")
-    .update({ status: "fachbereich_erledigt", fachbereich_erledigt_von: person.id, fachbereich_erledigt_am: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/feststellungen/${id}/status`, { method: "PATCH", body: JSON.stringify({ action: "fachbereich_erledigt" }) });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/compliance/feststellungen");
 }
 
 export async function setFeststellungWirksamkeitBestaetigt(id: string, normId: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("feststellungen")
-    .update({ status: "wirksamkeit_bestaetigt", wirksamkeit_bestaetigt_von: person.id, wirksamkeit_bestaetigt_am: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/feststellungen/${id}/status`, { method: "PATCH", body: JSON.stringify({ action: "wirksamkeit_bestaetigt" }) });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/compliance/feststellungen");
 }
 
 export async function setFeststellungGeschlossen(id: string, normId: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("feststellungen")
-    .update({ status: "geschlossen", geschlossen_von: person.id, geschlossen_am: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/feststellungen/${id}/status`, { method: "PATCH", body: JSON.stringify({ action: "geschlossen" }) });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/compliance/feststellungen");
 }
 
 export async function setFeststellungAkzeptiertesRisiko(id: string, normId: string, ueberpruefungsdatum: string) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("feststellungen")
-    .update({ status: "akzeptiertes_risiko", akzeptiertes_risiko_entscheider: person.id, akzeptiertes_risiko_ueberpruefung: ueberpruefungsdatum })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/feststellungen/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: "akzeptiertes_risiko", ueberpruefung: new Date(ueberpruefungsdatum).toISOString() }),
+  });
   revalidatePath(`/compliance/normen/${normId}`);
+  revalidatePath("/compliance/feststellungen");
 }
 
 /* =====================================================================
@@ -184,17 +202,13 @@ export async function setFeststellungAkzeptiertesRisiko(id: string, normId: stri
  * ===================================================================*/
 
 export async function addComplianceRating(fields: { periode: string; rating: string; begruendung: string | null }) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("compliance_ratings")
-    .insert({ ...fields, tenant_id: person.tenant_id, erfasst_von: person.id, erfasst_am: new Date().toISOString().slice(0, 10) });
-  if (error) throw new Error(error.message);
+  await apiFetch("/compliance/ratings", { method: "POST", body: JSON.stringify(fields) });
   revalidatePath("/compliance");
   revalidatePath("/compliance/bericht");
 }
 
 /* =====================================================================
- * Governance-Einstellungen (Tz. 3-4, tenant-weites Singleton)
+ * Governance-Einstellungen (Tz. 3-4, institutsweites Singleton)
  * ===================================================================*/
 
 export type GovernanceSettingsInput = {
@@ -205,11 +219,15 @@ export type GovernanceSettingsInput = {
 };
 
 export async function upsertGovernanceSettings(fields: GovernanceSettingsInput) {
-  const { supabase, person } = await requirePerson();
-  const { error } = await supabase
-    .from("governance_settings")
-    .upsert({ ...fields, tenant_id: person.tenant_id, updated_by: person.id, updated_at: new Date().toISOString() }, { onConflict: "tenant_id" });
-  if (error) throw new Error(error.message);
+  await apiFetch("/compliance/governance", {
+    method: "PUT",
+    body: JSON.stringify({
+      sonderfallKleinesInstitut: fields.sonderfall_kleines_institut,
+      interessenkonfliktMassnahmen: fields.interessenkonflikt_massnahmen,
+      kombinationRationale: fields.kombination_rationale,
+      ressourcenausstattung: fields.ressourcenausstattung,
+    }),
+  });
   revalidatePath("/compliance/governance");
 }
 
@@ -217,44 +235,16 @@ export async function upsertGovernanceSettings(fields: GovernanceSettingsInput) 
  * Bericht an die Geschaeftsleitung (Tz. 6)
  * ===================================================================*/
 
-/** Finalizes a draft report (Compliance) so it can go to the Geschaeftsleitung for Kenntnisnahme. */
 export async function finalizeReport(id: string) {
-  const { supabase } = await requirePerson();
-  const { error } = await supabase.from("reports").update({ status: "final" }).eq("id", id).eq("status", "entwurf");
-  if (error) throw new Error(error.message);
+  await apiFetch(`/compliance/reports/${id}/finalize`, { method: "POST" });
   revalidatePath("/compliance/bericht");
 }
 
-/** Records this Geschaeftsleitung member's Kenntnisnahme. The reports table has a single
- * kenntnisnahme_by/at pair (first-acknowledger wins there); every recipient's own ack date is
- * additionally tracked in content.recipients so the report still shows who signed off. */
-export async function ackReportRecipient(id: string, recipientName: string) {
-  const { supabase, person } = await requirePerson();
-  const today = new Date().toISOString().slice(0, 10);
-
-  const { data: current, error: readError } = await supabase
-    .from("reports")
-    .select("content, status, kenntnisnahme_at")
-    .eq("id", id)
-    .single();
-  if (readError) throw new Error(readError.message);
-  if (current.status !== "final") throw new Error("Nur finale Berichte koennen zur Kenntnis genommen werden.");
-
-  type Recipient = { name: string; ack_at: string | null };
-  const content = (current.content ?? {}) as { recipients?: Recipient[] };
-  const recipients = (content.recipients ?? []).map((r) =>
-    r.name === recipientName ? { ...r, ack_at: r.ack_at ?? today } : r
-  );
-
-  const patch: Database["public"]["Tables"]["reports"]["Update"] = {
-    content: { ...content, recipients } as Database["public"]["Tables"]["reports"]["Row"]["content"],
-  };
-  if (!current.kenntnisnahme_at) {
-    patch.kenntnisnahme_by = person.id;
-    patch.kenntnisnahme_at = today;
-  }
-
-  const { error } = await supabase.from("reports").update(patch).eq("id", id);
-  if (error) throw new Error(error.message);
+/** Records the current user's own Kenntnisnahme — one real row per person
+ * (ComplianceReportAcknowledgement), replacing the Supabase-era single kenntnisnahme_by/at plus
+ * the app-level content.recipients name-matching workaround. */
+export async function acknowledgeReport(id: string) {
+  await apiFetch(`/compliance/reports/${id}/acknowledge`, { method: "POST" });
   revalidatePath("/compliance/bericht");
+  revalidatePath("/dashboard");
 }

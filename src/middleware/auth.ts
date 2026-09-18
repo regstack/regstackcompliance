@@ -8,6 +8,7 @@ export interface AuthUser {
   userId: string;
   institutionId: string;
   role: Role;
+  name: string;
 }
 
 declare global {
@@ -20,7 +21,9 @@ declare global {
 }
 
 export function signToken(user: AuthUser): string {
-  return jwt.sign(user, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+  // env.jwtExpiresIn is a plain string (from JWT_EXPIRES_IN, e.g. "8h") — @types/jsonwebtoken's
+  // `expiresIn` wants its branded StringValue template-literal type, not `string`.
+  return jwt.sign(user, env.jwtSecret, { expiresIn: env.jwtExpiresIn as jwt.SignOptions["expiresIn"] });
 }
 
 // Server-side auth — every mutating route depends on this, never on a client-supplied role or

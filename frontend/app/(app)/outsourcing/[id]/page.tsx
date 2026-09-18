@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getActivity, openClauseCount, toFrontendHandlungsoption } from "@/lib/regstack/outsourcing";
-import { getBackendSession, canWriteOutsourcing } from "@/lib/regstack/backend-session";
+import { getActivity, getWeiterverlagerungskette, openClauseCount, toFrontendHandlungsoption } from "@/lib/regstack/outsourcing";
+import {
+  getBackendSession, canWriteOutsourcing, canWriteOutsourcingContract, isGeschaeftsleitung,
+} from "@/lib/regstack/backend-session";
+import { getInstitutionSettings } from "@/lib/regstack/institution";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ChecklistPanel } from "@/components/outsourcing/checklist-panel";
 import { AuslagerungStatusControl } from "@/components/outsourcing/auslagerung-status-control";
 import { DetailTabs } from "@/components/outsourcing/detail-tabs";
 import { HandlungsoptionPanel } from "@/components/outsourcing/handlungsoption-panel";
-import { NotMigratedNotice } from "@/components/outsourcing/not-migrated-notice";
+import { WesentlichkeitPanel } from "@/components/outsourcing/wesentlichkeit-panel";
+import { MonitoringPanel } from "@/components/outsourcing/monitoring-panel";
+import { WeiterverlagerungTree } from "@/components/outsourcing/weiterverlagerung-tree";
 
 export default async function AuslagerungDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,7 +30,11 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
   const activity = await getActivity(id);
   if (!activity) notFound();
 
+  const [institution, kette] = await Promise.all([getInstitutionSettings(), getWeiterverlagerungskette(id)]);
+
   const canWrite = canWriteOutsourcing(session.role);
+  const canWriteContract = canWriteOutsourcingContract(session.role);
+  const canApproveHandlungsoption = isGeschaeftsleitung(session.role);
   const offenCount = openClauseCount(activity);
 
   return (
@@ -49,7 +58,12 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
         </div>
 
         {canWrite && (
-          <AuslagerungStatusControl auslagerungId={activity.id} currentStatus={activity.status} offenCount={offenCount} />
+          <AuslagerungStatusControl
+            activityId={activity.id}
+            currentStatus={activity.status}
+            wesentlich={activity.riskAnalysis?.materiality === true}
+            offenCount={offenCount}
+          />
         )}
       </div>
 
@@ -70,7 +84,13 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
             key: "wesentlichkeit",
             label: "Wesentlichkeit",
             content: (
-              <NotMigratedNotice reason="Die Wesentlichkeitsanalyse nutzt im neuen Backend ein anderes Klassifizierungsmodell (CSC/Tesla-FS, institutsweit wählbar, siehe RiskAnalysis/classify.ts) als die bisherige Cockpit-Logik. Die Kriterienkataloge stimmen nicht überein — das erfordert eine Produktentscheidung, bevor diese Ansicht migriert wird." />
+              <WesentlichkeitPanel
+                activityId={id}
+                initial={activity.riskAnalysis}
+                deepDive={activity.deepDive}
+                institution={institution}
+                canWrite={canWrite}
+              />
             ),
           },
           {
@@ -81,7 +101,7 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
                 auslagerungId={id}
                 contract={activity.contract}
                 isSubOutsourcing={activity.isSubOutsourcing}
-                canWrite={canWrite}
+                canWrite={canWriteContract}
               />
             ),
           },
@@ -92,22 +112,21 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
               <HandlungsoptionPanel
                 auslagerungId={id}
                 initial={toFrontendHandlungsoption(activity.handlungsoption)}
-                canWrite={canWrite}
+                canWrite={canWriteContract}
+                canApprove={canApproveHandlungsoption}
               />
             ),
           },
           {
             key: "weiterverlagerung",
             label: "Weiterverlagerung",
-            content: (
-              <NotMigratedNotice reason="Der Backend-Datenmodell (Prisma) kennt bisher nur ein isSubOutsourcing-Flag, aber keine mehrstufige Weiterverlagerungskette (Baumstruktur) — dafür fehlt noch ein eigenes Datenmodell im Backend." />
-            ),
+            content: <WeiterverlagerungTree activityId={id} kette={kette} canWrite={canWriteContract} />,
           },
           {
             key: "monitoring",
             label: "Monitoring",
             content: (
-              <NotMigratedNotice reason="Das Backend modelliert Monitoring als Liste einzelner Evidence-Log-/KPI-Einträge (MonitoringRecord) statt als ein einzelnes bearbeitbares Formular — das Panel muss dafür neu gebaut werden." />
+              <MonitoringPanel activityId={id} records={activity.monitoringRecords ?? []} canWrite={canWrite} />
             ),
           },
         ]}

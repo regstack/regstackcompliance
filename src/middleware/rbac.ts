@@ -10,10 +10,22 @@ export type Resource =
   | "handlungsoption"
   | "handlungsoption.approve" // Dependency-Acceptance-Genehmigung, Geschäftsleitung only
   | "monitoring"
+  | "weiterverlagerung"
   | "report"
   | "report.approve"
   | "auditLog"
-  | "user";
+  | "user"
+  | "complianceRecord" // Quellen, Änderungen, Normen, Feststellungen, Ratings
+  | "complianceHandshake.decide" // Geschäftsleitung entscheidet einen widersprochenen Normzuweisungs-Handshake
+  | "complianceGovernance" // Tz. 3-4 Governance-Einstellungen (Singleton)
+  | "complianceReport"
+  | "complianceReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "complianceReference" // read-only Register: Risiken, Kontrollen, Beratung, Beauftragte, ...
+  | "revisionRecord" // Pruefungsobjekt, Pruefung, Feststellung, Personal, Governance-Register CRUD
+  | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
+  | "revisionReport"
+  | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "revisionPlan.approve"; // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
 
 export type Action = "read" | "write" | "delete";
 
@@ -49,6 +61,10 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "RISIKOCONTROLLING", "ADMIN"],
   },
+  weiterverlagerung: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "ADMIN"],
+  },
   report: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["COMPLIANCE", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
@@ -62,6 +78,47 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   user: {
     read: ["ADMIN", "GESCHAEFTSLEITUNG"],
     write: ["ADMIN"],
+  },
+  complianceRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "ADMIN"],
+  },
+  "complianceHandshake.decide": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  complianceGovernance: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    // Matches the frontend's own gate (governance/page.tsx uses canWriteCompliance, the same
+    // check as every other complianceRecord-style write) — not Geschäftsleitung-restricted.
+    write: ["COMPLIANCE", "ADMIN"],
+  },
+  complianceReport: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "ADMIN"],
+  },
+  "complianceReport.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  complianceReference: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+  },
+  revisionRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  revisionGovernance: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  revisionReport: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  "revisionReport.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  "revisionPlan.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
 };
 

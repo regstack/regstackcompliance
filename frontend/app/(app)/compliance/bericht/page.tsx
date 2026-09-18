@@ -1,5 +1,5 @@
 import { listReports } from "@/lib/regstack/compliance";
-import { getSessionContext, canWriteCompliance, isGeschaeftsleitung } from "@/lib/regstack/session";
+import { getBackendSession, canWriteCompliance, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { Banner } from "@/components/ui/banner";
 import { Card, CardBody } from "@/components/ui/card";
 import { ReportsPanel } from "@/components/compliance/reports-panel";
@@ -15,10 +15,10 @@ const SECTIONS = [
 ];
 
 export default async function BerichtPage() {
-  const ctx = await getSessionContext();
+  const session = await getBackendSession();
   const reports = await listReports();
-  const canFinalize = ctx ? canWriteCompliance(ctx) : false;
-  const canAck = ctx ? isGeschaeftsleitung(ctx) : false;
+  const canFinalize = session ? canWriteCompliance(session.role) : false;
+  const canAck = session ? isGeschaeftsleitung(session.role) : false;
   const current = reports.find((r) => r.report_type === "quartalsbericht" && r.status === "entwurf") ?? reports[0];
   const currentContent = current ? asContent(current.content) : null;
 
@@ -32,7 +32,7 @@ export default async function BerichtPage() {
 
       <section>
         <h2 className="mb-3 text-base font-semibold text-foreground">Berichtshistorie</h2>
-        <ReportsPanel reports={reports} canFinalize={canFinalize} canAck={canAck} />
+        <ReportsPanel reports={reports} canFinalize={canFinalize} canAck={canAck} currentUserId={session?.userId ?? ""} />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">

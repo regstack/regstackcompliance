@@ -25,7 +25,7 @@ router.post(
     const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!ok) throw new ForbiddenError("Ungültige Anmeldedaten");
 
-    const token = signToken({ userId: user.id, institutionId: user.institutionId, role: user.role });
+    const token = signToken({ userId: user.id, institutionId: user.institutionId, role: user.role, name: user.name });
     res.json({ token, user: { id: user.id, name: user.name, role: user.role, institutionId: user.institutionId } });
   })
 );

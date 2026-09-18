@@ -2,7 +2,7 @@ import { apiFetch, BackendError } from "@/lib/regstack/backend-client";
 import { CONTRACT_CHECKLIST_CATALOG } from "@/lib/regstack/contract-checklist-catalog";
 import { emptyHandlungsoption, type Handlungsoption } from "@/lib/regstack/classification";
 
-export type ActivityStatus = "ENTWURF" | "AKTIV";
+export type ActivityStatus = "ENTWURF" | "AKTIV" | "BEENDET";
 export type ScopeType = "AUSLAGERUNG" | "SONSTIGER_FREMDBEZUG" | "IKT_DORA";
 export type HandlungsoptionStatus = "ADOPTED_OPTIONS" | "EXIT_STRATEGY" | "BCM_LINKED";
 export type Ersetzbarkeit = "LEICHT" | "SCHWIERIG" | "UNMOEGLICH";
@@ -37,6 +37,12 @@ export type MonitoringRecord = {
   escalationNeeded: boolean;
   escalationNote: string | null;
   assuranceReportDueDate: string | null;
+  assuranceType: string | null;
+  bridgeCoverage: string | null;
+  reviewerName: string | null;
+  reviewedAt: string | null;
+  materialChange: boolean;
+  changeNote: string | null;
   kpiName: string | null;
   kpiTarget: string | null;
   kpiAchieved: string | null;
@@ -57,6 +63,18 @@ export type HandlungsoptionRecord = {
 export type ContractRecord = {
   clauseChecklist: Record<string, ClauseStatus>;
   clauseJustifications: Record<string, string>;
+};
+
+export type WeiterverlagerungStatus = "AKTIV" | "ENTFERNT";
+
+export type WeiterverlagerungNode = {
+  id: string;
+  parentId: string | null;
+  level: number;
+  provider: string;
+  country: string | null;
+  description: string | null;
+  status: WeiterverlagerungStatus;
 };
 
 export type OutsourcingActivity = {
@@ -88,6 +106,10 @@ export async function getActivity(id: string): Promise<OutsourcingActivity | nul
     if (e instanceof BackendError && e.status === 404) return null;
     throw e;
   }
+}
+
+export async function getWeiterverlagerungskette(activityId: string): Promise<WeiterverlagerungNode[]> {
+  return apiFetch<WeiterverlagerungNode[]>(`/activities/${activityId}/weiterverlagerung`);
 }
 
 const HANDLUNGSOPTION_STATUS_TO_FRONTEND: Record<string, Handlungsoption["status"]> = {

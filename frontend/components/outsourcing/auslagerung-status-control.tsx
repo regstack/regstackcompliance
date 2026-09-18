@@ -1,48 +1,58 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { activateActivity } from "@/app/(app)/outsourcing/actions";
+import { setActivityStatus, type ActivityStatus } from "@/app/(app)/outsourcing/actions";
 import { Button } from "@/components/ui/button";
-import { StatusPill } from "@/components/ui/status-pill";
 
-// The backend only exposes a one-way ENTWURF -> AKTIV transition (POST .../activate, gated by the
-// server-side activation blockers) — there's no "downgrade" endpoint and no BEENDET status in the
-// Prisma ActivityStatus enum, unlike the old Supabase-backed three-way (entwurf/aktiv/beendet) control.
+const OPTIONS: ActivityStatus[] = ["ENTWURF", "AKTIV", "BEENDET"];
+
+// The backend only gates the ENTWURF -> AKTIV transition (activationBlockers in
+// activities.routes.ts); every other transition here is unrestricted for anyone with write
+// access, so the warning below only ever applies while still in ENTWURF.
 export function AuslagerungStatusControl({
-  auslagerungId,
+  activityId,
   currentStatus,
+  wesentlich,
   offenCount,
 }: {
-  auslagerungId: string;
-  currentStatus: "ENTWURF" | "AKTIV";
+  activityId: string;
+  currentStatus: ActivityStatus;
+  wesentlich: boolean;
   offenCount: number;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function handleActivate() {
+  function handleChange(next: ActivityStatus) {
+    if (next === currentStatus) return;
     setError(null);
     startTransition(async () => {
       try {
-        await activateActivity(auslagerungId);
+        await setActivityStatus(activityId, next);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Aktivierung fehlgeschlagen.");
+        setError(e instanceof Error ? e.message : "Statuswechsel fehlgeschlagen.");
       }
     });
   }
 
-  if (currentStatus === "AKTIV") {
-    return <StatusPill status="aktiv" />;
-  }
-
   return (
     <div className="text-right">
-      <Button variant="primary" className="px-2.5 py-1 text-xs" disabled={pending} onClick={handleActivate}>
-        {pending ? "Aktiviert…" : "Aktivieren"}
-      </Button>
-      {offenCount > 0 && (
+      <div className="flex gap-1.5">
+        {OPTIONS.map((s) => (
+          <Button
+            key={s}
+            variant={s === currentStatus ? "primary" : "secondary"}
+            className="px-2.5 py-1 text-xs capitalize"
+            disabled={pending}
+            onClick={() => handleChange(s)}
+          >
+            {s.toLowerCase()}
+          </Button>
+        ))}
+      </div>
+      {wesentlich && offenCount > 0 && currentStatus === "ENTWURF" && (
         <p className="mt-2 max-w-52 text-xs text-status-warning">
-          Ggf. Aktivierungssperre: {offenCount} Checkliste-Punkt(e) noch offen.
+          Aktivierungssperre: {offenCount} Checkliste-Punkt(e) noch nicht erfüllt.
         </p>
       )}
       {error && <p className="mt-2 max-w-52 text-xs text-status-danger">{error}</p>}

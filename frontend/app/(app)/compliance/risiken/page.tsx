@@ -108,7 +108,7 @@ export default async function RisikenPage() {
                         <span className="font-mono text-xs text-muted-foreground">{k.naechste_faelligkeit ?? "—"}</span>
                         {overdue && <div className="mt-1"><StatusPill status="beendet" label="überfällig" /></div>}
                       </td>
-                      <td className="px-3 py-2.5"><StatusPill status={k.wirksamkeit} /></td>
+                      <td className="px-3 py-2.5">{k.wirksamkeit && <StatusPill status={k.wirksamkeit} />}</td>
                       <td className="px-3 py-2.5 text-muted-foreground">{k.verantwortlich?.full_name ?? "—"}</td>
                     </tr>
                   );
