@@ -76,8 +76,10 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
 - Objektspeicher-Anbindung für `Contract.fileObjectKey` (S3-kompatibel — AWS S3 EU oder Hetzner
   Object Storage) inkl. Pre-Signed-Upload-Endpoint; aktuell nimmt die API nur die Metadaten
   entgegen (siehe `contracts.routes.ts`).
-- DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
-  `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- DORA-Registermodul (Art. 28–30) — Scaffold vorhanden (`src/modules/dora/`, `DoraIctArrangement` +
+  `DoraWeiterverlagerung` in `prisma/schema.prisma`, RBAC-Ressource `doraRegister`, gemountet unter
+  `/api/dora/arrangements`); die fachliche Klassifizierungs-/Scoring-Logik analog `classify.ts`
+  fehlt bewusst noch, siehe `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
 - Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).
