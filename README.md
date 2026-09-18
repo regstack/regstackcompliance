@@ -78,6 +78,9 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
   entgegen (siehe `contracts.routes.ts`).
 - DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
   `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT als zwei weitere Fachmodule —
+  MVP-Spezifikation (Datenmodell, RBAC, Routen, offene Fragen) siehe
+  `Risikomanagement_BAIT_MVP_Spezifikation.md`.
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
 - Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).
