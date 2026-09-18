@@ -274,6 +274,57 @@ enum DoraRegisterLevel {
 }
 
 // ---------------------------------------------------------------------------
+// BAIT enums (Bankaufsichtliche Anforderungen an die IT) — IT-Prüfung (eigenständiges Register,
+// bewusst getrennt von PruefungStatus/Schweregrad der Internen Revision und von Compliance's
+// Schweregrad, gleiche Begründung wie bei RevisionsSchweregrad oben: jedes Modul führt seine
+// eigene Werteskala, damit Module unabhängig voneinander bleiben) und Informationsrisikomanagement
+// (BAIT Kapitel 3: Schutzbedarfsfeststellung + Risikoanalyse je Informationsverbund).
+// ---------------------------------------------------------------------------
+
+enum BaitPruefungStatus {
+  geplant
+  laufend
+  abgeschlossen
+}
+
+enum BaitFeststellungSchweregrad {
+  niedrig
+  mittel
+  hoch
+  kritisch
+}
+
+enum BaitFeststellungStatus {
+  offen
+  in_bearbeitung
+  geschlossen
+}
+
+// Schutzbedarfsfeststellung, BAIT Kapitel 3 — üblich normal/hoch/sehr hoch je Schutzziel.
+enum BaitSchutzbedarf {
+  normal
+  hoch
+  sehr_hoch
+}
+
+// Für Eintrittswahrscheinlichkeit, Auswirkung, resultierende Risikoklasse und Restrisiko — eine
+// gemeinsame vierstufige Skala, damit computeRisikoklasse() (validation.ts) eine einfache
+// Verknüpfungsmatrix zwischen den Dimensionen bilden kann.
+enum BaitRisikostufe {
+  niedrig
+  mittel
+  hoch
+  sehr_hoch
+}
+
+enum BaitBehandlungsoption {
+  vermeiden
+  mindern
+  akzeptieren
+  transferieren
+}
+
+// ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
 
@@ -332,6 +383,11 @@ model InstitutionProfile {
   revisionReports           RevisionReport[]
 
   doraArrangements DoraIctArrangement[]
+
+  baitPruefungen            BaitItPruefung[]
+  baitFeststellungen        BaitItPruefungsfeststellung[]
+  baitInformationsverbuende BaitInformationsverbund[]
+  baitRisikobewertungen     BaitRisikobewertung[]
 
   @@map("institution_profiles")
 }
@@ -1578,4 +1634,145 @@ model DoraWeiterverlagerung {
   @@index([arrangementId])
   @@index([parentId])
   @@map("dora_weiterverlagerungen")
+}
+
+// ---------------------------------------------------------------------------
+// BAIT — Bankaufsichtliche Anforderungen an die IT. Zwei Teilbereiche, bewusst als eigenständiges,
+// standalone Modul aufgebaut (gleiche Philosophie wie das DORA-Register): kein Teil hier setzt
+// Daten aus AT9/Compliance/Interner Revision/DORA voraus, auch wenn es inhaltlich verwandt ist.
+//
+// A) IT-Prüfung — ein eigenes, BAIT-skopiertes Prüfungsregister mit Feststellungen. Bewusst NICHT
+//    dasselbe Modell wie Pruefung/Pruefungsobjekt/Revisionsfeststellung der Internen Revision:
+//    andere Statuswerte, eigene Schweregrad-Skala, kein Vier-Augen-Arbeitspapier-Apparat.
+// B) Informationsrisikomanagement (BAIT Kapitel 3) — Informationsverbund-Register mit
+//    Schutzbedarfsfeststellung (Vertraulichkeit/Integrität/Verfügbarkeit/Authentizität) und eine
+//    je Informationsverbund geführte Risikobewertung (Bedrohung -> Eintrittswahrscheinlichkeit ×
+//    Auswirkung -> Risikoklasse -> Behandlungsentscheidung -> Restrisiko).
+// ---------------------------------------------------------------------------
+
+model BaitItPruefung {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  // Optionale Verknüpfung zum geprüften Informationsverbund (Teil B) — analog zum optionalen
+  // activityId-Cross-Reference bei DoraIctArrangement: nie Pflicht, das Prüfungsregister
+  // funktioniert auch, wenn das Informationsverbund-Register (noch) nicht befüllt ist.
+  informationsverbundId String?
+  informationsverbund   BaitInformationsverbund? @relation(fields: [informationsverbundId], references: [id])
+
+  subject           String // Gegenstand/Umfang der Prüfung
+  systemBezeichnung String? // Freitext-Bezeichnung des geprüften Systems, falls kein Informationsverbund-Eintrag existiert
+  scope             String? // Prüfungsumfang / Abgrenzung
+
+  plannedDate DateTime? // Soll-Termin
+  actualDate  DateTime? // Ist-Termin der Durchführung
+  pruefer     String? // Prüfer/-team, intern oder extern beauftragt
+
+  status        BaitPruefungStatus @default(geplant)
+  overallRating String? // Gesamturteil, Freitext (analog Pruefung.overallRating)
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  feststellungen BaitItPruefungsfeststellung[]
+
+  @@index([institutionId])
+  @@index([informationsverbundId])
+  @@map("bait_it_pruefungen")
+}
+
+model BaitItPruefungsfeststellung {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  pruefungId String
+  pruefung   BaitItPruefung @relation(fields: [pruefungId], references: [id])
+
+  titel                String
+  beschreibung         String?
+  schweregrad          BaitFeststellungSchweregrad?
+  status               BaitFeststellungStatus       @default(offen)
+  frist                DateTime? // Frist zur Behebung
+  verantwortlichUserId String?
+  massnahme            String? // geplante/umgesetzte Abhilfemaßnahme
+
+  geschlossenAm  DateTime?
+  geschlossenVon String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([institutionId])
+  @@index([pruefungId])
+  @@map("bait_it_pruefungsfeststellungen")
+}
+
+model BaitInformationsverbund {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  name                 String
+  beschreibung         String?
+  verantwortlichUserId String?
+
+  schutzbedarfVertraulichkeit BaitSchutzbedarf @default(normal)
+  schutzbedarfIntegritaet     BaitSchutzbedarf @default(normal)
+  schutzbedarfVerfuegbarkeit  BaitSchutzbedarf @default(normal)
+  schutzbedarfAuthentizitaet  BaitSchutzbedarf @default(normal)
+  schutzbedarfBegruendung     String? // Begründung der Einstufung — analog DoraIctArrangement.criticalityRationale
+
+  klassifiziertAm        DateTime?
+  klassifiziertVonUserId String?
+  nextReviewDueAt        DateTime? // turnusmäßige Überprüfung, BAIT Kap. 3
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pruefungen        BaitItPruefung[]
+  risikobewertungen BaitRisikobewertung[]
+
+  @@index([institutionId])
+  @@map("bait_informationsverbuende")
+}
+
+model BaitRisikobewertung {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  informationsverbundId String
+  informationsverbund   BaitInformationsverbund @relation(fields: [informationsverbundId], references: [id])
+
+  bedrohung     String // Bedrohungs-/Gefährdungsbeschreibung
+  schwachstelle String?
+
+  eintrittswahrscheinlichkeit BaitRisikostufe
+  auswirkung                  BaitRisikostufe
+  // Serverseitig aus den beiden Werten oben abgeleitet (validation.ts::computeRisikoklasse) — nie
+  // direkt vom Client gesetzt, gleiches Prinzip wie RiskAnalysis: eine Bewertung wird nicht bloß
+  // behauptet, sondern nachvollziehbar aus ihren Eingaben berechnet.
+  risikoklasse                BaitRisikostufe
+
+  behandlungsoption     BaitBehandlungsoption?
+  behandlungBegruendung String? // Pflicht bei Akzeptanz eines hohen/sehr hohen Risikos, siehe validation.ts::akzeptanzBegruendungMissing
+  restrisiko            BaitRisikostufe?
+
+  verantwortlichUserId String?
+  bewertetAm           DateTime?
+  bewertetVonUserId    String?
+  nextReviewDueAt      DateTime? // turnusmäßige Überprüfung, BAIT Kap. 3
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([institutionId])
+  @@index([informationsverbundId])
+  @@map("bait_risikobewertungen")
 }
