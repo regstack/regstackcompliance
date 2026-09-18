@@ -98,8 +98,11 @@
   --color-status-open: var(--status-open);
   --color-status-open-bg: var(--status-open-bg);
 
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-public-sans), "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --shadow-card: 0 10px 24px -18px rgba(0, 0, 0, 0.6);
 }
 
 body {
@@ -131,4 +134,36 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--graphite-600-solid);
+}
+
+/* Sidebar interaction states — module switcher, contextual nav, sign-out */
+.navlink {
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.navlink:hover {
+  background: rgba(191, 123, 69, 0.07);
+}
+.navlink-inactive:hover {
+  color: var(--graphite-100);
+}
+.switcher {
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.switcher:hover {
+  border-color: var(--graphite-600-solid);
+  background: var(--surface-raised);
+}
+.signout {
+  transition: color 0.12s ease;
+}
+.signout:hover {
+  color: var(--graphite-100);
+}
+
+/* Cards get a subtle border lift on hover to read as a touchable surface */
+.card-hover {
+  transition: border-color 0.15s ease;
+}
+.card-hover:hover {
+  border-color: var(--graphite-600-solid);
 }

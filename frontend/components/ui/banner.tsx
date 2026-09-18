@@ -14,7 +14,7 @@ export function Banner({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-md border px-4 py-3 text-sm ${TONE_CLASSES[tone]}`}>
+    <div className={`rounded-xl border px-4 py-3 text-sm ${TONE_CLASSES[tone]}`}>
       <div className="font-semibold">{title}</div>
       <div className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{children}</div>
     </div>

@@ -1,5 +1,4 @@
 import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
-import { ComplianceNav } from "@/components/compliance/compliance-nav";
 import { Banner } from "@/components/ui/banner";
 import { Card } from "@/components/ui/card";
 
@@ -25,13 +24,12 @@ export default async function ComplianceLayout({ children }: { children: React.R
 
   return (
     <div>
-      <div className="mb-1">
-        <h1 className="text-xl font-semibold text-foreground">Compliance-Cockpit</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Compliance-Cockpit</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           Compliance-Funktion nach MaRisk AT 4.4.2
         </p>
       </div>
-      <ComplianceNav />
       {readOnly && (
         <div className="mb-6">
           <Banner tone="warn" title="Nur-Lese-Zugang">

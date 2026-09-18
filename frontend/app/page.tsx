@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
+import { ShieldIcon } from "@/components/ui/icons";
 
 // proxy.ts leaves "/" public for signed-out visitors (redirects signed-in
 // users straight to /outsourcing), so this renders as the marketing page.
@@ -44,7 +45,9 @@ export default function MarketingPage() {
       <header className="border-b border-border-subtle">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-copper-500" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-copper-400 to-copper-600 text-accent-foreground">
+              <ShieldIcon width={16} height={16} strokeWidth={1.8} />
+            </div>
             <span className="text-sm font-semibold tracking-wide text-foreground">
               RegStack
             </span>
@@ -57,7 +60,7 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-5xl px-6 py-20 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Das MaRisk-Cockpit für regulierte Finanzinstitute
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
@@ -93,7 +96,7 @@ export default function MarketingPage() {
               Datenhoheit in der EU.
             </p>
 
-            <div className="mt-8 rounded-lg border border-copper-500/30 bg-copper-500/[0.06] px-5 py-4">
+            <div className="mt-8 rounded-2xl border border-copper-500/30 bg-copper-500/[0.06] px-5 py-4">
               <p className="text-sm text-foreground">
                 <span className="font-semibold text-copper-400">
                   Gebaut von Praktikern, nicht von der Stange.

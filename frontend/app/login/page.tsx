@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { loginToBackend } from "@/lib/regstack/backend-auth";
 import { Button } from "@/components/ui/button";
+import { ShieldIcon } from "@/components/ui/icons";
 
 function LoginForm() {
   const router = useRouter();
@@ -39,8 +40,10 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 h-10 w-10 rounded-md bg-copper-500" />
-          <h1 className="text-lg font-semibold text-foreground">RegStack</h1>
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-[10px] bg-gradient-to-br from-copper-400 to-copper-600 text-accent-foreground">
+            <ShieldIcon width={20} height={20} strokeWidth={1.8} />
+          </div>
+          <h1 className="font-serif text-xl font-semibold text-foreground">RegStack</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             MaRisk-Cockpit — Anmeldung
           </p>
@@ -48,7 +51,7 @@ function LoginForm() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-lg border border-border-subtle bg-surface p-6 shadow-lg"
+          className="rounded-2xl border border-border-subtle bg-surface-raised p-6 shadow-card"
         >
           <div className="mb-4">
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
@@ -59,7 +62,7 @@ function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+              className="w-full rounded-[10px] border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
               placeholder="name@institut.de"
             />
           </div>
@@ -73,13 +76,13 @@ function LoginForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+              className="w-full rounded-[10px] border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <div className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
+            <div className="mb-4 rounded-[10px] border border-status-danger/30 bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
               {error}
             </div>
           )}

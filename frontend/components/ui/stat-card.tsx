@@ -9,6 +9,20 @@ const VALUE_TONE: Record<Tone, string> = {
   crit: "text-status-danger",
 };
 
+const LABEL_TONE: Record<Tone, string> = {
+  neutral: "text-graphite-500",
+  good: "text-graphite-500",
+  warn: "text-status-warning",
+  crit: "text-status-danger",
+};
+
+const BORDER_TONE: Record<Tone, string> = {
+  neutral: "",
+  good: "",
+  warn: "border-status-warning/25",
+  crit: "border-status-danger/25",
+};
+
 export function StatCard({
   label, value, hint, tone = "neutral",
 }: {
@@ -18,10 +32,10 @@ export function StatCard({
   tone?: Tone;
 }) {
   return (
-    <Card className="flex flex-col gap-1.5 px-4 py-3.5">
-      <div className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`font-mono text-2xl font-semibold leading-none ${VALUE_TONE[tone]}`}>{value}</div>
-      {hint && <div className="text-xs leading-snug text-muted-foreground">{hint}</div>}
+    <Card className={`flex flex-col gap-2.5 px-5 py-[18px] ${BORDER_TONE[tone]}`}>
+      <div className={`text-[10.5px] font-bold uppercase tracking-wide ${LABEL_TONE[tone]}`}>{label}</div>
+      <div className={`font-serif text-[28px] font-semibold leading-none ${VALUE_TONE[tone]}`}>{value}</div>
+      {hint && <div className="text-[11.5px] leading-snug text-muted-foreground">{hint}</div>}
     </Card>
   );
 }

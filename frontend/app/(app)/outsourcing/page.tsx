@@ -23,7 +23,7 @@ export default async function OutsourcingPage() {
     <div>
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Auslagerungsregister</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Auslagerungsregister</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             AT 9 — alle Auslagerungen Ihrer Institution.
           </p>
