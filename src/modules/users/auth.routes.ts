@@ -6,6 +6,7 @@ import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { ForbiddenError, ValidationError } from "../../utils/errors";
 import { signToken } from "../../middleware/auth";
+import { rateLimit } from "../../middleware/rateLimit";
 import { env } from "../../config/env";
 import type { User } from "@prisma/client";
 
@@ -16,6 +17,16 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+// Keyed by IP + email so one throttled account can't be used to lock out everyone on the same
+// IP, and one IP can't brute-force many accounts by rotating the email.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyFn: (req) => `${req.ip}:${typeof req.body?.email === "string" ? req.body.email.toLowerCase() : ""}`,
+});
+
+const exchangeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+
 function sessionResponse(user: User) {
   const token = signToken({ userId: user.id, institutionId: user.institutionId, role: user.role, name: user.name });
   return { token, user: { id: user.id, name: user.name, role: user.role, institutionId: user.institutionId } };
@@ -23,6 +34,7 @@ function sessionResponse(user: User) {
 
 router.post(
   "/login",
+  loginLimiter,
   asyncHandler(async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) throw new ValidationError("E-Mail und Passwort erforderlich");
@@ -47,6 +59,7 @@ router.post(
  */
 router.post(
   "/exchange",
+  exchangeLimiter,
   asyncHandler(async (req, res) => {
     const header = req.header("authorization");
     if (!header?.startsWith("Bearer ")) throw new ForbiddenError("Fehlender Authorization-Header");
