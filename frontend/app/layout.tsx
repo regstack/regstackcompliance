@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "RegStack",
-  description: "RegStack Compliance-Cockpit",
+  description: "RegStack MaRisk-Cockpit",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

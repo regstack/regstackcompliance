@@ -33,8 +33,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
+  const isMarketingRoute = request.nextUrl.pathname === "/";
+  const isPublicRoute = isAuthRoute || isMarketingRoute;
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
@@ -46,7 +48,7 @@ export async function proxy(request: NextRequest) {
   // away here before it ever reaches the action handler — breaking the backend-session bridge.
   const isServerAction = request.headers.get("next-action") !== null;
 
-  if (user && isAuthRoute && !isServerAction) {
+  if (user && (isMarketingRoute || (isAuthRoute && !isServerAction))) {
     const url = request.nextUrl.clone();
     url.pathname = "/outsourcing";
     url.search = "";

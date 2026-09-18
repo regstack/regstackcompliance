@@ -42,7 +42,7 @@ function LoginForm() {
           <div className="mx-auto mb-4 h-10 w-10 rounded-md bg-copper-500" />
           <h1 className="text-lg font-semibold text-foreground">RegStack</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Compliance-Cockpit — Anmeldung
+            MaRisk-Cockpit — Anmeldung
           </p>
         </div>
 
