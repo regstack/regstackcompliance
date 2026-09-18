@@ -5,11 +5,21 @@ import pinoHttp from "pino-http";
 import { router } from "./routes";
 import { HttpError } from "./utils/errors";
 
+// Matches the deployed frontend's production domain and any Vercel preview deployment of it,
+// plus localhost for local dev — an open cors() is fine for a local-only backend but not once
+// this is reachable from the internet.
+const allowedOrigins = [
+  "https://www.regstack.de",
+  "https://regstack.de",
+  /^https:\/\/regstack-[a-z0-9-]+\.vercel\.app$/,
+  "http://localhost:3000",
+];
+
 export function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors()); // tighten to the deployed frontend origin before go-live
+  app.use(cors({ origin: allowedOrigins }));
   app.use(express.json({ limit: "2mb" }));
   app.use(pinoHttp({ redact: ["req.headers.authorization"] }));
 
