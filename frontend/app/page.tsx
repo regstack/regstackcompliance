@@ -156,8 +156,14 @@ export default function MarketingPage() {
       </main>
 
       <footer className="border-t border-border-subtle">
-        <div className="mx-auto max-w-5xl px-6 py-8 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} RegStack
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} RegStack</span>
+          <a
+            href="mailto:admin@regstack.de"
+            className="text-muted-foreground hover:text-copper-400"
+          >
+            admin@regstack.de
+          </a>
         </div>
       </footer>
     </div>
