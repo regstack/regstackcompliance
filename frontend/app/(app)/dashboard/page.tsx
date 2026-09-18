@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { getBackendSession, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { getLatestReports, getPendingAuditPlans, getDisputedNormzuweisungen, getModuleOverview } from "@/lib/regstack/dashboard";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { Button } from "@/components/ui/button";
 import { ReportAckButton } from "@/components/dashboard/report-ack-button";
 import { AuditPlanApproveButton } from "@/components/dashboard/audit-plan-approve-button";
 import { NormzuweisungDecision } from "@/components/dashboard/normzuweisung-decision";
@@ -13,6 +15,14 @@ const MODULE_LABEL: Record<ModuleType, string> = {
   outsourcing: "Outsourcing",
   compliance: "Compliance",
   internal_audit: "Interne Revision",
+};
+
+// Outsourcing has no board-report page yet (lib/regstack/dashboard.ts: its report row is always
+// null), so it has no entry here — the link only renders when a module both has a report page
+// AND getLatestReports() found a row for it.
+const REPORT_HREF: Partial<Record<ModuleType, (reportType: string) => string>> = {
+  compliance: () => "/compliance/bericht",
+  internal_audit: (reportType) => `/interne-revision/${reportType}`,
 };
 
 export default async function DashboardPage() {
@@ -107,6 +117,13 @@ export default async function DashboardPage() {
                         ) : (
                           <ReportAckButton reportId={report.id} module={module} />
                         ))}
+                      {REPORT_HREF[module] && (
+                        <Link href={REPORT_HREF[module]!(report.report_type)} className="block pt-1">
+                          <Button variant="secondary" className="w-full">
+                            Bericht ansehen
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   )}
                 </CardBody>
