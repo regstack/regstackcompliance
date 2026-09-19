@@ -7,20 +7,21 @@ export const metadata: Metadata = {
 
 // DSGVO-Datenschutzerklärung. Beschreibt die tatsächliche Datenverarbeitung dieser Codebase
 // (Supabase Auth für Login/Session, Backend-JWT + Audit-Trail für Anwendungsdaten, kein
-// Analytics/Tracking im Repo gefunden). Mit [Platzhalter] markierte Felder sind
-// unternehmensspezifische Pflichtangaben und dürfen nicht erfunden werden.
+// Analytics/Tracking im Repo gefunden). Verbleibende [Platzhalter] sind unternehmensspezifische
+// Pflichtangaben, die noch nicht feststehen (DPO-Bestellung, Supabase-Projektregion,
+// Hosting-/Objektspeicher-Anbieter) — nicht erfunden.
 export default function DatenschutzPage() {
   return (
-    <LegalPage title="Datenschutzerklärung" updated="18. September 2026">
+    <LegalPage title="Datenschutzerklärung" updated="19. September 2026">
       <LegalSection heading="1. Verantwortlicher">
         <p>
           Verantwortlicher im Sinne der Datenschutz-Grundverordnung (DSGVO)
           ist:
         </p>
         <p>
-          <Placeholder>Firmenname und Rechtsform</Placeholder>
+          Lumera Technologies (Einzelunternehmen), Inh. Sascha Beinert
           <br />
-          <Placeholder>Straße, PLZ, Ort</Placeholder>
+          Kurt-Eisner-Straße 48, 81735 München
           <br />
           E-Mail: <a href="mailto:admin@regstack.de">admin@regstack.de</a>
         </p>

@@ -5,48 +5,37 @@ export const metadata: Metadata = {
   title: "Impressum — RegStack",
 };
 
-// Angaben gemäß § 5 TMG / § 18 Abs. 2 MStV. Die mit [Platzhalter] markierten Felder enthalten
-// echte Pflichtangaben und dürfen NICHT mit erfundenen Daten befüllt werden — sie müssen vor
-// Live-Schaltung durch die tatsächlichen Unternehmensangaben ersetzt werden.
+// Angaben gemäß § 5 TMG / § 18 Abs. 2 MStV. Lumera Technologies ist ein Einzelunternehmen
+// (Gewerbe), kein Handelsregister-Eintrag (kein HRB) — deshalb bewusst kein
+// "Registereintrag"-Abschnitt. Die PLZ (81735) wurde für die Adresse recherchiert, nicht vom
+// Karteninhaber selbst bestätigt — bei Zustellungsproblemen zuerst hier prüfen.
+// Verbleibende [Platzhalter] (USt-IdNr.) enthalten eine echte Pflichtangabe und dürfen NICHT mit
+// erfundenen Daten befüllt werden.
 export default function ImpressumPage() {
   return (
-    <LegalPage title="Impressum" updated="18. September 2026">
+    <LegalPage title="Impressum" updated="19. September 2026">
       <LegalSection heading="Angaben gemäß § 5 TMG">
         <p>
-          <Placeholder>Firmenname und Rechtsform, z. B. „RegStack GmbH“</Placeholder>
+          Lumera Technologies (Einzelunternehmen)
           <br />
-          <Placeholder>Straße und Hausnummer</Placeholder>
+          Inh. Sascha Beinert
           <br />
-          <Placeholder>Postleitzahl und Ort</Placeholder>
+          Kurt-Eisner-Straße 48
           <br />
-          <Placeholder>Land</Placeholder>
+          81735 München
+          <br />
+          Deutschland
         </p>
       </LegalSection>
 
       <LegalSection heading="Vertreten durch">
-        <p>
-          <Placeholder>
-            Name(n) der/des vertretungsberechtigten Geschäftsführer(s) bzw. Vorstands
-          </Placeholder>
-        </p>
+        <p>Sascha Beinert, Geschäftsführer dieses Gewerbes</p>
       </LegalSection>
 
       <LegalSection heading="Kontakt">
         <p>
-          Telefon: <Placeholder>Telefonnummer</Placeholder>
-          <br />
           E-Mail:{" "}
           <a href="mailto:admin@regstack.de">admin@regstack.de</a>
-        </p>
-      </LegalSection>
-
-      <LegalSection heading="Registereintrag">
-        <p>
-          Eintragung im Handelsregister.
-          <br />
-          Registergericht: <Placeholder>zuständiges Amtsgericht</Placeholder>
-          <br />
-          Registernummer: <Placeholder>HRB-Nummer</Placeholder>
         </p>
       </LegalSection>
 
@@ -54,15 +43,15 @@ export default function ImpressumPage() {
         <p>
           Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
           <br />
-          <Placeholder>USt-IdNr., falls vorhanden</Placeholder>
+          <Placeholder>USt-IdNr., falls vorhanden — sonst Abschnitt entfernen</Placeholder>
         </p>
       </LegalSection>
 
       <LegalSection heading="Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV">
         <p>
-          <Placeholder>
-            Name und ladungsfähige Anschrift der inhaltlich verantwortlichen Person
-          </Placeholder>
+          Sascha Beinert
+          <br />
+          Kurt-Eisner-Straße 48, 81735 München
         </p>
       </LegalSection>
 
