@@ -8,6 +8,7 @@ import { getInstitutionSettings } from "@/lib/regstack/institution";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ChecklistPanel } from "@/components/outsourcing/checklist-panel";
+import { ContractFilePanel } from "@/components/outsourcing/contract-file-panel";
 import { AuslagerungStatusControl } from "@/components/outsourcing/auslagerung-status-control";
 import { DetailTabs } from "@/components/outsourcing/detail-tabs";
 import { HandlungsoptionPanel } from "@/components/outsourcing/handlungsoption-panel";
@@ -97,12 +98,15 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
             key: "vertrag",
             label: "Vertragscheckliste",
             content: (
-              <ChecklistPanel
-                auslagerungId={id}
-                contract={activity.contract}
-                isSubOutsourcing={activity.isSubOutsourcing}
-                canWrite={canWriteContract}
-              />
+              <>
+                <ContractFilePanel activityId={id} contract={activity.contract} canWrite={canWriteContract} />
+                <ChecklistPanel
+                  auslagerungId={id}
+                  contract={activity.contract}
+                  isSubOutsourcing={activity.isSubOutsourcing}
+                  canWrite={canWriteContract}
+                />
+              </>
             ),
           },
           {

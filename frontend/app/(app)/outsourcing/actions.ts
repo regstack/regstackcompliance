@@ -31,6 +31,22 @@ export async function setChecklistStatus(activityId: string, code: string, statu
   revalidatePath(`/outsourcing/${activityId}`);
 }
 
+// Called after the browser has already uploaded the file straight to Blob storage via the token
+// from /api/contracts/upload-url — this only registers the resulting object key against the
+// activity's contract record, mirroring the clauseChecklist-only PUT above (undefined fields are
+// left untouched by the backend's Prisma update).
+export async function registerContractFile(
+  activityId: string,
+  file: { fileObjectKey: string; fileName: string; fileSize: number; fileMime: string }
+) {
+  await apiFetch(`/activities/${activityId}/contract`, {
+    method: "PUT",
+    body: JSON.stringify(file),
+  });
+
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
 export type ActivityStatus = "ENTWURF" | "AKTIV" | "BEENDET";
 
 export async function setActivityStatus(activityId: string, status: ActivityStatus) {
