@@ -7,15 +7,16 @@ das Produkt von ausgelagerten Dienstleistern verlangt (Tz. 9: Notfallkonzept, Er
 Nachweispflicht), gilt für den eigenen Betrieb.
 
 **Status:** Die Datenbank läuft auf Supabase-Postgres (Region eu-central-1/Frankfurt), das
-Backend auf Render (siehe README, Abschnitt „Deployment"). Ein Teil dieses Plans ist inzwischen
-umgesetzt — siehe Abschnitt 2/3 — der Rest ist mit **[Noch einzurichten]** markiert.
+Backend als Vercel-Serverless-Function (siehe README, Abschnitt „Deployment"). Ein Teil dieses
+Plans ist inzwischen umgesetzt — siehe Abschnitt 2/3 — der Rest ist mit **[Noch einzurichten]**
+markiert.
 
 ## 1. Ziele: RPO/RTO
 
 | Kennzahl | Ziel | Begründung |
 |---|---|---|
 | **RPO** (Recovery Point Objective) | ≤ 15 Minuten via Supabase-PITR (sobald aktiviert, Abschnitt 2); ≤ 24 Stunden allein über die eigene tägliche Zweitsicherung | Ein Datenverlust von einem Tag wäre bei einem Audit-Trail-System (jeder Write ist eine Nachweispflicht) nicht hinnehmbar — deshalb ist Supabase-PITR die primäre Verteidigungslinie, nicht der tägliche Dump. |
-| **RTO** (Recovery Time Objective) | ≤ 4 Stunden für einen vollständigen Restore aus Backup | Ein Ausfall des Kernsystems blockiert Kunden bei Fristen (Vertrags-, Handlungsoptions-, Monitoring-Deadlines, siehe `src/modules/notifications`) — das System muss zügig wieder verfügbar sein, ohne die zugrunde liegenden Fristen selbst zu verändern. Kein Multi-AZ-Failover-Ziel, da weder Supabase- noch Render-Setup aktuell eine synchron replizierte Standby-Instanz vorsehen. |
+| **RTO** (Recovery Time Objective) | ≤ 4 Stunden für einen vollständigen Restore aus Backup | Ein Ausfall des Kernsystems blockiert Kunden bei Fristen (Vertrags-, Handlungsoptions-, Monitoring-Deadlines, siehe `src/modules/notifications`) — das System muss zügig wieder verfügbar sein, ohne die zugrunde liegenden Fristen selbst zu verändern. Kein Multi-AZ-Failover-Ziel, da das Setup aktuell keine synchron replizierte Standby-Instanz vorsieht. |
 
 Diese Ziele sind Zielwerte für die Betriebsplanung, keine vertraglich zugesicherten SLAs
 gegenüber Kunden — Letzteres ist eine Geschäftsentscheidung außerhalb dieses Dokuments.
