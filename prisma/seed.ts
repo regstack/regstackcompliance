@@ -28,6 +28,7 @@ async function main() {
       { email: "compliance@beispiel-leasing.de", name: "M. Winter", role: "COMPLIANCE" as const },
       { email: "revision@beispiel-leasing.de", name: "K. Fischer", role: "INTERNE_REVISION" as const },
       { email: "admin@regstack.de", name: "RegStack Admin", role: "ADMIN" as const },
+      { email: "risikocontrolling@beispiel-leasing.de", name: "S. Krüger", role: "RISIKOCONTROLLING" as const },
     ].map((u) =>
       prisma.user.upsert({
         where: { email: u.email },
@@ -525,8 +526,369 @@ async function main() {
     },
   });
 
+  const risikocontrolling = users[4];
+
+  // --- Risikomanagement (MaRisk AT 4) demo data -------------------------------------------------
+  // Story und Zahlen sind bewusst deckungsgleich mit dem UI-Prototyp aus
+  // Risikomanagement_BAIT_MVP_Spezifikation.md, damit Cockpit-Mockup und API dieselbe Demo erzählen.
+
+  await Promise.all(
+    [
+      {
+        jahr: 2026,
+        kategorie: "ADRESSENAUSFALLRISIKO" as const,
+        bezeichnung: "Kreditportfolio Firmenkunden & Gewerbeimmobilien",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-11-01"),
+        naechsteUeberpruefung: new Date("2026-11-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "MARKTPREISRISIKO_ANLAGEBUCH" as const,
+        bezeichnung: "Zinsänderungsrisiko im Bankbuch",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-09-01"),
+        naechsteUeberpruefung: new Date("2026-09-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "MARKTPREISRISIKO_HANDELSBUCH" as const,
+        bezeichnung: "Kein Handelsbuchinstitut",
+        wesentlichkeit: "nicht_wesentlich" as const,
+        begruendung: "Institut führt kein Handelsbuch (§ 1 Abs. 12 KWG).",
+        naechsteUeberpruefung: new Date("2026-09-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "LIQUIDITAETSRISIKO" as const,
+        bezeichnung: "Refinanzierungs- und Einlagenstruktur",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-09-01"),
+        naechsteUeberpruefung: new Date("2026-09-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "OPERATIONELLES_RISIKO" as const,
+        bezeichnung: "IT-, Prozess- und Auslagerungsrisiken",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-12-01"),
+        naechsteUeberpruefung: new Date("2026-12-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "KONZENTRATIONSRISIKO" as const,
+        bezeichnung: "Branchenkonzentration Bauwirtschaft",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-11-01"),
+        naechsteUeberpruefung: new Date("2026-11-01"),
+      },
+      {
+        jahr: 2026,
+        kategorie: "ESG_RISIKO" as const,
+        bezeichnung: "Transitionsrisiko im Kreditportfolio",
+        wesentlichkeit: "wesentlich" as const,
+        verantwortlichUserId: risikocontrolling.id,
+        letzteUeberpruefung: new Date("2025-06-01"),
+        naechsteUeberpruefung: new Date("2026-06-01"), // bewusst bereits fällig, für die Dashboard-Warnung
+      },
+      {
+        jahr: 2026,
+        kategorie: "SONSTIGES_RISIKO" as const,
+        bezeichnung: "Reputationsrisiko",
+        wesentlichkeit: "nicht_wesentlich" as const,
+        verantwortlichUserId: compliance.id,
+        letzteUeberpruefung: new Date("2025-11-01"),
+        naechsteUeberpruefung: new Date("2026-11-01"),
+      },
+    ].map((data) => prisma.risikoinventur.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
+  );
+
+  await prisma.risikostrategie.create({
+    data: {
+      institutionId: institution.id,
+      art: "geschaeftsstrategie",
+      jahr: 2026,
+      inhalt: { schwerpunkte: "Wachstum Firmenkundenleasing, Digitalisierung Antragsstrecke" },
+      status: "verabschiedet",
+      verabschiedetAm: new Date("2025-12-10"),
+      verabschiedetVonUserId: geschaeftsleitung.id,
+      naechsteUeberpruefung: new Date("2026-12-10"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.risikostrategie.create({
+    data: {
+      institutionId: institution.id,
+      art: "risikostrategie",
+      jahr: 2026,
+      inhalt: { konsistenzGeschaeftsstrategie: "geprüft, keine Abweichungen" },
+      status: "verabschiedet",
+      verabschiedetAm: new Date("2025-12-10"),
+      verabschiedetVonUserId: geschaeftsleitung.id,
+      naechsteUeberpruefung: new Date("2026-12-10"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.risikostrategie.create({
+    data: {
+      institutionId: institution.id,
+      art: "teilstrategie",
+      jahr: 2025,
+      inhalt: { bezeichnung: "Teilstrategie Kreditrisiko 2025" },
+      status: "verabschiedet",
+      verabschiedetAm: new Date("2025-03-01"),
+      verabschiedetVonUserId: geschaeftsleitung.id,
+      naechsteUeberpruefung: new Date("2026-03-01"), // bereits überfällig — Dashboard-Warnung
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.risikotragfaehigkeit.create({
+    data: {
+      institutionId: institution.id,
+      periode: "2026-Q1",
+      ansatz: "oekonomisch",
+      risikodeckungspotenzial: 128_500_000,
+      limits: {
+        ADRESSENAUSFALLRISIKO: { limitProzent: 100, auslastungProzent: 62 },
+        MARKTPREISRISIKO_ANLAGEBUCH: { limitProzent: 100, auslastungProzent: 78 },
+        LIQUIDITAETSRISIKO: { limitProzent: 100, auslastungProzent: 54 },
+        OPERATIONELLES_RISIKO: { limitProzent: 100, auslastungProzent: 88 },
+        KONZENTRATIONSRISIKO: { limitProzent: 100, auslastungProzent: 96 },
+      },
+      auslastungGesamt: 71,
+      ergebnis: "Risikodeckungspotenzial deckt alle wesentlichen Risiken; Konzentrationsrisiko nahe Limit.",
+      methodenpruefungAm: new Date("2026-01-15"),
+      freigegebenVonUserId: risikocontrolling.id,
+      freigegebenAm: new Date("2026-04-05"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.rmReport.create({
+    data: {
+      institutionId: institution.id,
+      reportType: "quartalsbericht",
+      periodFrom: new Date("2026-01-01"),
+      periodTo: new Date("2026-03-31"),
+      status: "entwurf",
+      content: {
+        kapitalausstattung: "Risikodeckungspotenzial deckt alle wesentlichen Risiken. Konzentrationsrisiko nahe Limit, Gegenmaßnahme eingeleitet.",
+        risikolage: "Keine wesentlichen Änderungen im Berichtszeitraum. ESG-Risikobewertung wird zum 06/2026 aktualisiert.",
+        massnahmen: "Limitanpassung Branchenkonzentration Bauwirtschaft in Abstimmung mit dem Kreditrisikocontrolling, Umsetzung bis 05/2026.",
+      },
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
+
+  const itStrategie2026 = await prisma.itStrategie.create({
+    data: {
+      institutionId: institution.id,
+      jahr: 2026,
+      inhalt: { schwerpunkte: "Cloud-Migration Kernbankverfahren, Ausbau Informationssicherheit" },
+      status: "verabschiedet",
+      verabschiedetAm: new Date("2026-01-20"),
+      verabschiedetVonUserId: geschaeftsleitung.id,
+      konsistenzpruefungGeschaeftsstrategie: "Durchgeführt, keine Abweichungen zur Geschäftsstrategie 2026.",
+      naechsteUeberpruefung: new Date("2027-01-20"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  const [kernbankverfahren, kreditvergabesystem, firmenkundenportal, netzwerkRz, backupRz] = await Promise.all([
+    prisma.itAsset.create({
+      data: {
+        institutionId: institution.id,
+        bezeichnung: "Kernbankverfahren",
+        kategorie: "it_system",
+        eigentuemerUserId: risikocontrolling.id,
+        schutzbedarfVertraulichkeit: "sehr_hoch",
+        schutzbedarfIntegritaet: "sehr_hoch",
+        schutzbedarfVerfuegbarkeit: "sehr_hoch",
+        begruendung: "Träger sämtlicher Kernbankprozesse, Ausfall unterbricht das gesamte Bankgeschäft.",
+        letzteUeberpruefung: new Date("2026-01-10"),
+        naechsteUeberpruefung: new Date("2027-01-10"),
+        createdByUserId: risikocontrolling.id,
+      },
+    }),
+    prisma.itAsset.create({
+      data: {
+        institutionId: institution.id,
+        bezeichnung: "Kreditvergabesystem",
+        kategorie: "anwendung",
+        eigentuemerUserId: risikocontrolling.id,
+        schutzbedarfVertraulichkeit: "hoch",
+        schutzbedarfIntegritaet: "hoch",
+        schutzbedarfVerfuegbarkeit: "hoch",
+        letzteUeberpruefung: new Date("2026-01-10"),
+        naechsteUeberpruefung: new Date("2027-01-10"),
+        createdByUserId: risikocontrolling.id,
+      },
+    }),
+    prisma.itAsset.create({
+      data: {
+        institutionId: institution.id,
+        bezeichnung: "Firmenkundenportal",
+        kategorie: "anwendung",
+        eigentuemerUserId: compliance.id,
+        schutzbedarfVertraulichkeit: "hoch",
+        schutzbedarfIntegritaet: "hoch",
+        schutzbedarfVerfuegbarkeit: "normal",
+        letzteUeberpruefung: new Date("2026-01-10"),
+        naechsteUeberpruefung: new Date("2027-01-10"),
+        createdByUserId: risikocontrolling.id,
+      },
+    }),
+    prisma.itAsset.create({
+      data: {
+        institutionId: institution.id,
+        bezeichnung: "Netzwerkinfrastruktur Rechenzentrum",
+        kategorie: "netzwerk",
+        eigentuemerUserId: risikocontrolling.id,
+        schutzbedarfVertraulichkeit: "hoch",
+        schutzbedarfIntegritaet: "sehr_hoch",
+        schutzbedarfVerfuegbarkeit: "sehr_hoch",
+        letzteUeberpruefung: new Date("2026-01-10"),
+        naechsteUeberpruefung: new Date("2027-01-10"),
+        createdByUserId: risikocontrolling.id,
+      },
+    }),
+    prisma.itAsset.create({
+      data: {
+        institutionId: institution.id,
+        bezeichnung: "Backup-Rechenzentrum",
+        kategorie: "rechenzentrum",
+        eigentuemerUserId: risikocontrolling.id,
+        schutzbedarfVertraulichkeit: "normal",
+        schutzbedarfIntegritaet: "hoch",
+        schutzbedarfVerfuegbarkeit: "sehr_hoch",
+        letzteUeberpruefung: new Date("2026-01-10"),
+        naechsteUeberpruefung: new Date("2027-01-10"),
+        createdByUserId: risikocontrolling.id,
+      },
+    }),
+  ]);
+  await prisma.itAsset.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "E-Mail & Kommunikation",
+      kategorie: "anwendung",
+      eigentuemerUserId: compliance.id,
+      schutzbedarfVertraulichkeit: "normal",
+      schutzbedarfIntegritaet: "normal",
+      schutzbedarfVerfuegbarkeit: "hoch",
+      letzteUeberpruefung: new Date("2026-01-10"),
+      naechsteUeberpruefung: new Date("2027-01-10"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.itRisiko.create({
+    data: {
+      institutionId: institution.id,
+      assetId: firmenkundenportal.id,
+      bedrohung: "Unbefugter Zugriff durch veraltete Berechtigungen",
+      eintrittswahrscheinlichkeit: "mittel",
+      auswirkung: "hoch",
+      bruttorisiko: "hoch",
+      massnahme: "Rezertifizierung der Portal-Berechtigungen, Einführung eines regelmäßigen Reviews.",
+      restrisiko: "hoch",
+      status: "offen",
+      verantwortlichUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itRisiko.create({
+    data: {
+      institutionId: institution.id,
+      assetId: kernbankverfahren.id,
+      bedrohung: "Ausfall des Kernbankverfahrens durch Kapazitätsengpass",
+      eintrittswahrscheinlichkeit: "mittel",
+      auswirkung: "hoch",
+      bruttorisiko: "hoch",
+      massnahme: "Kapazitätsmonitoring und Skalierungsplan mit dem Anbieter abstimmen.",
+      restrisiko: "mittel",
+      status: "offen",
+      verantwortlichUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itRisiko.create({
+    data: {
+      institutionId: institution.id,
+      assetId: kreditvergabesystem.id,
+      bedrohung: "Ransomware-Angriff über eine Drittanbieter-Schnittstelle",
+      eintrittswahrscheinlichkeit: "mittel",
+      auswirkung: "kritisch",
+      bruttorisiko: "kritisch",
+      massnahme: "Netzsegmentierung der Schnittstelle, verschärftes Patch-Management beim Drittanbieter.",
+      restrisiko: "mittel",
+      status: "in_bearbeitung",
+      verantwortlichUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itRisiko.create({
+    data: {
+      institutionId: institution.id,
+      assetId: backupRz.id,
+      bedrohung: "Datenverlust durch unvollständige Datensicherung",
+      eintrittswahrscheinlichkeit: "gering",
+      auswirkung: "hoch",
+      bruttorisiko: "mittel",
+      massnahme: "Backup-Verifikation automatisiert, wöchentlicher Restore-Test eingeführt.",
+      restrisiko: "gering",
+      status: "geschlossen",
+      verantwortlichUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.itSicherheitsvorfall.create({
+    data: {
+      institutionId: institution.id,
+      datum: new Date("2026-03-02"),
+      kategorie: "Verfügbarkeit",
+      schweregrad: "hoch",
+      beschreibung: "Kurzzeitiger Ausfall des Kernbankverfahrens durch einen Kapazitätsengpass im Rechenzentrum.",
+      betroffeneSysteme: "Kernbankverfahren, Netzwerkinfrastruktur Rechenzentrum",
+      eskalationAnUserId: geschaeftsleitung.id,
+      meldepflichtBaFin: true,
+      meldedatumBaFin: new Date("2026-03-03"),
+      status: "in_bearbeitung",
+      massnahme: "Kapazitätserweiterung beauftragt, Monitoring-Schwellenwerte angepasst.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itSicherheitsvorfall.create({
+    data: {
+      institutionId: institution.id,
+      datum: new Date("2026-03-14"),
+      kategorie: "Social Engineering",
+      schweregrad: "mittel",
+      beschreibung: "Phishing-Kampagne gegen Nutzer:innen des Firmenkundenportals.",
+      betroffeneSysteme: "Firmenkundenportal",
+      eskalationAnUserId: risikocontrolling.id,
+      meldepflichtBaFin: false,
+      status: "geschlossen",
+      massnahme: "Betroffene Zugänge gesperrt, Awareness-Hinweis an alle Nutzer:innen versendet.",
+      abschlussAm: new Date("2026-03-18"),
+      abschlussVonUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
   // eslint-disable-next-line no-console
-  console.log(`Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, and Interne Revision demo data.`);
+  console.log(
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Risikomanagement, and IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet) demo data.`
+  );
 }
 
 main()
