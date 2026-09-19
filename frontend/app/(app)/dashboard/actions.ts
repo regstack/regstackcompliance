@@ -5,6 +5,7 @@ import { acknowledgeReport as acknowledgeComplianceReport, decideNormZuweisung }
 import { ackQuartalsbericht } from "@/app/(app)/interne-revision/quartalsbericht/actions";
 import { approveAuditPlan as approveAuditPlanBackend } from "@/app/(app)/interne-revision/pruefungsuniversum/actions";
 import { approveHandlungsoption } from "@/app/(app)/outsourcing/actions";
+import { acknowledgeExternePruefung as acknowledgeExternePruefungBackend } from "@/app/(app)/interne-revision/externe-pruefungen/actions";
 import type { Database } from "@/lib/database.types";
 
 type ModuleType = Database["public"]["Enums"]["module_type"];
@@ -48,5 +49,14 @@ export async function decideNormzuweisung(handshakeId: string, normId: string, d
  * delegation pattern as the other two dashboard actions above. */
 export async function approveDependencyAcceptance(activityId: string, depApprover: string) {
   await approveHandlungsoption(activityId, depApprover);
+  revalidatePath("/dashboard");
+}
+
+/** Geschäftsleitung-Kenntnisnahme des jährlichen externen Prüfungsberichts — delegates to Interne
+ * Revision's own backend-backed action (externalAuditRecord.acknowledge RBAC,
+ * GESCHAEFTSLEITUNG/ADMIN only, enforced server-side). Erst danach verteilt die Revision die
+ * Feststellungen an die Fachbereiche. */
+export async function acknowledgeExternePruefung(externePruefungId: string) {
+  await acknowledgeExternePruefungBackend(externePruefungId);
   revalidatePath("/dashboard");
 }

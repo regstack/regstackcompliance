@@ -7,6 +7,7 @@ import {
   getModuleOverview,
   getMonitoringEscalations,
   getPendingDependencyApprovals,
+  getPendingExternePruefungen,
 } from "@/lib/regstack/dashboard";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -15,6 +16,7 @@ import { ReportAckButton } from "@/components/dashboard/report-ack-button";
 import { AuditPlanApproveButton } from "@/components/dashboard/audit-plan-approve-button";
 import { NormzuweisungDecision } from "@/components/dashboard/normzuweisung-decision";
 import { DependencyApprovalButton } from "@/components/dashboard/dependency-approval-button";
+import { ExternePruefungAckButton } from "@/components/dashboard/externe-pruefung-ack-button";
 import type { Database } from "@/lib/database.types";
 
 type ModuleType = Database["public"]["Enums"]["module_type"];
@@ -44,13 +46,14 @@ export default async function DashboardPage() {
     );
   }
 
-  const [reports, auditPlans, disputes, overview, monitoringEscalations, dependencyApprovals] = await Promise.all([
+  const [reports, auditPlans, disputes, overview, monitoringEscalations, dependencyApprovals, pendingExternePruefungen] = await Promise.all([
     getLatestReports(),
     getPendingAuditPlans(),
     getDisputedNormzuweisungen(),
     getModuleOverview(),
     getMonitoringEscalations(),
     getPendingDependencyApprovals(),
+    getPendingExternePruefungen(),
   ]);
 
   return (
@@ -145,6 +148,25 @@ export default async function DashboardPage() {
           })}
         </div>
       </div>
+
+      {pendingExternePruefungen.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Externe Prüfung — Kenntnisnahme ausstehend</h2>
+          <div className="space-y-3">
+            {pendingExternePruefungen.map((p) => (
+              <Card key={p.id}>
+                <CardBody className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{p.pruefer} — {p.jahr}</p>
+                    {p.berichtsdatum && <p className="text-xs text-muted-foreground">Bericht vom {p.berichtsdatum}</p>}
+                  </div>
+                  <ExternePruefungAckButton externePruefungId={p.id} />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-foreground">Prüfungsplan-Genehmigung</h2>

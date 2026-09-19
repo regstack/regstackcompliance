@@ -675,6 +675,91 @@ export async function listSonderauftraege() {
 }
 
 /* =====================================================================
+ * Externe Prüfung — der jährliche Bericht des externen Prüfers (Wirtschaftsprüfer/
+ * Bankenaufsicht) an die Geschäftsleitung. Interne Revision erfasst ihn hier und verteilt
+ * seine Feststellungen an die zuständigen Fachbereiche/Module zur Nachverfolgung.
+ * ===================================================================*/
+
+type BackendExternePruefungFeststellung = {
+  id: string;
+  externePruefungId: string;
+  titel: string;
+  beschreibung: string | null;
+  schweregrad: string | null;
+  frist: string | null;
+  modul: string | null;
+  fachbereich: string | null;
+  verantwortlichUserId: string | null;
+  status: string;
+  verteiltAm: string | null;
+  verteiltVon: string | null;
+  fachbereichErledigtAm: string | null;
+  fachbereichErledigtVon: string | null;
+  wirksamkeitBestaetigtAm: string | null;
+  wirksamkeitBestaetigtVon: string | null;
+  geschlossenAm: string | null;
+  geschlossenVon: string | null;
+  createdAt: string;
+  externePruefung?: { pruefer: string; jahr: number } | null;
+};
+
+function reshapeExternePruefungFeststellung(f: BackendExternePruefungFeststellung, names: Map<string, string>) {
+  return {
+    id: f.id,
+    externe_pruefung_id: f.externePruefungId,
+    titel: f.titel,
+    beschreibung: f.beschreibung,
+    schweregrad: f.schweregrad,
+    frist: iso10(f.frist),
+    modul: f.modul,
+    fachbereich: f.fachbereich,
+    verantwortlich_person_id: f.verantwortlichUserId,
+    status: f.status,
+    verteilt_am: iso10(f.verteiltAm),
+    fachbereich_erledigt_am: iso10(f.fachbereichErledigtAm),
+    wirksamkeit_bestaetigt_am: iso10(f.wirksamkeitBestaetigtAm),
+    geschlossen_am: iso10(f.geschlossenAm),
+    created_at: f.createdAt,
+    verantwortlich: personRef(names, f.verantwortlichUserId),
+    externe_pruefung: f.externePruefung ? { pruefer: f.externePruefung.pruefer, jahr: f.externePruefung.jahr } : null,
+  };
+}
+
+type BackendExternePruefung = {
+  id: string;
+  pruefer: string;
+  jahr: number;
+  berichtsdatum: string | null;
+  glKenntnisnahmeByUserId: string | null;
+  glKenntnisnahmeAt: string | null;
+  createdAt: string;
+  feststellungen: BackendExternePruefungFeststellung[];
+};
+
+export async function listExternePruefungen() {
+  const [rows, names] = await Promise.all([apiFetch<BackendExternePruefung[]>("/revisions/externe-pruefungen"), getUserNameMap()]);
+  return rows.map((p) => ({
+    id: p.id,
+    pruefer: p.pruefer,
+    jahr: p.jahr,
+    berichtsdatum: iso10(p.berichtsdatum),
+    gl_kenntnisnahme_am: iso10(p.glKenntnisnahmeAt),
+    created_at: p.createdAt,
+    feststellungen: p.feststellungen.map((f) => reshapeExternePruefungFeststellung(f, names)),
+  }));
+}
+
+/** Für die "Meine offenen Feststellungen"-Ansicht im jeweiligen Modul — nur die dem aktuellen
+ * Nutzer zugewiesenen, noch nicht geschlossenen Feststellungen aus externen Prüfungen. */
+export async function listOffeneExternePruefungFeststellungenFuerMich() {
+  const [rows, names] = await Promise.all([
+    apiFetch<BackendExternePruefungFeststellung[]>("/revisions/externe-pruefungen/feststellungen/all?assignedToMe=true"),
+    getUserNameMap(),
+  ]);
+  return rows.filter((f) => f.status !== "geschlossen").map((f) => reshapeExternePruefungFeststellung(f, names));
+}
+
+/* =====================================================================
  * Audit-Trail
  * ===================================================================*/
 
