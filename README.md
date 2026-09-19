@@ -68,34 +68,25 @@ src/middleware/auditTrail.ts    withAudit() — transaktionaler Audit-Trail
 src/modules/…                   Ein Ordner je Entität/Prozess (Route + Validierung)
 prisma/seed.ts                  Musterdaten, deckungsgleich mit regstack_cockpit.html
 tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, ohne DB-Abhängigkeit
-.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build,
-                                 Deploy-Trigger (Render) nach grüner CI auf main
-render.yaml                     Render-Blueprint für den Backend-Dienst (siehe Abschnitt Deployment)
+.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build
+api/index.ts                    Vercel-Serverless-Einstieg — exportiert dieselbe createApp() wie
+                                 src/server.ts, ohne app.listen() (siehe Abschnitt Deployment)
+vercel.json                     Leitet alle Pfade an die api/index.ts-Function weiter
 ```
 
 ## Deployment
 
 Die Datenbank ist Supabase-Postgres (Region eu-central-1/Frankfurt) — `DATABASE_URL` zeigt direkt
-darauf, es gibt keine separate RDS-/Hetzner-Datenbank. Der Node/Express-Prozess selbst läuft
-separat auf [Render](https://render.com) (`render.yaml` im Repo-Root ist die Blueprint-Definition
-dafür), da Supabase keine langlaufenden Node-Prozesse hostet.
+darauf, es gibt keine separate RDS-/Hetzner-Datenbank. Der Node/Express-Prozess selbst läuft als
+**Vercel-Serverless-Function**: `api/index.ts` exportiert dieselbe `createApp()` wie
+`src/server.ts` (nur ohne `app.listen()` — Vercels Node-Runtime nimmt eine exportierte
+Express-App direkt als Request-Handler), `vercel.json` leitet alle Pfade dorthin um.
 
-Einrichtung (einmalig):
-
-1. In Render: „New → Blueprint" und dieses Repo verbinden — übernimmt `render.yaml`.
-2. Die mit `sync: false` markierten Umgebungsvariablen (siehe `render.yaml`, u. a.
-   `DATABASE_URL`, `JWT_SECRET`, `S3_*`) im Render-Dashboard eintragen — deren echte Werte stehen
-   nie in diesem Repo.
-3. Auto-Deploy in Render deaktivieren (Settings → Build & Deploy) und stattdessen den
-   Deploy-Hook-Link (Settings → Deploy Hook) als GitHub-Actions-Secret
-   `RENDER_DEPLOY_HOOK_URL` in diesem Repo hinterlegen.
-
-Danach löst jeder Push auf `main`, der die CI-Jobs (Lint/Typecheck/Test/Build) übersteht, automatisch
-ein Deployment auf Render aus (`deploy`-Job in `.github/workflows/ci.yml`) — ein roter CI-Lauf
-deployt nie.
-
-Das Frontend (Next.js, `frontend/`) läuft auf Vercel; Vercels eigene Git-Integration deployt es
-bereits automatisch bei jedem Push, dafür ist kein zusätzlicher CI-Schritt nötig.
+Sowohl das Frontend (Next.js, `frontend/`) als auch dieses Backend sind bei Vercel als eigene
+Projekte verbunden; Vercels Git-Integration deployt beide automatisch bei jedem Push auf `master`
+(und erzeugt Preview-Deployments für jeden Branch/PR) — dafür ist kein zusätzlicher CI-Schritt
+nötig, `ci.yml` deckt nur Lint/Typecheck/Test/Build ab. Umgebungsvariablen (`DATABASE_URL`,
+`JWT_SECRET`, `S3_*`, …) werden im jeweiligen Vercel-Projekt hinterlegt, nie in diesem Repo.
 
 ### Datenbank-Backup
 
