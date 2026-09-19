@@ -28,4 +28,9 @@ export const env = {
   s3AccessKeyId: process.env.S3_ACCESS_KEY_ID,
   s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
   s3ForcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+  // Database backups (src/scripts/backup-database.ts) default to the same bucket as contract
+  // uploads, under a separate "db-backups/" prefix — set S3_BACKUP_BUCKET to isolate backups in
+  // their own bucket instead (recommended in production: backups deserve access controls
+  // independent of whoever can read uploaded contract documents).
+  s3BackupBucket: process.env.S3_BACKUP_BUCKET ?? process.env.S3_BUCKET,
 };

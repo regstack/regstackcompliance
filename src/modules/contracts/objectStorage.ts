@@ -1,27 +1,16 @@
 import { randomUUID } from "crypto";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../../config/env";
 import { HttpError } from "../../utils/errors";
+import { s3Client } from "../../utils/s3Client";
 
 const UPLOAD_URL_EXPIRY_SECONDS = 5 * 60;
 const DOWNLOAD_URL_EXPIRY_SECONDS = 60;
 
-let client: S3Client | null = null;
-
-function s3(): S3Client {
-  if (!env.s3Bucket || !env.s3AccessKeyId || !env.s3SecretAccessKey) {
-    throw new HttpError(503, "Objektspeicher ist auf diesem Server nicht konfiguriert");
-  }
-  if (!client) {
-    client = new S3Client({
-      region: env.s3Region,
-      endpoint: env.s3Endpoint,
-      forcePathStyle: env.s3ForcePathStyle,
-      credentials: { accessKeyId: env.s3AccessKeyId, secretAccessKey: env.s3SecretAccessKey },
-    });
-  }
-  return client;
+function requireBucket(): string {
+  if (!env.s3Bucket) throw new HttpError(503, "Objektspeicher ist auf diesem Server nicht konfiguriert");
+  return env.s3Bucket;
 }
 
 // Strips everything but the extension so the stored key never carries user-controlled path
@@ -43,12 +32,12 @@ export async function createUploadUrl(params: {
   fileMime: string;
 }): Promise<{ uploadUrl: string; objectKey: string }> {
   const objectKey = buildObjectKey(params.institutionId, params.activityId, params.fileName);
-  const command = new PutObjectCommand({ Bucket: env.s3Bucket, Key: objectKey, ContentType: params.fileMime });
-  const uploadUrl = await getSignedUrl(s3(), command, { expiresIn: UPLOAD_URL_EXPIRY_SECONDS });
+  const command = new PutObjectCommand({ Bucket: requireBucket(), Key: objectKey, ContentType: params.fileMime });
+  const uploadUrl = await getSignedUrl(s3Client(), command, { expiresIn: UPLOAD_URL_EXPIRY_SECONDS });
   return { uploadUrl, objectKey };
 }
 
 export async function createDownloadUrl(objectKey: string): Promise<string> {
-  const command = new GetObjectCommand({ Bucket: env.s3Bucket, Key: objectKey });
-  return getSignedUrl(s3(), command, { expiresIn: DOWNLOAD_URL_EXPIRY_SECONDS });
+  const command = new GetObjectCommand({ Bucket: requireBucket(), Key: objectKey });
+  return getSignedUrl(s3Client(), command, { expiresIn: DOWNLOAD_URL_EXPIRY_SECONDS });
 }
