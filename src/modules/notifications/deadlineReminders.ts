@@ -24,17 +24,21 @@ export function selectDueThreshold(daysUntilDue: number, alreadySent: ReadonlySe
   return applicable.find((t) => !alreadySent.has(t)) ?? null;
 }
 
-type EntityType = "CONTRACT" | "HANDLUNGSOPTION" | "MONITORING";
+type EntityType = "CONTRACT" | "HANDLUNGSOPTION" | "MONITORING" | "EXTERNE_PRUEFUNG_FESTSTELLUNG";
 
 interface Candidate {
   entityType: EntityType;
   entityId: string;
-  activityId: string;
   institutionId: string;
   dueDate: Date;
+  // Broadcast to every active user with one of these roles ...
   recipientRoles: Role[];
+  // ... plus, when set, these specific users regardless of role — e.g. the Fachbereich person an
+  // external-audit finding was actually distributed to, who may hold any role at all.
+  recipientUserIds?: string[];
   subject: string;
   bodyLine: string;
+  linkPath: string;
 }
 
 function formatDate(date: Date): string {
@@ -52,7 +56,6 @@ async function collectCandidates(): Promise<Candidate[]> {
     candidates.push({
       entityType: "CONTRACT",
       entityId: activity.id,
-      activityId: activity.id,
       institutionId: activity.institutionId,
       dueDate: activity.contractEnd!,
       recipientRoles: ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "ADMIN"],
@@ -62,6 +65,7 @@ async function collectCandidates(): Promise<Candidate[]> {
         (activity.terminationNoticeMonths
           ? ` Kündigungsfrist: ${activity.terminationNoticeMonths} Monat(e) — bitte rechtzeitig über Verlängerung/Neuausschreibung entscheiden.`
           : ""),
+      linkPath: `/outsourcing/${activity.id}`,
     });
   }
 
@@ -73,12 +77,12 @@ async function collectCandidates(): Promise<Candidate[]> {
     candidates.push({
       entityType: "HANDLUNGSOPTION",
       entityId: record.activity.id,
-      activityId: record.activity.id,
       institutionId: record.activity.institutionId,
       dueDate: record.reviewDate!,
       recipientRoles: ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "ADMIN"],
       subject: `Handlungsoption zur Überprüfung fällig: ${record.activity.name}`,
       bodyLine: `Die Handlungsoption zu „${record.activity.name}“ ist zur Überprüfung fällig am ${formatDate(record.reviewDate!)}.`,
+      linkPath: `/outsourcing/${record.activity.id}`,
     });
   }
 
@@ -90,12 +94,35 @@ async function collectCandidates(): Promise<Candidate[]> {
     candidates.push({
       entityType: "MONITORING",
       entityId: record.id,
-      activityId: record.activity.id,
       institutionId: record.activity.institutionId,
       dueDate: record.assuranceReportDueDate!,
       recipientRoles: ["AUSLAGERUNGSBEAUFTRAGTER", "COMPLIANCE", "RISIKOCONTROLLING", "ADMIN"],
       subject: `Nachweis fällig: ${record.activity.name}`,
       bodyLine: `Der Nachweis (${record.assuranceType ?? "Prüfbericht"}) zu „${record.activity.name}“ ist fällig am ${formatDate(record.assuranceReportDueDate!)}.`,
+      linkPath: `/outsourcing/${record.activity.id}`,
+    });
+  }
+
+  // Feststellungen aus der externen Prüfung (Wirtschaftsprüfer/Bankenaufsicht), verteilt an einen
+  // Fachbereich zur Umsetzung — offen or fachbereich_erledigt still needs someone's attention;
+  // geschlossen/akzeptiertes_risiko means the Frist no longer matters. Reminded twice over: the
+  // specific person the finding was distributed to (any role), and Interne Revision/Admin, who
+  // own escalating it further if the department doesn't act.
+  const externeFeststellungen = await prisma.externePruefungFeststellung.findMany({
+    where: { frist: { not: null }, status: { notIn: ["geschlossen", "akzeptiertes_risiko"] } },
+    select: { id: true, institutionId: true, titel: true, frist: true, verantwortlichUserId: true },
+  });
+  for (const f of externeFeststellungen) {
+    candidates.push({
+      entityType: "EXTERNE_PRUEFUNG_FESTSTELLUNG",
+      entityId: f.id,
+      institutionId: f.institutionId,
+      dueDate: f.frist!,
+      recipientRoles: ["INTERNE_REVISION", "ADMIN"],
+      recipientUserIds: f.verantwortlichUserId ? [f.verantwortlichUserId] : undefined,
+      subject: `Feststellung aus externer Prüfung fällig: ${f.titel}`,
+      bodyLine: `Die Feststellung „${f.titel}“ aus der externen Prüfung ist zur Umsetzung fällig am ${formatDate(f.frist!)}.`,
+      linkPath: `/interne-revision/externe-pruefungen`,
     });
   }
 
@@ -129,7 +156,11 @@ export async function runDeadlineReminders(now: Date = new Date()): Promise<Remi
     if (threshold === null) continue;
 
     const recipients = await prisma.user.findMany({
-      where: { institutionId: candidate.institutionId, role: { in: candidate.recipientRoles }, active: true },
+      where: {
+        institutionId: candidate.institutionId,
+        active: true,
+        OR: [{ role: { in: candidate.recipientRoles } }, ...(candidate.recipientUserIds?.length ? [{ id: { in: candidate.recipientUserIds } }] : [])],
+      },
       select: { email: true },
     });
     if (recipients.length === 0) {
@@ -137,7 +168,7 @@ export async function runDeadlineReminders(now: Date = new Date()): Promise<Remi
       continue;
     }
 
-    const link = `${env.remindersAppUrl}/outsourcing/${candidate.activityId}`;
+    const link = `${env.remindersAppUrl}${candidate.linkPath}`;
     const text = `${candidate.bodyLine}\n\nDetails: ${link}`;
 
     for (const recipient of recipients) {

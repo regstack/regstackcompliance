@@ -1,7 +1,8 @@
 name: Deadline reminders
 
 # Runs the deadline-reminder email job (contract renewals, Handlungsoption reviews, monitoring
-# due dates — see src/modules/notifications) against the production database once a day. This
+# due dates, externe Prüfungsfeststellungen — see src/modules/notifications) against the
+# production database once a day. This
 # backend has no in-process scheduler, so this workflow is the "cron" for it; point it at a
 # different scheduler instead if the production DB isn't reachable from GitHub Actions.
 on:
