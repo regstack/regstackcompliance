@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { getBackendSession, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
-import { getLatestReports, getPendingAuditPlans, getDisputedNormzuweisungen, getModuleOverview, getPendingExternePruefungen } from "@/lib/regstack/dashboard";
+import {
+  getLatestReports,
+  getPendingAuditPlans,
+  getDisputedNormzuweisungen,
+  getModuleOverview,
+  getMonitoringEscalations,
+  getPendingDependencyApprovals,
+  getPendingExternePruefungen,
+} from "@/lib/regstack/dashboard";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Button } from "@/components/ui/button";
 import { ReportAckButton } from "@/components/dashboard/report-ack-button";
 import { AuditPlanApproveButton } from "@/components/dashboard/audit-plan-approve-button";
 import { NormzuweisungDecision } from "@/components/dashboard/normzuweisung-decision";
+import { DependencyApprovalButton } from "@/components/dashboard/dependency-approval-button";
 import { ExternePruefungAckButton } from "@/components/dashboard/externe-pruefung-ack-button";
 import type { Database } from "@/lib/database.types";
 
@@ -37,11 +46,13 @@ export default async function DashboardPage() {
     );
   }
 
-  const [reports, auditPlans, disputes, overview, pendingExternePruefungen] = await Promise.all([
+  const [reports, auditPlans, disputes, overview, monitoringEscalations, dependencyApprovals, pendingExternePruefungen] = await Promise.all([
     getLatestReports(),
     getPendingAuditPlans(),
     getDisputedNormzuweisungen(),
     getModuleOverview(),
+    getMonitoringEscalations(),
+    getPendingDependencyApprovals(),
     getPendingExternePruefungen(),
   ]);
 
@@ -62,6 +73,9 @@ export default async function DashboardPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outsourcing</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{overview.outsourcing.aktiv}</p>
               <p className="text-xs text-muted-foreground">aktive Auslagerungen, davon {overview.outsourcing.wesentlich} wesentlich</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {overview.outsourcing.offeneEskalationen} Monitoring-Eskalation(en) · {overview.outsourcing.offeneVertragspunkte} mit offenen Vertragspunkten
+              </p>
             </CardBody>
           </Card>
           <Card>
@@ -174,6 +188,73 @@ export default async function DashboardPage() {
                     )}
                   </div>
                   <AuditPlanApproveButton auditPlanId={plan.id} />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Dependency-Acceptance ausstehend</h2>
+        {dependencyApprovals.length === 0 ? (
+          <Card className="px-5 py-6">
+            <p className="text-sm text-muted-foreground">Keine Dependency-Acceptance wartet aktuell auf Genehmigung.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {dependencyApprovals.map((d) => (
+              <Card key={d.activityId}>
+                <CardBody>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{d.activityName}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        BCM-Anbindung (Tz. 6) — Ersetzbarkeit: {d.ersetzbarkeit ?? "—"}
+                        {d.reviewDate && ` · Nächste Überprüfung: ${new Date(d.reviewDate).toLocaleDateString("de-DE")}`}
+                      </p>
+                      {d.depControls && <p className="mt-1.5 text-xs text-muted-foreground">{d.depControls}</p>}
+                    </div>
+                    <Link href={`/outsourcing/${d.activityId}`} className="shrink-0">
+                      <Button variant="secondary" className="px-2.5 py-1 text-xs">Auslagerung ansehen</Button>
+                    </Link>
+                  </div>
+                  <DependencyApprovalButton activityId={d.activityId} />
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Offene Monitoring-Eskalationen</h2>
+        {monitoringEscalations.length === 0 ? (
+          <Card className="px-5 py-6">
+            <p className="text-sm text-muted-foreground">Keine offenen Eskalationen aus dem Auslagerungsmonitoring.</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {monitoringEscalations.map((e) => (
+              <Card key={e.id}>
+                <CardBody>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{e.activityName}</p>
+                      {e.evidenceDescription && <p className="mt-1 text-xs text-muted-foreground">{e.evidenceDescription}</p>}
+                      {e.evidenceDate && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Stand: {new Date(e.evidenceDate).toLocaleDateString("de-DE")}
+                        </p>
+                      )}
+                      {e.escalationNote && (
+                        <p className="mt-1.5 rounded bg-status-warning-bg px-2 py-1 text-xs text-status-warning">{e.escalationNote}</p>
+                      )}
+                    </div>
+                    <Link href={`/outsourcing/${e.activityId}`} className="shrink-0">
+                      <Button variant="secondary" className="px-2.5 py-1 text-xs">Auslagerung ansehen</Button>
+                    </Link>
+                  </div>
                 </CardBody>
               </Card>
             ))}
