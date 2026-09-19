@@ -112,6 +112,7 @@ export function MonitoringPanel({
               ))}
             </div>
           )}
+          {evidenceLog.length === 0 && <p className="text-sm text-muted-foreground">Noch kein Evidenz-Log-Eintrag erfasst.</p>}
 
           {canWrite && (
             <div className="space-y-3 border-t border-border-subtle pt-4">

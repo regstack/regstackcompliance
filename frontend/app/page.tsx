@@ -159,14 +159,19 @@ export default function MarketingPage() {
       </main>
 
       <footer className="border-t border-border-subtle">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} RegStack</span>
-          <a
-            href="mailto:admin@regstack.de"
-            className="text-muted-foreground hover:text-copper-400"
-          >
-            admin@regstack.de
-          </a>
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} RegStack UG (haftungsbeschränkt)</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <a href="mailto:admin@regstack.de" className="hover:text-copper-400">
+              admin@regstack.de
+            </a>
+            <Link href="/impressum" className="hover:text-copper-400">
+              Impressum
+            </Link>
+            <Link href="/datenschutz" className="hover:text-copper-400">
+              Datenschutz
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

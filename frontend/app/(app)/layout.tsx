@@ -1,5 +1,5 @@
 import { getSessionContext } from "@/lib/regstack/session";
-import { SidebarNav } from "@/components/sidebar-nav";
+import { AppShell } from "@/components/app-shell";
 import { SignOutButton } from "@/components/sign-out-button";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -27,11 +27,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <SidebarNav fullName={ctx.fullName} email={ctx.email} roles={ctx.roles} />
-      <main className="flex-1 px-8 py-8">
-        <div className="mx-auto max-w-5xl">{children}</div>
-      </main>
-    </div>
+    <AppShell fullName={ctx.fullName} email={ctx.email} roles={ctx.roles}>
+      {children}
+    </AppShell>
   );
 }

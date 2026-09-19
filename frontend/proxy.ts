@@ -63,7 +63,9 @@ export async function proxy(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith("/login");
   const isMarketingRoute = pathname === "/" && !isAppHost;
-  const isPublicRoute = isAuthRoute || isMarketingRoute;
+  // §5 TMG / § 18 MStV require these to be reachable without logging in, from any host.
+  const isLegalRoute = pathname === "/impressum" || pathname === "/datenschutz";
+  const isPublicRoute = isAuthRoute || isMarketingRoute || isLegalRoute;
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
