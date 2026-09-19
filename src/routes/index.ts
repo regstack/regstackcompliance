@@ -26,6 +26,10 @@ import revisionsGovernanceRoutes from "../modules/revisions/governance.routes";
 import revisionsReportsRoutes from "../modules/revisions/reports.routes";
 import doraRoutes from "../modules/dora/dora.routes";
 import doraSubOutsourcingRoutes from "../modules/dora/doraSubOutsourcing.routes";
+import baitPruefungenRoutes from "../modules/bait/pruefungen.routes";
+import baitFeststellungenRoutes from "../modules/bait/feststellungen.routes";
+import baitInformationsverbuendeRoutes from "../modules/bait/informationsverbuende.routes";
+import baitRisikobewertungenRoutes from "../modules/bait/risikobewertungen.routes";
 import { requireAuth } from "../middleware/auth";
 
 export const router = Router();
@@ -61,3 +65,7 @@ router.use("/revisions/governance", revisionsGovernanceRoutes);
 router.use("/revisions/reports", revisionsReportsRoutes);
 router.use("/dora/arrangements", doraRoutes);
 router.use("/dora/arrangements/:arrangementId/sub-outsourcing", doraSubOutsourcingRoutes);
+router.use("/bait/pruefungen", baitPruefungenRoutes);
+router.use("/bait/feststellungen", baitFeststellungenRoutes);
+router.use("/bait/informationsverbuende", baitInformationsverbuendeRoutes);
+router.use("/bait/risikobewertungen", baitRisikobewertungenRoutes);

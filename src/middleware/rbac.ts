@@ -26,7 +26,9 @@ export type Resource =
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
   | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
-  | "doraRegister"; // DORA Art. 28-30 — IKT-Drittdienstleister-Register (Arrangements + Sub-Kette)
+  | "doraRegister" // DORA Art. 28-30 — IKT-Drittdienstleister-Register (Arrangements + Sub-Kette)
+  | "baitPruefung" // BAIT IT-Prüfung — Prüfungsregister + Feststellungen (eigenständig ggü. revisionRecord)
+  | "baitRisiko"; // BAIT Kap. 3 Informationsrisikomanagement — Informationsverbünde + Risikobewertungen
 
 export type Action = "read" | "write" | "delete";
 
@@ -126,6 +128,21 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   doraRegister: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
+    delete: ["ADMIN"],
+  },
+  // Ein IT-Audit ist inhaltlich eine Prüfungstätigkeit — gleicher Schreibkreis wie revisionRecord
+  // (INTERNE_REVISION führt die Prüfung durch), breit lesbar wie jedes andere Register hier.
+  baitPruefung: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+    delete: ["ADMIN"],
+  },
+  // Das Informationsverbund-/Risiko-Register ist inhaltlich IT-Risikomanagement — gleicher
+  // Schreibkreis wie complianceReference/Risiko-Kontrolle (COMPLIANCE, RISIKOCONTROLLING), nicht an
+  // die Prüfungsfunktion gebunden.
+  baitRisiko: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "ADMIN"],
     delete: ["ADMIN"],
   },
 };
