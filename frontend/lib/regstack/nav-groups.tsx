@@ -3,9 +3,11 @@ import {
   AlertTriangleIcon,
   BoxIcon,
   ClipboardListIcon,
+  CpuIcon,
   FileBarChartIcon,
   FileTextIcon,
   FlagIcon,
+  GaugeIcon,
   NetworkIcon,
   ScaleIcon,
   SearchCheckIcon,
@@ -16,13 +18,21 @@ import {
 
 // A local, nav-only module key — deliberately NOT the Supabase-generated `ModuleType` enum
 // (lib/regstack/session.ts, backed by the `module_type` Postgres enum in the Supabase project
-// this repo doesn't hold migrations for). Accounting and IKS are Express/Prisma-backed modules
-// like Interne Revision before them, but they have no Supabase role_assignments entry — adding
-// one would mean a Supabase schema migration this repo can't run. The switcher renders every
-// entry here unconditionally already (it doesn't filter by ctx.roles), and real access control is
-// each module's own layout.tsx checking the backend session — so a local key set costs nothing
-// and avoids a dependency this repo can't fulfill.
-export type NavModuleKey = "outsourcing" | "compliance" | "internal_audit" | "accounting" | "iks";
+// this repo doesn't hold migrations for). Accounting, IKS, Risikomanagement, and IT-Risiko/BAIT
+// are all Express/Prisma-backed modules like Interne Revision before them, but none of them have
+// a Supabase role_assignments entry — adding one would mean a Supabase schema migration this repo
+// can't run. The switcher renders every entry here unconditionally already (it doesn't filter by
+// ctx.roles), and real access control is each module's own layout.tsx checking the backend
+// session (getBackendSession + canWrite*), same pattern Outsourcing already used — so a local key
+// set costs nothing and avoids a dependency this repo can't fulfill.
+export type NavModuleKey =
+  | "outsourcing"
+  | "compliance"
+  | "internal_audit"
+  | "accounting"
+  | "iks"
+  | "risikomanagement"
+  | "it_risiko";
 
 export type NavLink = { href: string; label: string };
 export type NavGroup = { title: string | null; icon: ReactNode; items: NavLink[] };
@@ -195,9 +205,69 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
       },
     ],
   },
+  risikomanagement: {
+    module: "risikomanagement",
+    label: "Risikomanagement",
+    href: "/risikomanagement",
+    switcherIcon: <GaugeIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/risikomanagement",
+    dashboardLabel: "Dashboard",
+    groups: [
+      {
+        title: "Inventur & Strategien · AT 4.1–4.2",
+        icon: <FileTextIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#inventur", label: "Risikoinventur" }, { href: "/risikomanagement#strategien", label: "Geschäfts- & Risikostrategien" }],
+      },
+      {
+        title: "Risikotragfähigkeit · AT 4.1",
+        icon: <GaugeIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#rtf", label: "RTF & Limitauslastung" }],
+      },
+      {
+        title: "Berichte · AT 4.4.1",
+        icon: <FileBarChartIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#bericht", label: "Bericht an die Geschäftsleitung" }],
+      },
+    ],
+  },
+  it_risiko: {
+    module: "it_risiko",
+    label: "IT-Risiko / BAIT",
+    href: "/it-risiko",
+    switcherIcon: <CpuIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/it-risiko",
+    dashboardLabel: "Dashboard",
+    groups: [
+      {
+        title: "IT-Strategie · Kap. 1",
+        icon: <FileTextIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#strategie", label: "IT-Strategie" }],
+      },
+      {
+        title: "Informationsrisiko · Kap. 3",
+        icon: <ShieldIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#assets", label: "Schutzbedarfsfeststellung" }, { href: "/it-risiko#risiken", label: "IT-Risikoregister" }],
+      },
+      {
+        title: "Informationssicherheit · Kap. 4",
+        icon: <AlertTriangleIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#vorfaelle", label: "Sicherheitsvorfälle" }],
+      },
+    ],
+  },
 };
 
-export const MODULE_ORDER: NavModuleKey[] = ["outsourcing", "compliance", "internal_audit", "accounting", "iks"];
+export const MODULE_ORDER: NavModuleKey[] = [
+  "outsourcing",
+  "compliance",
+  "internal_audit",
+  "accounting",
+  "iks",
+  "risikomanagement",
+  "it_risiko",
+];
 
 export function moduleForPathname(pathname: string): NavModuleKey | null {
   for (const mod of MODULE_ORDER) {

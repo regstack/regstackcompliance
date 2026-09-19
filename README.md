@@ -113,6 +113,12 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
   der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
   aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+- Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
+  (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
+  `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
+  auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
+  Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
+  `Risikomanagement_BAIT_MVP_Spezifikation.md`.
 - Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
   umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
   Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
@@ -121,3 +127,5 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
   funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
   und Zugangsdaten gesetzt sind (siehe `.env.example`).
+- Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
+  nur Lint/Test/Build ab, keinen Deploy-Schritt.
