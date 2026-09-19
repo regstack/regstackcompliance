@@ -25,7 +25,8 @@ export type Resource =
   | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
-  | "revisionPlan.approve"; // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "ictRegister"; // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
 
 export type Action = "read" | "write" | "delete";
 
@@ -119,6 +120,12 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
   "revisionPlan.approve": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  ictRegister: {
+    // Same role split as outsourcingActivity: ICT third-party risk sits alongside outsourcing
+    // risk management, handled by the same actors.
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
   },
 };
 

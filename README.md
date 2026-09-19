@@ -99,8 +99,12 @@ bereits automatisch bei jedem Push, dafür ist kein zusätzlicher CI-Schritt nö
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
-  `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- DORA-Registermodul (Art. 28–30): eine erste Fassung ist da (`src/modules/ictRegister/`,
+  UI unter Outsourcing → „DORA-Register", `prisma/schema.prisma` — `IctProvider`/
+  `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
+  Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
+  der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
 - Backup/Disaster-Recovery der Produktiv-DB: Plan liegt vor (`docs/backup-disaster-recovery.md`),
   konkrete Umsetzung steht noch aus.
 - Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die

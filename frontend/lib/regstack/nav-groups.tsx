@@ -38,7 +38,13 @@ export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
     active: true,
     dashboardHref: "/outsourcing",
     dashboardLabel: "Auslagerungsregister",
-    groups: [],
+    groups: [
+      {
+        title: "IKT-Drittanbieter · DORA Art. 28–30",
+        icon: <AlertTriangleIcon {...iconProps} />,
+        items: [{ href: "/outsourcing/ict-register", label: "DORA-Register" }],
+      },
+    ],
   },
   compliance: {
     module: "compliance",

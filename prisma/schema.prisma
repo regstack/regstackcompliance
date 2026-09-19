@@ -309,6 +309,9 @@ model InstitutionProfile {
   revisionSonderauftraege  RevisionSonderauftrag[]
   revisionReports          RevisionReport[]
 
+  ictProviders             IctProvider[]
+  ictArrangements          IctArrangement[]
+
   @@map("institution_profiles")
 }
 
@@ -1487,4 +1490,69 @@ model RevisionReport {
 
   @@map("revision_reports")
   @@index([institutionId])
+}
+
+// DORA (Verordnung (EU) 2022/2554) Art. 28-30 — Register of Information über ICT-Drittanbieter.
+// Bewusst ein EIGENSTÄNDIGES Register statt eine Erweiterung von OutsourcingActivity: DORA erfasst
+// ALLE IKT-Dienstleistungsverträge, nicht nur die, die MaRisk AT 9 als "Auslagerung" einordnet —
+// beide Register können sich auf denselben Anbieter beziehen, ohne dass eine Regelung die andere
+// verzerrt. HINWEIS: Diese Feldstruktur ist eine interne Arbeitsgrundlage für die in Art. 28-30
+// verlangten Kerninhalte, KEIN geprüfter 1:1-Abgleich mit den offiziellen EBA/ESA-Meldevorlagen
+// (Durchführungsverordnung (EU) 2024/2956) — vor aufsichtsrechtlicher Meldung fachlich prüfen.
+enum IctProviderType {
+  DIREKT
+  KONZERNINTERN
+}
+
+enum IctArrangementStatus {
+  AKTIV
+  BEENDET
+}
+
+model IctProvider {
+  id                     String   @id @default(uuid())
+  institutionId          String
+  institution            InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  name                   String
+  legalEntityIdentifier  String?  // LEI, sofern vorhanden
+  country                String?
+  providerType           IctProviderType @default(DIREKT)
+  parentUndertaking      String?  // Mutterunternehmen, bei Konzernbezug relevant
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  arrangements           IctArrangement[]
+
+  @@map("ict_providers")
+  @@index([institutionId])
+}
+
+model IctArrangement {
+  id                       String   @id @default(uuid())
+  institutionId            String
+  institution              InstitutionProfile @relation(fields: [institutionId], references: [id])
+  providerId               String
+  provider                 IctProvider @relation(fields: [providerId], references: [id])
+
+  functionDescription      String   // erbrachte IKT-Dienstleistung/-Funktion
+  supportsCriticalFunction Boolean  @default(false) // Art. 28(3) — kritische oder wichtige Funktion
+  criticalityReason        String?  // Pflicht, sobald supportsCriticalFunction = true
+
+  contractStart            DateTime?
+  contractEnd              DateTime?
+  terminationNoticeMonths  Int?
+  dataCategories           String?
+  hasSubcontracting        Boolean  @default(false)
+  subcontractingNote       String?
+
+  status                   IctArrangementStatus @default(AKTIV)
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("ict_arrangements")
+  @@index([institutionId])
+  @@index([providerId])
 }
