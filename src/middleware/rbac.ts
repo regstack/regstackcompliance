@@ -26,7 +26,16 @@ export type Resource =
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
   | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
-  | "ictRegister"; // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
+  | "ictRegister" // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
+  | "accountingRecord" // Bilanz, GuV, Anhang, Lagebericht — Entwurf-Erfassung/-Bearbeitung
+  | "accountingReport" // Finalisierung (Entwurf -> final) je Dokumenttyp/Geschäftsjahr
+  | "accountingReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Dokuments
+  | "icsProcess" // IKS Geschäftsprozesse
+  | "icsControl" // IKS Kontrollen (Zuordnung zu Prozessen)
+  | "icsTesting" // IKS Kontrolltests inkl. Nachweisen
+  | "icsPolicy" // IKS Richtlinien-/Workflow-Dokumentenbibliothek
+  | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
+  | "externalAuditRecord.acknowledge"; // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
 
 export type Action = "read" | "write" | "delete";
 
@@ -126,6 +135,40 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     // risk management, handled by the same actors.
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
+  },
+  accountingRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["BUCHHALTUNG", "ADMIN"],
+  },
+  accountingReport: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["BUCHHALTUNG", "ADMIN"],
+  },
+  "accountingReport.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  icsProcess: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  icsControl: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  icsTesting: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "INTERNE_REVISION", "ADMIN"],
+  },
+  icsPolicy: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "COMPLIANCE", "ADMIN"],
+  },
+  externalAuditRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  "externalAuditRecord.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
 };
 

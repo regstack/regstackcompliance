@@ -27,6 +27,8 @@ async function main() {
       { email: "geschaeftsleitung@beispiel-leasing.de", name: "J. Bauer", role: "GESCHAEFTSLEITUNG" as const },
       { email: "compliance@beispiel-leasing.de", name: "M. Winter", role: "COMPLIANCE" as const },
       { email: "revision@beispiel-leasing.de", name: "K. Fischer", role: "INTERNE_REVISION" as const },
+      { email: "risikocontrolling@beispiel-leasing.de", name: "T. Neumann", role: "RISIKOCONTROLLING" as const },
+      { email: "buchhaltung@beispiel-leasing.de", name: "S. Krüger", role: "BUCHHALTUNG" as const },
       { email: "admin@regstack.de", name: "RegStack Admin", role: "ADMIN" as const },
     ].map((u) =>
       prisma.user.upsert({
@@ -525,8 +527,520 @@ async function main() {
     },
   });
 
+  const risikocontrolling = users[3];
+  const buchhaltung = users[4];
+
+  // --- Accounting / Buchhaltung demo data -------------------------------------------------
+  // Three fiscal years so the dashboard's period-over-period analysis has something to show;
+  // 2024/2025 are finalized (2024 also signed off by Geschäftsleitung), 2026 is still a draft.
+
+  const bilanz2024 = await prisma.balanceSheet.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000001" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000001",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2024,
+      periodLabel: "Geschäftsjahr 2024",
+      status: "final",
+      finalizedAt: new Date("2025-03-15"),
+      lineItems: {
+        create: [
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Leasingvermögen", currentAmount: 42_000_000, priorYearAmount: 38_000_000, sortOrder: 1 },
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Sachanlagen", currentAmount: 1_200_000, priorYearAmount: 1_100_000, sortOrder: 2 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Forderungen aus Leasingverträgen", currentAmount: 8_500_000, priorYearAmount: 7_800_000, sortOrder: 3 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Kassenbestand, Guthaben bei Kreditinstituten", currentAmount: 3_200_000, priorYearAmount: 2_900_000, sortOrder: 4 },
+          { side: "AKTIVA", section: "RECHNUNGSABGRENZUNG_AKTIVA", label: "Aktive Rechnungsabgrenzung", currentAmount: 450_000, priorYearAmount: 400_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gezeichnetes Kapital", currentAmount: 5_000_000, priorYearAmount: 5_000_000, sortOrder: 1 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gewinnrücklagen", currentAmount: 6_200_000, priorYearAmount: 5_400_000, sortOrder: 2 },
+          { side: "PASSIVA", section: "RUECKSTELLUNGEN", label: "Rückstellungen für Risiken", currentAmount: 1_800_000, priorYearAmount: 1_600_000, sortOrder: 3 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten gegenüber Kreditinstituten", currentAmount: 38_500_000, priorYearAmount: 35_200_000, sortOrder: 4 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten aus Lieferungen und Leistungen", currentAmount: 3_100_000, priorYearAmount: 2_800_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "RECHNUNGSABGRENZUNG_PASSIVA", label: "Passive Rechnungsabgrenzung", currentAmount: 750_000, priorYearAmount: 680_000, sortOrder: 6 },
+        ],
+      },
+    },
+  });
+  await prisma.accountingSignOff.upsert({
+    where: { documentType_documentId_userId: { documentType: "BILANZ", documentId: bilanz2024.id, userId: geschaeftsleitung.id } },
+    update: {},
+    create: { institutionId: institution.id, documentType: "BILANZ", documentId: bilanz2024.id, userId: geschaeftsleitung.id },
+  });
+
+  await prisma.balanceSheet.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000002" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000002",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2025,
+      periodLabel: "Geschäftsjahr 2025",
+      status: "final",
+      finalizedAt: new Date("2026-03-14"),
+      lineItems: {
+        create: [
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Leasingvermögen", currentAmount: 46_800_000, priorYearAmount: 42_000_000, sortOrder: 1 },
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Sachanlagen", currentAmount: 1_350_000, priorYearAmount: 1_200_000, sortOrder: 2 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Forderungen aus Leasingverträgen", currentAmount: 9_600_000, priorYearAmount: 8_500_000, sortOrder: 3 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Kassenbestand, Guthaben bei Kreditinstituten", currentAmount: 3_850_000, priorYearAmount: 3_200_000, sortOrder: 4 },
+          { side: "AKTIVA", section: "RECHNUNGSABGRENZUNG_AKTIVA", label: "Aktive Rechnungsabgrenzung", currentAmount: 500_000, priorYearAmount: 450_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gezeichnetes Kapital", currentAmount: 5_000_000, priorYearAmount: 5_000_000, sortOrder: 1 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gewinnrücklagen", currentAmount: 7_450_000, priorYearAmount: 6_200_000, sortOrder: 2 },
+          { side: "PASSIVA", section: "RUECKSTELLUNGEN", label: "Rückstellungen für Risiken", currentAmount: 2_100_000, priorYearAmount: 1_800_000, sortOrder: 3 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten gegenüber Kreditinstituten", currentAmount: 43_200_000, priorYearAmount: 38_500_000, sortOrder: 4 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten aus Lieferungen und Leistungen", currentAmount: 3_450_000, priorYearAmount: 3_100_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "RECHNUNGSABGRENZUNG_PASSIVA", label: "Passive Rechnungsabgrenzung", currentAmount: 900_000, priorYearAmount: 750_000, sortOrder: 6 },
+        ],
+      },
+    },
+  });
+
+  await prisma.balanceSheet.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000003" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000003",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2026,
+      periodLabel: "Geschäftsjahr 2026 (laufend)",
+      status: "entwurf",
+      lineItems: {
+        create: [
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Leasingvermögen", currentAmount: 49_500_000, priorYearAmount: 46_800_000, sortOrder: 1 },
+          { side: "AKTIVA", section: "ANLAGEVERMOEGEN", label: "Sachanlagen", currentAmount: 1_300_000, priorYearAmount: 1_350_000, sortOrder: 2 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Forderungen aus Leasingverträgen", currentAmount: 10_800_000, priorYearAmount: 9_600_000, sortOrder: 3 },
+          { side: "AKTIVA", section: "UMLAUFVERMOEGEN", label: "Kassenbestand, Guthaben bei Kreditinstituten", currentAmount: 4_100_000, priorYearAmount: 3_850_000, sortOrder: 4 },
+          { side: "AKTIVA", section: "RECHNUNGSABGRENZUNG_AKTIVA", label: "Aktive Rechnungsabgrenzung", currentAmount: 520_000, priorYearAmount: 500_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gezeichnetes Kapital", currentAmount: 5_000_000, priorYearAmount: 5_000_000, sortOrder: 1 },
+          { side: "PASSIVA", section: "EIGENKAPITAL", label: "Gewinnrücklagen", currentAmount: 8_900_000, priorYearAmount: 7_450_000, sortOrder: 2 },
+          { side: "PASSIVA", section: "RUECKSTELLUNGEN", label: "Rückstellungen für Risiken", currentAmount: 3_400_000, priorYearAmount: 2_100_000, sortOrder: 3 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten gegenüber Kreditinstituten", currentAmount: 45_100_000, priorYearAmount: 43_200_000, sortOrder: 4 },
+          { side: "PASSIVA", section: "VERBINDLICHKEITEN", label: "Verbindlichkeiten aus Lieferungen und Leistungen", currentAmount: 2_850_000, priorYearAmount: 3_450_000, sortOrder: 5 },
+          { side: "PASSIVA", section: "RECHNUNGSABGRENZUNG_PASSIVA", label: "Passive Rechnungsabgrenzung", currentAmount: 970_000, priorYearAmount: 900_000, sortOrder: 6 },
+        ],
+      },
+    },
+  });
+
+  await prisma.incomeStatement.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000011" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000011",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2024,
+      periodLabel: "Geschäftsjahr 2024",
+      status: "final",
+      finalizedAt: new Date("2025-03-15"),
+      lineItems: {
+        create: [
+          { section: "ERTRAEGE", label: "Leasingerträge", currentAmount: 9_200_000, priorYearAmount: 8_400_000, sortOrder: 1 },
+          { section: "ERTRAEGE", label: "Zinserträge", currentAmount: 350_000, priorYearAmount: 300_000, sortOrder: 2 },
+          { section: "ERTRAEGE", label: "Sonstige betriebliche Erträge", currentAmount: 180_000, priorYearAmount: 150_000, sortOrder: 3 },
+          { section: "AUFWENDUNGEN", label: "Abschreibungen auf Leasingvermögen", currentAmount: 5_100_000, priorYearAmount: 4_700_000, sortOrder: 4 },
+          { section: "AUFWENDUNGEN", label: "Zinsaufwendungen", currentAmount: 2_200_000, priorYearAmount: 2_000_000, sortOrder: 5 },
+          { section: "AUFWENDUNGEN", label: "Personalaufwand", currentAmount: 1_450_000, priorYearAmount: 1_300_000, sortOrder: 6 },
+          { section: "AUFWENDUNGEN", label: "Sonstige betriebliche Aufwendungen", currentAmount: 780_000, priorYearAmount: 700_000, sortOrder: 7 },
+          { section: "ERGEBNIS", label: "Jahresüberschuss", currentAmount: 200_000, priorYearAmount: 150_000, sortOrder: 8 },
+        ],
+      },
+    },
+  });
+
+  await prisma.incomeStatement.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000012" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000012",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2025,
+      periodLabel: "Geschäftsjahr 2025",
+      status: "final",
+      finalizedAt: new Date("2026-03-14"),
+      lineItems: {
+        create: [
+          { section: "ERTRAEGE", label: "Leasingerträge", currentAmount: 10_400_000, priorYearAmount: 9_200_000, sortOrder: 1 },
+          { section: "ERTRAEGE", label: "Zinserträge", currentAmount: 420_000, priorYearAmount: 350_000, sortOrder: 2 },
+          { section: "ERTRAEGE", label: "Sonstige betriebliche Erträge", currentAmount: 210_000, priorYearAmount: 180_000, sortOrder: 3 },
+          { section: "AUFWENDUNGEN", label: "Abschreibungen auf Leasingvermögen", currentAmount: 5_650_000, priorYearAmount: 5_100_000, sortOrder: 4 },
+          { section: "AUFWENDUNGEN", label: "Zinsaufwendungen", currentAmount: 2_500_000, priorYearAmount: 2_200_000, sortOrder: 5 },
+          { section: "AUFWENDUNGEN", label: "Personalaufwand", currentAmount: 1_600_000, priorYearAmount: 1_450_000, sortOrder: 6 },
+          { section: "AUFWENDUNGEN", label: "Sonstige betriebliche Aufwendungen", currentAmount: 850_000, priorYearAmount: 780_000, sortOrder: 7 },
+          { section: "ERGEBNIS", label: "Jahresüberschuss", currentAmount: 430_000, priorYearAmount: 200_000, sortOrder: 8 },
+        ],
+      },
+    },
+  });
+
+  await prisma.incomeStatement.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000013" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000013",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2026,
+      periodLabel: "Geschäftsjahr 2026 (laufend)",
+      status: "entwurf",
+      lineItems: {
+        create: [
+          { section: "ERTRAEGE", label: "Leasingerträge", currentAmount: 11_700_000, priorYearAmount: 10_400_000, sortOrder: 1 },
+          { section: "ERTRAEGE", label: "Zinserträge", currentAmount: 480_000, priorYearAmount: 420_000, sortOrder: 2 },
+          { section: "ERTRAEGE", label: "Sonstige betriebliche Erträge", currentAmount: 240_000, priorYearAmount: 210_000, sortOrder: 3 },
+          { section: "AUFWENDUNGEN", label: "Abschreibungen auf Leasingvermögen", currentAmount: 6_200_000, priorYearAmount: 5_650_000, sortOrder: 4 },
+          { section: "AUFWENDUNGEN", label: "Zinsaufwendungen", currentAmount: 2_750_000, priorYearAmount: 2_500_000, sortOrder: 5 },
+          { section: "AUFWENDUNGEN", label: "Personalaufwand", currentAmount: 1_780_000, priorYearAmount: 1_600_000, sortOrder: 6 },
+          { section: "AUFWENDUNGEN", label: "Sonstige betriebliche Aufwendungen", currentAmount: 990_000, priorYearAmount: 850_000, sortOrder: 7 },
+          { section: "ERGEBNIS", label: "Jahresüberschuss", currentAmount: 700_000, priorYearAmount: 430_000, sortOrder: 8 },
+        ],
+      },
+    },
+  });
+
+  await prisma.accountingNotes.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000021" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000021",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2025,
+      status: "final",
+      finalizedAt: new Date("2026-03-14"),
+      sections: {
+        create: [
+          {
+            title: "Bilanzierungs- und Bewertungsmethoden",
+            content: "Das Leasingvermögen wird linear über die betriebsgewöhnliche Nutzungsdauer abgeschrieben. Forderungen aus Leasingverträgen werden zum Nennwert abzüglich Einzelwertberichtigungen angesetzt.",
+            sortOrder: 1,
+          },
+          {
+            title: "Angaben zu Verbindlichkeiten gegenüber Kreditinstituten",
+            content: "Die Verbindlichkeiten gegenüber Kreditinstituten haben überwiegend eine Restlaufzeit von mehr als fünf Jahren und dienen der Refinanzierung des Leasingportfolios.",
+            linkedLineItemLabel: "Verbindlichkeiten gegenüber Kreditinstituten",
+            sortOrder: 2,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.managementReport.upsert({
+    where: { id: "20000000-0000-0000-0000-000000000031" },
+    update: {},
+    create: {
+      id: "20000000-0000-0000-0000-000000000031",
+      institutionId: institution.id,
+      createdByUserId: buchhaltung.id,
+      fiscalYear: 2025,
+      status: "final",
+      finalizedAt: new Date("2026-03-14"),
+      sections: {
+        create: [
+          {
+            title: "Geschäftsverlauf",
+            content: "Das Neugeschäft im Leasingportfolio entwickelte sich planmäßig; die Leasingerträge stiegen um rund 13 % gegenüber dem Vorjahr.",
+            sortOrder: 1,
+          },
+          {
+            title: "Risikobericht",
+            content: "Adressenausfallrisiken werden durch eine breite Diversifizierung des Kundenportfolios begrenzt. Zinsänderungsrisiken werden durch fristenkongruente Refinanzierung gesteuert.",
+            sortOrder: 2,
+          },
+          {
+            title: "Prognosebericht",
+            content: "Für das Geschäftsjahr 2026 wird ein weiteres moderates Wachstum des Neugeschäfts sowie ein Anstieg des Jahresüberschusses erwartet.",
+            sortOrder: 3,
+          },
+        ],
+      },
+    },
+  });
+
+  // --- Internal Control System (IKS) demo data -------------------------------------------------
+
+  const p2p = await prisma.icsBusinessProcess.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000001" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000001",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Procure-to-Pay",
+      owner: "Einkauf & Rechnungswesen",
+      description: "Prozess von der Bestellanforderung über Wareneingang und Rechnungsprüfung bis zur Zahlung.",
+    },
+  });
+  const o2c = await prisma.icsBusinessProcess.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000002" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000002",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Order-to-Cash",
+      owner: "Vertrieb & Forderungsmanagement",
+      description: "Prozess von der Vertragsanbahnung über Rechnungsstellung bis zum Zahlungseingang.",
+    },
+  });
+  const payroll = await prisma.icsBusinessProcess.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000003" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000003",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Payroll",
+      owner: "Personalabteilung",
+      description: "Monatliche Gehaltsabrechnung inklusive Personalstammdatenpflege und Abrechnungsläufen.",
+    },
+  });
+  const itAccess = await prisma.icsBusinessProcess.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000004" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000004",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "IT Access Management",
+      owner: "IT-Abteilung",
+      description: "Vergabe, Überprüfung und Entzug von Berechtigungen für IT-Systeme und Kernanwendungen.",
+    },
+  });
+
+  const controlP2P1 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000101" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000101",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Vier-Augen-Prinzip bei Zahlungsfreigabe",
+      controlType: "MANUAL",
+      frequency: "PER_TRANSACTION",
+      description: "Jede Zahlung erfordert die Freigabe durch eine zweite, von der Rechnungserfassung unabhängige Person.",
+      risksAddressed: "Fehlerhafte oder betrügerische Zahlungen",
+      controlOwnerUserId: buchhaltung.id,
+      businessProcesses: { create: [{ businessProcessId: p2p.id }] },
+    },
+  });
+  await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000102" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000102",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Automatischer 3-Way-Match",
+      controlType: "AUTOMATED",
+      frequency: "PER_TRANSACTION",
+      description: "Das ERP-System gleicht Bestellung, Wareneingang und Rechnung automatisiert ab, bevor eine Zahlung angestoßen wird.",
+      risksAddressed: "Zahlung ohne zugrunde liegende Leistung",
+      controlOwnerUserId: risikocontrolling.id,
+      businessProcesses: { create: [{ businessProcessId: p2p.id }] },
+    },
+  });
+  const controlO2C1 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000103" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000103",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Monatlicher Forderungsabgleich",
+      controlType: "MANUAL",
+      frequency: "MONTHLY",
+      description: "Abgleich der offenen Forderungen aus Leasingverträgen mit der Debitorenbuchhaltung.",
+      risksAddressed: "Fehlbestände oder verspätete Erkennung von Zahlungsausfällen",
+      controlOwnerUserId: buchhaltung.id,
+      businessProcesses: { create: [{ businessProcessId: o2c.id }] },
+    },
+  });
+  const controlPayroll1 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000104" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000104",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Plausibilitätsprüfung Gehaltslauf",
+      controlType: "AUTOMATED",
+      frequency: "MONTHLY",
+      description: "Automatisierter Soll-Ist-Vergleich der Gehaltssumme je Abrechnungslauf gegenüber dem Vormonat, Abweichungen werden markiert.",
+      risksAddressed: "Fehlerhafte Gehaltsabrechnung",
+      controlOwnerUserId: risikocontrolling.id,
+      businessProcesses: { create: [{ businessProcessId: payroll.id }] },
+    },
+  });
+  const controlPayroll2 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000105" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000105",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Vier-Augen-Prinzip Personalstammdatenänderung",
+      controlType: "MANUAL",
+      frequency: "PER_TRANSACTION",
+      description: "Änderungen an Bankverbindung oder Gehalt in den Personalstammdaten erfordern eine zweite Freigabe.",
+      risksAddressed: "Manipulation von Personalstammdaten",
+      controlOwnerUserId: buchhaltung.id,
+      businessProcesses: { create: [{ businessProcessId: payroll.id }] },
+    },
+  });
+  const controlIt1 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000106" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000106",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Quartalsweise Rezertifizierung der Zugriffsrechte",
+      controlType: "ITGC",
+      frequency: "QUARTERLY",
+      description: "Fachbereichsleiter bestätigen quartalsweise, dass die vergebenen Berechtigungen in den Kernanwendungen weiterhin erforderlich sind.",
+      risksAddressed: "Überhöhte oder verwaiste Zugriffsrechte",
+      controlOwnerUserId: risikocontrolling.id,
+      businessProcesses: { create: [{ businessProcessId: itAccess.id }] },
+    },
+  });
+  const controlIt2 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000107" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000107",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Automatische Deaktivierung bei Austritt",
+      controlType: "ITGC",
+      frequency: "PER_TRANSACTION",
+      description: "Beim Austritt eines Mitarbeitenden werden alle Systemzugänge automatisiert über die HR-Schnittstelle gesperrt.",
+      risksAddressed: "Fortbestehender Zugriff ausgeschiedener Mitarbeitender",
+      controlOwnerUserId: risikocontrolling.id,
+      businessProcesses: { create: [{ businessProcessId: itAccess.id }] },
+    },
+  });
+  const controlIt3 = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000108" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000108",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Jährliche Passwortrichtlinien-Prüfung",
+      controlType: "ITGC",
+      frequency: "ANNUALLY",
+      description: "Jährliche Überprüfung, ob die technischen Passwortrichtlinien in allen Kernanwendungen den Vorgaben entsprechen.",
+      risksAddressed: "Unzureichende Zugangssicherung",
+      controlOwnerUserId: revision.id,
+      businessProcesses: { create: [{ businessProcessId: itAccess.id }] },
+    },
+  });
+
+  await prisma.icsControlTest.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000201" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000201",
+      controlId: controlIt1.id,
+      createdByUserId: revision.id,
+      plannedPeriod: "Q1 2026",
+      plannedDate: new Date("2026-02-15"),
+      status: "COMPLETED",
+      result: "EFFECTIVE",
+      resultNotes: "Stichprobe von 10 Nutzerkonten geprüft — Rezertifizierung vollständig und fristgerecht dokumentiert.",
+      testedByUserId: revision.id,
+      testedAt: new Date("2026-02-20"),
+      evidence: {
+        create: [
+          {
+            id: "30000000-0000-0000-0000-000000000301",
+            fileObjectKey: "ics-evidence/rezertifizierung-q1-2026.pdf",
+            fileName: "Rezertifizierung_Zugriffsrechte_Q1_2026.pdf",
+            fileMime: "application/pdf",
+            uploadedByUserId: revision.id,
+          },
+        ],
+      },
+    },
+  });
+  await prisma.icsControlTest.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000202" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000202",
+      controlId: controlIt2.id,
+      createdByUserId: risikocontrolling.id,
+      plannedPeriod: "Q2 2026",
+      plannedDate: new Date("2026-05-30"),
+      status: "PLANNED",
+    },
+  });
+  await prisma.icsControlTest.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000203" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000203",
+      controlId: controlP2P1.id,
+      createdByUserId: risikocontrolling.id,
+      plannedPeriod: "Q1 2026",
+      plannedDate: new Date("2026-03-10"),
+      status: "COMPLETED",
+      result: "DEFICIENT",
+      resultNotes: "In 2 von 20 Stichproben fehlte die zweite Freigabe — Nachschärfung des Freigabeworkflows empfohlen.",
+      testedByUserId: risikocontrolling.id,
+      testedAt: new Date("2026-03-12"),
+    },
+  });
+
+  await prisma.icsPolicyDocument.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000401" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000401",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      title: "Konzernrichtlinie Zahlungsverkehr",
+      description: "Regelt Zeichnungsberechtigungen, Freigabeworkflows und Vier-Augen-Prinzip im Zahlungsverkehr.",
+      documentType: "Richtlinie",
+      fileObjectKey: "ics-policies/richtlinie-zahlungsverkehr-v3.pdf",
+      fileName: "Richtlinie_Zahlungsverkehr_v3.pdf",
+      fileMime: "application/pdf",
+      uploadedByUserId: risikocontrolling.id,
+      uploadedAt: new Date("2025-11-01"),
+      businessProcesses: { create: [{ businessProcessId: p2p.id }] },
+      controls: { create: [{ controlId: controlP2P1.id }] },
+    },
+  });
+  await prisma.icsPolicyDocument.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000402" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000402",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      title: "Arbeitsanweisung Berechtigungsvergabe IT",
+      description: "Beschreibt den Workflow zur Beantragung, Genehmigung und Rezertifizierung von IT-Berechtigungen.",
+      documentType: "Arbeitsanweisung",
+      fileObjectKey: "ics-policies/arbeitsanweisung-berechtigungsvergabe.pdf",
+      fileName: "Arbeitsanweisung_Berechtigungsvergabe_IT.pdf",
+      fileMime: "application/pdf",
+      uploadedByUserId: risikocontrolling.id,
+      uploadedAt: new Date("2025-09-15"),
+      businessProcesses: { create: [{ businessProcessId: itAccess.id }] },
+      controls: { create: [{ controlId: controlIt1.id }, { controlId: controlIt2.id }] },
+    },
+  });
+
   // eslint-disable-next-line no-console
-  console.log(`Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, and Interne Revision demo data.`);
+  console.log(
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, and IKS demo data.`
+  );
 }
 
 main()

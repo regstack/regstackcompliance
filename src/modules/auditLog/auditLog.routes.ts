@@ -41,6 +41,8 @@ const MODULE_ENTITY_TYPES: Record<string, string[]> = {
     "RevisionGlMitteilung",
     "RevisionSonderauftrag",
     "RevisionReport",
+    "ExternePruefung",
+    "ExternePruefungFeststellung",
   ],
 };
 

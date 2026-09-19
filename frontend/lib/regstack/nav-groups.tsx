@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { ModuleType } from "@/lib/regstack/session";
 import {
   AlertTriangleIcon,
   BoxIcon,
@@ -7,17 +6,29 @@ import {
   FileBarChartIcon,
   FileTextIcon,
   FlagIcon,
+  NetworkIcon,
+  ScaleIcon,
   SearchCheckIcon,
   SettingsIcon,
   ShieldIcon,
   UsersIcon,
 } from "@/components/ui/icons";
 
+// A local, nav-only module key — deliberately NOT the Supabase-generated `ModuleType` enum
+// (lib/regstack/session.ts, backed by the `module_type` Postgres enum in the Supabase project
+// this repo doesn't hold migrations for). Accounting and IKS are Express/Prisma-backed modules
+// like Interne Revision before them, but they have no Supabase role_assignments entry — adding
+// one would mean a Supabase schema migration this repo can't run. The switcher renders every
+// entry here unconditionally already (it doesn't filter by ctx.roles), and real access control is
+// each module's own layout.tsx checking the backend session — so a local key set costs nothing
+// and avoids a dependency this repo can't fulfill.
+export type NavModuleKey = "outsourcing" | "compliance" | "internal_audit" | "accounting" | "iks";
+
 export type NavLink = { href: string; label: string };
 export type NavGroup = { title: string | null; icon: ReactNode; items: NavLink[] };
 
 export type ModuleNav = {
-  module: ModuleType;
+  module: NavModuleKey;
   label: string;
   href: string;
   switcherIcon: ReactNode;
@@ -29,7 +40,7 @@ export type ModuleNav = {
 
 const iconProps = { width: 14, height: 14 } as const;
 
-export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
+export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
   outsourcing: {
     module: "outsourcing",
     label: "Outsourcing",
@@ -115,6 +126,7 @@ export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
         items: [
           { href: "/interne-revision/pruefungen", label: "Prüfungen" },
           { href: "/interne-revision/feststellungen", label: "Feststellungen & Nachverfolgung" },
+          { href: "/interne-revision/externe-pruefungen", label: "Externe Prüfung — Feststellungen" },
         ],
       },
       {
@@ -146,11 +158,48 @@ export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
       },
     ],
   },
+  accounting: {
+    module: "accounting",
+    label: "Buchhaltung",
+    href: "/buchhaltung",
+    switcherIcon: <ScaleIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/buchhaltung",
+    dashboardLabel: "Übersicht",
+    groups: [
+      {
+        title: "Jahresabschluss",
+        icon: <FileBarChartIcon {...iconProps} />,
+        items: [
+          { href: "/buchhaltung/bilanz", label: "Bilanz" },
+          { href: "/buchhaltung/guv", label: "Gewinn- und Verlustrechnung" },
+          { href: "/buchhaltung/anhang", label: "Anhang" },
+          { href: "/buchhaltung/lagebericht", label: "Lagebericht" },
+        ],
+      },
+    ],
+  },
+  iks: {
+    module: "iks",
+    label: "IKS",
+    href: "/iks",
+    switcherIcon: <NetworkIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/iks",
+    dashboardLabel: "Übersicht",
+    groups: [
+      {
+        title: "Prozesse & Kontrollen",
+        icon: <ClipboardListIcon {...iconProps} />,
+        items: [{ href: "/iks/richtlinien", label: "Richtlinien & Workflow-Dokumente" }],
+      },
+    ],
+  },
 };
 
-export const MODULE_ORDER: ModuleType[] = ["outsourcing", "compliance", "internal_audit"];
+export const MODULE_ORDER: NavModuleKey[] = ["outsourcing", "compliance", "internal_audit", "accounting", "iks"];
 
-export function moduleForPathname(pathname: string): ModuleType | null {
+export function moduleForPathname(pathname: string): NavModuleKey | null {
   for (const mod of MODULE_ORDER) {
     if (pathname.startsWith(MODULE_NAV[mod].href)) return mod;
   }
