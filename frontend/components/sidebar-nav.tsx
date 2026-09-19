@@ -187,7 +187,12 @@ export function SidebarNav({
             </span>
           ))}
         </div>
-        <SignOutButton variant="link" />
+        <div className="flex items-center justify-between">
+          <Link href="/konto" className="text-xs font-medium text-muted-foreground hover:text-copper-400">
+            Konto & Sicherheit
+          </Link>
+          <SignOutButton variant="link" />
+        </div>
       </div>
     </aside>
   );

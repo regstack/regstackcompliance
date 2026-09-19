@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRoutes from "../modules/users/auth.routes";
 import usersRoutes from "../modules/users/users.routes";
+import twoFactorRoutes from "../modules/users/twoFactor.routes";
 import institutionRoutes from "../modules/institutions/institutions.routes";
 import activityRoutes from "../modules/outsourcingActivities/activities.routes";
 import contractRoutes from "../modules/contracts/contracts.routes";
@@ -42,6 +43,7 @@ router.use("/activities/:activityId/weiterverlagerung", weiterverlagerungRoutes)
 router.use("/reports", reportRoutes);
 router.use("/audit-log", auditLogRoutes);
 router.use("/users", usersRoutes);
+router.use("/users/me/2fa", twoFactorRoutes);
 router.use("/compliance/quellen", complianceQuellenRoutes);
 router.use("/compliance/aenderungen", complianceAenderungenRoutes);
 router.use("/compliance/normen", complianceNormenRoutes);

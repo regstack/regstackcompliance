@@ -324,6 +324,13 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Optional TOTP second factor — offered to GESCHAEFTSLEITUNG/ADMIN (see
+  // src/modules/users/twoFactor.routes.ts). totpSecret is set as soon as setup is started but
+  // totpEnabled only flips to true once the user has proven possession of it (POST .../2fa/enable
+  // with a valid code) — never trust an unconfirmed secret to gate login.
+  totpSecret    String?
+  totpEnabled   Boolean  @default(false)
+
   auditEvents   AuditLogEvent[]
 
   @@map("users")
@@ -541,6 +548,20 @@ model Weiterverlagerung {
   @@map("weiterverlagerungen")
   @@index([activityId])
   @@index([parentId])
+}
+
+// Tracks which deadline-reminder emails have already gone out (src/modules/notifications), keyed
+// by the source record and how many days out the reminder fires — so a daily cron run never
+// re-sends the same threshold twice for the same contract/Handlungsoption/monitoring deadline.
+model DeadlineReminder {
+  id            String   @id @default(uuid())
+  entityType    String   // "CONTRACT" | "HANDLUNGSOPTION" | "MONITORING"
+  entityId      String   // OutsourcingActivity.id / MonitoringRecord.id
+  thresholdDays Int
+  sentAt        DateTime @default(now())
+
+  @@unique([entityType, entityId, thresholdDays])
+  @@map("deadline_reminders")
 }
 
 model Report {
