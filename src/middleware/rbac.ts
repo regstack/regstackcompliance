@@ -25,7 +25,9 @@ export type Resource =
   | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
-  | "revisionPlan.approve"; // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
+  | "externalAuditRecord.acknowledge"; // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
 
 export type Action = "read" | "write" | "delete";
 
@@ -118,6 +120,13 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
   "revisionPlan.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  externalAuditRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  "externalAuditRecord.acknowledge": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
 };

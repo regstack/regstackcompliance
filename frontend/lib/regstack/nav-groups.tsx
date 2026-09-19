@@ -109,6 +109,7 @@ export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
         items: [
           { href: "/interne-revision/pruefungen", label: "Prüfungen" },
           { href: "/interne-revision/feststellungen", label: "Feststellungen & Nachverfolgung" },
+          { href: "/interne-revision/externe-pruefungen", label: "Externe Prüfung — Feststellungen" },
         ],
       },
       {
