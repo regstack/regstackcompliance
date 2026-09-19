@@ -34,7 +34,8 @@ export type Resource =
   | "icsTesting" // IKS Kontrolltests inkl. Nachweisen
   | "icsPolicy" // IKS Richtlinien-/Workflow-Dokumentenbibliothek
   | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
-  | "externalAuditRecord.acknowledge"; // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
+  | "externalAuditRecord.acknowledge" // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
+  | "ictRegister"; // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
 
 export type Action = "read" | "write" | "delete";
 
@@ -162,6 +163,12 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
   "externalAuditRecord.acknowledge": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  ictRegister: {
+    // Same role split as outsourcingActivity: ICT third-party risk sits alongside outsourcing
+    // risk management, handled by the same actors.
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
   },
 };
 

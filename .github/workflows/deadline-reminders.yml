@@ -1,0 +1,28 @@
+name: Deadline reminders
+
+# Runs the deadline-reminder email job (contract renewals, Handlungsoption reviews, monitoring
+# due dates — see src/modules/notifications) against the production database once a day. This
+# backend has no in-process scheduler, so this workflow is the "cron" for it; point it at a
+# different scheduler instead if the production DB isn't reachable from GitHub Actions.
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      REMINDERS_FROM_EMAIL: ${{ vars.REMINDERS_FROM_EMAIL }}
+      REMINDERS_APP_URL: ${{ vars.REMINDERS_APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - run: npm run reminders:send

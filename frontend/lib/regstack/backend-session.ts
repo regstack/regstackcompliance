@@ -113,3 +113,12 @@ const ICS_POLICY_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "COMPLIANCE"
 export function canWriteIcsPolicy(role: BackendRole): boolean {
   return ICS_POLICY_WRITE_ROLES.includes(role);
 }
+
+// Mirrors src/middleware/rbac.ts's MATRIX.ictRegister.write — same role list as
+// OUTSOURCING_WRITE_ROLES today, kept as its own constant since the two are conceptually
+// independent (DORA ICT risk vs. MaRisk AT 9 outsourcing) and may diverge later.
+const ICT_REGISTER_WRITE_ROLES: BackendRole[] = ["COMPLIANCE", "RISIKOCONTROLLING", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"];
+
+export function canWriteIctRegister(role: BackendRole): boolean {
+  return ICT_REGISTER_WRITE_ROLES.includes(role);
+}

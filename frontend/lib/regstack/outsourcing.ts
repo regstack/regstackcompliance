@@ -63,6 +63,11 @@ export type HandlungsoptionRecord = {
 export type ContractRecord = {
   clauseChecklist: Record<string, ClauseStatus>;
   clauseJustifications: Record<string, string>;
+  fileObjectKey: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  fileMime: string | null;
+  uploadedAt: string | null;
 };
 
 export type WeiterverlagerungStatus = "AKTIV" | "ENTFERNT";

@@ -36,3 +36,20 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # Deploys to Render only after `test` passes on main — Render's own auto-deploy would otherwise
+  # ship a commit before CI has verified it. Render itself does the actual build/start (see
+  # render.yaml); this job only asks it to pull and deploy the commit that just passed CI, via the
+  # per-service deploy hook URL (Render dashboard → service → Settings → Deploy Hook).
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret not set — skipping deploy. See render.yaml/README for setup." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

@@ -68,16 +68,56 @@ src/middleware/auditTrail.ts    withAudit() — transaktionaler Audit-Trail
 src/modules/…                   Ein Ordner je Entität/Prozess (Route + Validierung)
 prisma/seed.ts                  Musterdaten, deckungsgleich mit regstack_cockpit.html
 tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, ohne DB-Abhängigkeit
-.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build
+.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build,
+                                 Deploy-Trigger (Render) nach grüner CI auf main
+render.yaml                     Render-Blueprint für den Backend-Dienst (siehe Abschnitt Deployment)
 ```
+
+## Deployment
+
+Die Datenbank ist Supabase-Postgres (Region eu-central-1/Frankfurt) — `DATABASE_URL` zeigt direkt
+darauf, es gibt keine separate RDS-/Hetzner-Datenbank. Der Node/Express-Prozess selbst läuft
+separat auf [Render](https://render.com) (`render.yaml` im Repo-Root ist die Blueprint-Definition
+dafür), da Supabase keine langlaufenden Node-Prozesse hostet.
+
+Einrichtung (einmalig):
+
+1. In Render: „New → Blueprint" und dieses Repo verbinden — übernimmt `render.yaml`.
+2. Die mit `sync: false` markierten Umgebungsvariablen (siehe `render.yaml`, u. a.
+   `DATABASE_URL`, `JWT_SECRET`, `S3_*`) im Render-Dashboard eintragen — deren echte Werte stehen
+   nie in diesem Repo.
+3. Auto-Deploy in Render deaktivieren (Settings → Build & Deploy) und stattdessen den
+   Deploy-Hook-Link (Settings → Deploy Hook) als GitHub-Actions-Secret
+   `RENDER_DEPLOY_HOOK_URL` in diesem Repo hinterlegen.
+
+Danach löst jeder Push auf `main`, der die CI-Jobs (Lint/Typecheck/Test/Build) übersteht, automatisch
+ein Deployment auf Render aus (`deploy`-Job in `.github/workflows/ci.yml`) — ein roter CI-Lauf
+deployt nie.
+
+Das Frontend (Next.js, `frontend/`) läuft auf Vercel; Vercels eigene Git-Integration deployt es
+bereits automatisch bei jedem Push, dafür ist kein zusätzlicher CI-Schritt nötig.
+
+### Datenbank-Backup
+
+`.github/workflows/backup.yml` sichert die Produktiv-DB täglich unabhängig von Supabases eigenen
+Backups (`npm run backup:run`, siehe `docs/backup-disaster-recovery.md`) und restauriert den Dump
+im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene GitHub-Secrets
+(`PRODUCTION_DATABASE_URL_DIRECT` — Supabases **direkte**, nicht gepoolte Verbindung — plus die
+`S3_*`-Zugangsdaten); ohne sie läuft der Workflow ins Leere, siehe Abschnitt 7 der Doku.
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- Objektspeicher-Anbindung für `Contract.fileObjectKey` (S3-kompatibel — AWS S3 EU oder Hetzner
-  Object Storage) inkl. Pre-Signed-Upload-Endpoint; aktuell nimmt die API nur die Metadaten
-  entgegen (siehe `contracts.routes.ts`).
-- DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
-  `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
-- Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
-  nur Lint/Test/Build ab, keinen Deploy-Schritt.
-- Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).
+- DORA-Registermodul (Art. 28–30): eine erste Fassung ist da (`src/modules/ictRegister/`,
+  UI unter Outsourcing → „DORA-Register", `prisma/schema.prisma` — `IctProvider`/
+  `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
+  Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
+  der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+- Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
+  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
+  Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
+  (`docs/backup-disaster-recovery.md`, Abschnitt 7).
+- Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
+  S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
+  funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
+  und Zugangsdaten gesetzt sind (siehe `.env.example`).

@@ -5,8 +5,64 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
+import { createDownloadUrl, createUploadUrl } from "./objectStorage";
 
 const router = Router({ mergeParams: true });
+
+const ALLOWED_CONTRACT_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+const MAX_CONTRACT_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
+const uploadUrlSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  fileMime: z.enum([...ALLOWED_CONTRACT_MIME_TYPES] as [string, ...string[]]),
+  fileSize: z.number().int().positive().max(MAX_CONTRACT_FILE_SIZE_BYTES),
+});
+
+// Step 1 of the upload flow: mint a pre-signed PUT URL so the file's bytes go straight from the
+// browser to object storage, never through this API (see the PUT / handler below, which
+// registers the resulting objectKey once the browser's own upload has succeeded). fileSize is
+// only a UX guard here — a pre-signed PUT URL doesn't itself enforce a size limit, so this is not
+// the security boundary; it just avoids minting URLs the frontend has already refused to use.
+router.post(
+  "/upload-url",
+  requirePermission("contract", "write"),
+  asyncHandler(async (req, res) => {
+    const parsed = uploadUrlSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError(parsed.error.message);
+
+    const activity = await prisma.outsourcingActivity.findFirst({
+      where: { id: req.params.activityId, institutionId: req.user!.institutionId },
+    });
+    if (!activity) throw new NotFoundError("Auslagerung nicht gefunden");
+
+    const { uploadUrl, objectKey } = await createUploadUrl({
+      institutionId: req.user!.institutionId,
+      activityId: activity.id,
+      fileName: parsed.data.fileName,
+      fileMime: parsed.data.fileMime,
+    });
+    res.json({ uploadUrl, objectKey });
+  })
+);
+
+router.get(
+  "/download-url",
+  requirePermission("contract", "read"),
+  asyncHandler(async (req, res) => {
+    const activity = await prisma.outsourcingActivity.findFirst({
+      where: { id: req.params.activityId, institutionId: req.user!.institutionId },
+      include: { contract: true },
+    });
+    if (!activity?.contract?.fileObjectKey) throw new NotFoundError("Kein Vertragsdokument hinterlegt");
+
+    const downloadUrl = await createDownloadUrl(activity.contract.fileObjectKey);
+    res.json({ downloadUrl });
+  })
+);
 
 const clauseSchema = z.object({
   clauseChecklist: z.record(z.enum(["ERFUELLT", "NICHT_ERFUELLT", "IN_UEBERARBEITUNG"])).optional(),

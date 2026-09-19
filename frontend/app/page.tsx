@@ -161,12 +161,20 @@ export default function MarketingPage() {
       <footer className="border-t border-border-subtle">
         <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} RegStack</span>
-          <a
-            href="mailto:admin@regstack.de"
-            className="text-muted-foreground hover:text-copper-400"
-          >
-            admin@regstack.de
-          </a>
+          <div className="flex gap-4">
+            <Link href="/impressum" className="hover:text-copper-400">
+              Impressum
+            </Link>
+            <Link href="/datenschutz" className="hover:text-copper-400">
+              Datenschutz
+            </Link>
+            <a
+              href="mailto:admin@regstack.de"
+              className="hover:text-copper-400"
+            >
+              admin@regstack.de
+            </a>
+          </div>
         </div>
       </footer>
     </div>
