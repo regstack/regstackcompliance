@@ -24,6 +24,7 @@ import revisionsFeststellungenRoutes from "../modules/revisions/feststellungen.r
 import revisionsPersonalRoutes from "../modules/revisions/personal.routes";
 import revisionsGovernanceRoutes from "../modules/revisions/governance.routes";
 import revisionsReportsRoutes from "../modules/revisions/reports.routes";
+import externePruefungenRoutes from "../modules/revisions/externePruefungen.routes";
 import accountingBalanceSheetsRoutes from "../modules/accounting/balanceSheets.routes";
 import accountingIncomeStatementsRoutes from "../modules/accounting/incomeStatements.routes";
 import accountingNotesRoutes from "../modules/accounting/notes.routes";
@@ -65,6 +66,7 @@ router.use("/revisions/feststellungen", revisionsFeststellungenRoutes);
 router.use("/revisions/personal", revisionsPersonalRoutes);
 router.use("/revisions/governance", revisionsGovernanceRoutes);
 router.use("/revisions/reports", revisionsReportsRoutes);
+router.use("/revisions/externe-pruefungen", externePruefungenRoutes);
 router.use("/accounting/balance-sheets", accountingBalanceSheetsRoutes);
 router.use("/accounting/income-statements", accountingIncomeStatementsRoutes);
 router.use("/accounting/notes", accountingNotesRoutes);

@@ -32,7 +32,9 @@ export type Resource =
   | "icsProcess" // IKS Geschäftsprozesse
   | "icsControl" // IKS Kontrollen (Zuordnung zu Prozessen)
   | "icsTesting" // IKS Kontrolltests inkl. Nachweisen
-  | "icsPolicy"; // IKS Richtlinien-/Workflow-Dokumentenbibliothek
+  | "icsPolicy" // IKS Richtlinien-/Workflow-Dokumentenbibliothek
+  | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
+  | "externalAuditRecord.acknowledge"; // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
 
 export type Action = "read" | "write" | "delete";
 
@@ -153,6 +155,13 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   icsPolicy: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "BUCHHALTUNG", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "COMPLIANCE", "ADMIN"],
+  },
+  externalAuditRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  "externalAuditRecord.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
 };
 

@@ -87,3 +87,34 @@ describe("isSelfReview / auditCloseBlocked — the 4-eyes gate, now server-enfor
     expect(auditCloseBlocked([])).toBe(false);
   });
 });
+
+describe("requirePermission — externalAuditRecord (ExternePruefung + Feststellungen)", () => {
+  it("allows INTERNE_REVISION to write, but not GESCHAEFTSLEITUNG or COMPLIANCE", () => {
+    const next = vi.fn();
+    requirePermission("externalAuditRecord", "write")(mockReq("INTERNE_REVISION"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("externalAuditRecord", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+    expect(() => requirePermission("externalAuditRecord", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+  });
+
+  it("lets every role read externalAuditRecord (every department needs to see its own findings)", () => {
+    for (const role of ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"]) {
+      const next = vi.fn();
+      requirePermission("externalAuditRecord", "read")(mockReq(role), mockRes, next);
+      expect(next).toHaveBeenCalledOnce();
+    }
+  });
+
+  it("only GESCHAEFTSLEITUNG/ADMIN may acknowledge the external auditor's report", () => {
+    expect(() =>
+      requirePermission("externalAuditRecord.acknowledge", "write")(mockReq("INTERNE_REVISION"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+    const next = vi.fn();
+    requirePermission("externalAuditRecord.acknowledge", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+});
