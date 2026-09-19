@@ -10,16 +10,20 @@ import { NextResponse, type NextRequest } from "next/server";
 // host, exactly as before the split.
 const APP_HOST = "app.regstack.de";
 const MARKETING_HOSTS = new Set(["regstack.de", "www.regstack.de"]);
+// Impressum/Datenschutzerklärung must stay reachable without auth and without a redirect hop
+// (§5 TMG / DSGVO), on either host — unlike the rest of the app they carry no user data.
+const LEGAL_PATHS = new Set(["/impressum", "/datenschutz"]);
 
 export async function proxy(request: NextRequest) {
   const hostname = (request.headers.get("host") ?? request.nextUrl.hostname).split(":")[0];
   const pathname = request.nextUrl.pathname;
   const isMarketingHost = MARKETING_HOSTS.has(hostname);
   const isAppHost = hostname === APP_HOST;
+  const isLegalRoute = LEGAL_PATHS.has(pathname);
 
-  // The marketing domain only ever serves the homepage — every other path
+  // The marketing domain only ever serves the homepage and the legal pages — every other path
   // (login, the authenticated app) belongs on the app subdomain.
-  if (isMarketingHost && pathname !== "/") {
+  if (isMarketingHost && pathname !== "/" && !isLegalRoute) {
     return NextResponse.redirect(
       new URL(pathname + request.nextUrl.search, `https://${APP_HOST}`)
     );
@@ -63,8 +67,6 @@ export async function proxy(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith("/login");
   const isMarketingRoute = pathname === "/" && !isAppHost;
-  // §5 TMG / § 18 MStV require these to be reachable without logging in, from any host.
-  const isLegalRoute = pathname === "/impressum" || pathname === "/datenschutz";
   const isPublicRoute = isAuthRoute || isMarketingRoute || isLegalRoute;
 
   if (!user && !isPublicRoute) {

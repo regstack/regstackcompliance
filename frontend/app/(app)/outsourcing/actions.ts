@@ -13,6 +13,44 @@ const CHECKLIST_STATUS_TO_BACKEND: Record<ChecklistStatus, ClauseStatus> = {
   in_ueberarbeitung: "IN_UEBERARBEITUNG",
 };
 
+/** Step 1 of the upload flow: asks the backend to mint a pre-signed PUT URL, so the file's bytes
+ * go straight from the browser to object storage and never through this Next.js server or its
+ * apiFetch layer — apiFetch is used here only to fetch the (small) URL itself. */
+export async function getContractUploadUrl(activityId: string, fileName: string, fileMime: string, fileSize: number) {
+  return apiFetch<{ uploadUrl: string; objectKey: string }>(`/activities/${activityId}/contract/upload-url`, {
+    method: "POST",
+    body: JSON.stringify({ fileName, fileMime, fileSize }),
+  });
+}
+
+/** Step 2: once the browser's own PUT to `uploadUrl` has succeeded, registers the resulting
+ * objectKey as the activity's contract document — mirrors setChecklistStatus's
+ * read-then-merge-then-PUT pattern so an in-flight checklist edit isn't clobbered by this call
+ * (and vice versa). */
+export async function registerContractFile(
+  activityId: string,
+  file: { objectKey: string; fileName: string; fileSize: number; fileMime: string }
+) {
+  const activity = await apiFetch<{ contract: ContractRecord | null }>(`/activities/${activityId}`);
+  await apiFetch(`/activities/${activityId}/contract`, {
+    method: "PUT",
+    body: JSON.stringify({
+      clauseChecklist: activity.contract?.clauseChecklist ?? {},
+      clauseJustifications: activity.contract?.clauseJustifications ?? {},
+      fileObjectKey: file.objectKey,
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      fileMime: file.fileMime,
+    }),
+  });
+  revalidatePath(`/outsourcing/${activityId}`);
+}
+
+export async function getContractDownloadUrl(activityId: string) {
+  const { downloadUrl } = await apiFetch<{ downloadUrl: string }>(`/activities/${activityId}/contract/download-url`);
+  return downloadUrl;
+}
+
 export async function setChecklistStatus(activityId: string, code: string, status: ChecklistStatus, notiz: string | null) {
   const activity = await apiFetch<{ contract: ContractRecord | null }>(`/activities/${activityId}`);
   const clauseChecklist = { ...(activity.contract?.clauseChecklist ?? {}), [code]: CHECKLIST_STATUS_TO_BACKEND[status] };

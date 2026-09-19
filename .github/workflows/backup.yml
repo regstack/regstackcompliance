@@ -1,0 +1,79 @@
+name: Database backup
+
+# Independent, out-of-band backup of the production database — a second copy alongside Supabase's
+# own PITR/backups (see docs/backup-disaster-recovery.md), not a replacement for it. The `backup`
+# job dumps + uploads; `verify-restore` immediately restores that same dump into a fresh, throwaway
+# Postgres and confirms Prisma considers it fully migrated — so a broken backup is caught the day
+# it happens, not the day someone actually needs it.
+on:
+  schedule:
+    - cron: "0 2 * * *" # 02:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      # Must be Supabase's DIRECT (non-pooled) connection string, or its session-mode pooler — not
+      # the transaction-mode pgbouncer URL the app itself may use for regular queries. pg_dump
+      # needs session-level behavior transaction pooling doesn't provide.
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL_DIRECT }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }} # only because src/config/env.ts requires it at import time
+      S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+      S3_REGION: ${{ vars.S3_REGION }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_BACKUP_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      S3_FORCE_PATH_STYLE: ${{ vars.S3_FORCE_PATH_STYLE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - run: npm run backup:run
+      # dump.sql is the plain-text dump backup:run produced on disk before gzipping it for upload
+      # — handed to verify-restore below so that job doesn't need its own S3 read access.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-dump
+          path: dump.sql
+          retention-days: 2
+
+  verify-restore:
+    needs: backup
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: regstack
+          POSTGRES_PASSWORD: regstack_restore_check
+          POSTGRES_DB: regstack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U regstack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://regstack:regstack_restore_check@localhost:5432/regstack?schema=public"
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: db-dump
+      - name: Restore the just-taken dump into a throwaway Postgres
+        # ON_ERROR_STOP=1: the dump is --clean --if-exists (idempotent against a fresh DB), so a
+        # real error here means the backup itself is broken, not just "object already existed".
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f dump.sql
+      - name: Confirm Prisma considers the restored schema fully migrated
+        run: npx prisma migrate status

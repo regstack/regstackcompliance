@@ -58,6 +58,27 @@ router.post(
   })
 );
 
+// Institution-wide feed for the Geschäftsleitung dashboard — the per-activity GET already includes
+// monitoringRecords, but the list endpoint above deliberately doesn't (would be a lot of dead
+// weight on every register load), so escalations need their own cross-activity query. Registered
+// before "/:id" so Express doesn't match "monitoring" as an activity id.
+router.get(
+  "/monitoring/escalations",
+  requirePermission("monitoring", "read"),
+  asyncHandler(async (req, res) => {
+    const records = await prisma.monitoringRecord.findMany({
+      where: {
+        type: "EVIDENCE_LOG",
+        escalationNeeded: true,
+        activity: { institutionId: req.user!.institutionId },
+      },
+      include: { activity: { select: { id: true, name: true } } },
+      orderBy: { evidenceDate: "desc" },
+    });
+    res.json(records);
+  })
+);
+
 router.get(
   "/:id",
   requirePermission("outsourcingActivity", "read"),

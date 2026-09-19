@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { loginToBackend } from "@/lib/regstack/backend-auth";
+import { completeTwoFactorLogin, loginToBackend } from "@/lib/regstack/backend-auth";
 import { Button } from "@/components/ui/button";
 import { ShieldIcon } from "@/components/ui/icons";
 
@@ -14,6 +14,13 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState("");
+
+  function proceedToApp() {
+    router.replace(searchParams.get("next") ?? "/outsourcing");
+    router.refresh();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,17 +30,87 @@ function LoginForm() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
 
-    await loginToBackend();
+    const backendLogin = await loginToBackend();
+    setLoading(false);
 
-    router.replace(searchParams.get("next") ?? "/outsourcing");
-    router.refresh();
+    // ADMIN/GESCHAEFTSLEITUNG accounts with TOTP enabled don't get a backend session yet — the
+    // Supabase sign-in above already succeeded, but the second factor is still outstanding.
+    if (backendLogin.status === "mfa_required") {
+      setMfaToken(backendLogin.mfaToken);
+      return;
+    }
+
+    proceedToApp();
+  }
+
+  async function handleVerifyTotp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaToken) return;
+    setError(null);
+    setLoading(true);
+
+    const ok = await completeTwoFactorLogin(mfaToken, totpCode);
+    setLoading(false);
+
+    if (!ok) {
+      setError("Code ungültig oder abgelaufen.");
+      return;
+    }
+
+    proceedToApp();
+  }
+
+  if (mfaToken) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-[10px] bg-gradient-to-br from-copper-400 to-copper-600 text-accent-foreground">
+              <ShieldIcon width={20} height={20} strokeWidth={1.8} />
+            </div>
+            <h1 className="font-serif text-xl font-semibold text-foreground">Zwei-Faktor-Code</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bitte den Code aus Ihrer Authenticator-App eingeben.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleVerifyTotp}
+            className="rounded-2xl border border-border-subtle bg-surface-raised p-6 shadow-card"
+          >
+            <div className="mb-6">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoFocus
+                required
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full rounded-[10px] border border-border-strong bg-graphite-950 px-3 py-2 text-center text-lg tracking-[0.5em] text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
+                placeholder="123456"
+              />
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-[10px] border border-status-danger/30 bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" disabled={loading || totpCode.length !== 6} className="w-full">
+              {loading ? "Prüft…" : "Bestätigen"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   return (
