@@ -1,11 +1,11 @@
 # Risikomanagement (MaRisk AT 4) & BAIT/IT-Risikomanagement — MVP-Spezifikation
 
-**Status:** Backend-Scaffolding für beide Module ist umgesetzt — Prisma-Modelle, Migration,
-RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/`
-(siehe Commit-Historie). Migration lokal gegen ein frisches Postgres 16 verifiziert
-(`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test über den generierten
-Client). Offen: Frontend-Anbindung, Seed-Daten, Nachweis-Integration (`EvidenceModule` um
-`RISK_MANAGEMENT`/`IT_RISK` erweitern) und die drei Fragen im letzten Abschnitt.
+**Status:** Backend-Scaffolding, Seed-Daten und Frontend-Anbindung für beide Module sind umgesetzt
+und live gegen Postgres + Express verifiziert (siehe Commit-Historie). Von den drei ursprünglich
+offenen Fragen sind zwei geklärt (Novelle-9-Scope gegen den Primärtext geprüft; keine eigene
+ISB-Rolle). Offen: BAIT-Priorisierung (Frage 2 unten), Nachweis-Integration (`EvidenceModule` um
+`RISK_MANAGEMENT`/`IT_RISK` erweitern), Editing-UI für bestehende Einträge, und die vier Kapitel-
+Lücken aus dem Quellenabgleich (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4).
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
@@ -433,8 +433,11 @@ model ItSicherheitsvorfall {
 | "itSecurityIncident"
 ```
 
-Offene Frage unten: ob es dafür eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Rolle braucht,
-oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht.
+**Entschieden (19.09.2026):** keine eigene ISB-Rolle. `RISIKOCONTROLLING`/`ADMIN` bleiben
+zuständig für alle drei BAIT-Kap.-4-Ressourcen — bereits so implementiert
+(`itGovernanceRecord`, `itRiskRecord`, `itSecurityIncident` in `src/middleware/rbac.ts`), keine
+Schema-Änderung nötig. Revisited werden sollte das erst, wenn ein Institut tatsächlich einen
+eigenständigen Informationssicherheitsbeauftragten mit eigenem Login braucht.
 
 ### Routen (Vorschlag)
 
@@ -466,19 +469,20 @@ Beide Module folgen den drei Grundsätzen aus dem README ausnahmslos:
 2. Modul 1 MVP (Risikoinventur, Strategie, RTF, Report) — kleinerer Blast Radius, kein neuer
    RBAC-Rollentyp nötig.
 3. Modul 2 MVP (IT-Strategie, Asset-Register, IT-Risiko-Register, Sicherheitsvorfälle).
-4. Je nach Entscheidung zur ISB-Rolle: `Role`-Enum erweitern + Seed-User anpassen.
+4. ~~Je nach Entscheidung zur ISB-Rolle: `Role`-Enum erweitern + Seed-User anpassen.~~ Entfällt —
+   siehe Entscheidung bei "RBAC-Ergänzungen" im BAIT-Abschnitt.
 
 ## Offene Fragen an dich
 
-1. Trifft die Eingrenzung oben ("MaRisk Novelle 9" = aktuelle AT-4-Risikomanagement-Kapitel inkl.
-   ESG) das, was du meinst, oder zielst du auf eine bestimmte Fassung/Novellen-Nummer, die ich noch
-   nicht kenne?
+1. ~~Trifft die Eingrenzung oben ("MaRisk Novelle 9" = ...) das, was du meinst?~~ **Geklärt** —
+   gegen den Primärtext (Rundschreiben 06/2026 (BA), Stand 30.06.2026) geprüft, siehe
+   "Korrekturen nach Quellenabgleich" oben.
 2. Passt die BAIT-Priorisierung (IT-Strategie + Schutzbedarf + Risiko-Register + Sicherheitsvorfälle
    zuerst, Berechtigungsmanagement/IT-Projekte/IT-Betrieb später), oder ist für euer Institut z. B.
    das Berechtigungsmanagement (Kap. 5) dringlicher fürs MVP?
-3. Braucht Kap. 4 BAIT (Informationssicherheit) eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-
-   Login-Rolle, oder reicht `RISIKOCONTROLLING`/`ADMIN` fürs MVP?
+3. ~~Braucht Kap. 4 BAIT eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Login-Rolle?~~
+   **Geklärt — nein**, `RISIKOCONTROLLING`/`ADMIN` bleiben zuständig (siehe RBAC-Abschnitt oben).
 
-Sobald das steht, kann ich direkt mit Modul 1 (Risikomanagement) anfangen: Prisma-Migration,
-`src/modules/risikomanagement/`, RBAC-Einträge, Routen, Tests — im selben Zug wie die drei
-bestehenden Module.
+Einzig offen: Frage 2 (BAIT-Priorisierung), plus die vier in "Neu gefundene Lücken" oben
+aufgeführten Kapitel (AT 3.2 Aufsichtsorgan-Reporting, AT 4.3.4 Modelle, AT 4.2 Tz. 3
+NPL-Strategie), Editing-UI für bestehende Einträge, und die Nachweis/`EvidenceModule`-Integration.
