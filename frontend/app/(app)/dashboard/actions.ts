@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { acknowledgeReport as acknowledgeComplianceReport, decideNormZuweisung } from "@/app/(app)/compliance/actions";
 import { ackQuartalsbericht } from "@/app/(app)/interne-revision/quartalsbericht/actions";
 import { approveAuditPlan as approveAuditPlanBackend } from "@/app/(app)/interne-revision/pruefungsuniversum/actions";
+import { approveHandlungsoption } from "@/app/(app)/outsourcing/actions";
 import type { Database } from "@/lib/database.types";
 
 type ModuleType = Database["public"]["Enums"]["module_type"];
@@ -40,4 +41,12 @@ export async function approveAuditPlan(auditPlanId: string) {
  * than keeping a second, independently-maintained Supabase implementation of the same operation. */
 export async function decideNormzuweisung(handshakeId: string, normId: string, decisionNote: string) {
   await decideNormZuweisung(handshakeId, normId, decisionNote);
+}
+
+/** Dependency-Acceptance-Bestätigung (Tz. 6 S.3, BCM_LINKED-Pfad) — delegates to Outsourcing's own
+ * backend-backed action (handlungsoption.approve RBAC, GESCHAEFTSLEITUNG/ADMIN only), same
+ * delegation pattern as the other two dashboard actions above. */
+export async function approveDependencyAcceptance(activityId: string, depApprover: string) {
+  await approveHandlungsoption(activityId, depApprover);
+  revalidatePath("/dashboard");
 }
