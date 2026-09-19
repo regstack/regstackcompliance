@@ -25,7 +25,17 @@ export type Resource =
   | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
-  | "revisionPlan.approve"; // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
+  | "riskManagementRecord" // Risikoinventur, Risikotragfähigkeit
+  | "riskStrategy" // Geschäfts-/Risikostrategie, Entwurf-Phase (CRUD)
+  | "riskStrategy.approve" // Verabschiedung durch die Geschäftsleitung, AT 4.2
+  | "riskManagementReport"
+  | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
+  | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
+  | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
+  | "itRisk.accept" // Geschäftsleitung akzeptiert verbleibendes Restrisiko, BAIT Kap. 3
+  | "itSecurityIncident"; // Sicherheitsvorfälle, BAIT Kap. 4
 
 export type Action = "read" | "write" | "delete";
 
@@ -119,6 +129,44 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
   "revisionPlan.approve": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  riskManagementRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  riskStrategy: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "riskStrategy.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"], // AT 4.2 — Strategien sind an die Geschäftsleitung gebunden
+  },
+  riskManagementReport: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "riskManagementReport.acknowledge": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  itGovernanceRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    // Kein eigener ISB-Login in diesem MVP (siehe Risikomanagement_BAIT_MVP_Spezifikation.md,
+    // offene Frage 3) — RISIKOCONTROLLING trägt die Schreibrechte vorläufig mit.
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "itStrategy.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"], // BAIT Kap. 1 — Verabschiedung ist Geschäftsleitungssache
+  },
+  itRiskRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "itRisk.accept": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"], // verbleibendes hohes Restrisiko braucht GL-Akzeptanz, BAIT Kap. 3
+  },
+  itSecurityIncident: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
   },
 };
 

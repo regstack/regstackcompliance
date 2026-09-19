@@ -24,6 +24,14 @@ import revisionsFeststellungenRoutes from "../modules/revisions/feststellungen.r
 import revisionsPersonalRoutes from "../modules/revisions/personal.routes";
 import revisionsGovernanceRoutes from "../modules/revisions/governance.routes";
 import revisionsReportsRoutes from "../modules/revisions/reports.routes";
+import risikomanagementInventurRoutes from "../modules/risikomanagement/inventur.routes";
+import risikomanagementStrategienRoutes from "../modules/risikomanagement/strategien.routes";
+import risikomanagementRtfRoutes from "../modules/risikomanagement/risikotragfaehigkeit.routes";
+import risikomanagementReportsRoutes from "../modules/risikomanagement/reports.routes";
+import itRisikoStrategieRoutes from "../modules/itRisiko/strategie.routes";
+import itRisikoAssetsRoutes from "../modules/itRisiko/assets.routes";
+import itRisikoRisikenRoutes from "../modules/itRisiko/risiken.routes";
+import itRisikoVorfaelleRoutes from "../modules/itRisiko/vorfaelle.routes";
 import { requireAuth } from "../middleware/auth";
 
 export const router = Router();
@@ -57,3 +65,11 @@ router.use("/revisions/feststellungen", revisionsFeststellungenRoutes);
 router.use("/revisions/personal", revisionsPersonalRoutes);
 router.use("/revisions/governance", revisionsGovernanceRoutes);
 router.use("/revisions/reports", revisionsReportsRoutes);
+router.use("/risikomanagement/inventur", risikomanagementInventurRoutes);
+router.use("/risikomanagement/strategien", risikomanagementStrategienRoutes);
+router.use("/risikomanagement/risikotragfaehigkeit", risikomanagementRtfRoutes);
+router.use("/risikomanagement/reports", risikomanagementReportsRoutes);
+router.use("/it-risiko/strategie", itRisikoStrategieRoutes);
+router.use("/it-risiko/assets", itRisikoAssetsRoutes);
+router.use("/it-risiko/risiken", itRisikoRisikenRoutes);
+router.use("/it-risiko/vorfaelle", itRisikoVorfaelleRoutes);
