@@ -54,14 +54,17 @@ function PersonalRowForm({ row, canWrite }: { row: PersonalRow; canWrite: boolea
       <td className="px-3 py-2.5 text-muted-foreground">{row.person?.org_unit ?? "—"}</td>
       <td className="px-3 py-2.5">
         <input className={inputCls} disabled={disabled} value={form.non_audit_tasks ?? ""} placeholder="—"
+          aria-label="Revisionsfremde Aufgabe"
           onChange={(e) => update({ non_audit_tasks: e.target.value || null })} />
       </td>
       <td className="px-3 py-2.5 text-center">
         <input type="checkbox" className="h-4 w-4 accent-copper-500" disabled={disabled} checked={form.advisory_active}
+          aria-label="Beratend tätig"
           onChange={(e) => update({ advisory_active: e.target.checked })} />
       </td>
       <td className="px-3 py-2.5">
         <input className={inputCls} disabled={disabled || !form.advisory_active} value={form.advisory_safeguard ?? ""} placeholder="—"
+          aria-label="Unabhängigkeits-Sicherung"
           onChange={(e) => update({ advisory_safeguard: e.target.value || null })} />
       </td>
       {canWrite && (
@@ -98,7 +101,7 @@ function AddPersonRow({ candidates, canWrite }: { candidates: { id: string; full
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2">
-      <select className={`${inputCls} max-w-xs`} value={selected} disabled={pending} onChange={(e) => setSelected(e.target.value)}>
+      <select className={`${inputCls} max-w-xs`} value={selected} disabled={pending} onChange={(e) => setSelected(e.target.value)} aria-label="Person auswählen">
         <option value="">— Person auswählen —</option>
         {candidates.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
       </select>

@@ -48,13 +48,13 @@ function ProjektForm({
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
         <input placeholder="Projekt" className={inputCls} disabled={pending} value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-        <select className={inputCls} disabled={pending} value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} aria-label="Projekt" />
+        <select className={inputCls} disabled={pending} value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} aria-label="Rolle">
           <option value="begleitend">projektbegleitend (prüfend)</option>
           <option value="beratend">beratend (Tz. 3 S.3)</option>
         </select>
         <select className={inputCls} disabled={pending} value={form.ir_contact_person_id ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, ir_contact_person_id: e.target.value || null }))}>
+          onChange={(e) => setForm((f) => ({ ...f, ir_contact_person_id: e.target.value || null }))} aria-label="Ansprechpartner Revision">
           <option value="">— Ansprechpartner Revision —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
@@ -85,7 +85,7 @@ function ProjektForm({
         Vollständiges Informations- und Zugriffsrecht im Projekt gewährleistet (Tz. 1 S.3/4)
       </label>
       <textarea placeholder="Notizen" rows={2} className={`mt-2 ${inputCls}`} disabled={pending}
-        value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+        value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} aria-label="Notizen" />
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
         <Button className="px-2.5 py-1 text-xs" disabled={pending || !form.name.trim()} onClick={submit}>{pending ? "Speichert…" : "Speichern"}</Button>

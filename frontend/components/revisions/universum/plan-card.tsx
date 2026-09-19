@@ -46,11 +46,11 @@ function AdjustmentForm({ planId, current, onDone }: { planId: string; current: 
   return (
     <div className="mt-2 rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
-        <input type="date" value={entry.date} disabled={pending} onChange={(e) => setEntry((f) => ({ ...f, date: e.target.value }))} className={input} />
+        <input type="date" value={entry.date} disabled={pending} onChange={(e) => setEntry((f) => ({ ...f, date: e.target.value }))} className={input} aria-label="Datum" />
         <input placeholder="Beschreibung der Anpassung" value={entry.desc} disabled={pending}
-          onChange={(e) => setEntry((f) => ({ ...f, desc: e.target.value }))} className={input} />
+          onChange={(e) => setEntry((f) => ({ ...f, desc: e.target.value }))} className={input} aria-label="Beschreibung der Anpassung" />
         <input placeholder="Genehmigt durch" value={entry.approvedBy} disabled={pending}
-          onChange={(e) => setEntry((f) => ({ ...f, approvedBy: e.target.value }))} className={input} />
+          onChange={(e) => setEntry((f) => ({ ...f, approvedBy: e.target.value }))} className={input} aria-label="Genehmigt durch" />
       </div>
       <ErrorText error={error} />
       <div className="mt-2 flex gap-2">

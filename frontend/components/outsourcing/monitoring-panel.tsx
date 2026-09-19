@@ -112,6 +112,7 @@ export function MonitoringPanel({
               ))}
             </div>
           )}
+          {evidenceLog.length === 0 && <p className="text-sm text-muted-foreground">Noch kein Evidenz-Log-Eintrag erfasst.</p>}
 
           {canWrite && (
             <div className="space-y-3 border-t border-border-subtle pt-4">
@@ -199,6 +200,7 @@ export function MonitoringPanel({
                   disabled={disabled}
                   rows={2}
                   placeholder="Beschreibung der Änderung"
+                  aria-label="Beschreibung der Änderung"
                   onChange={(e) => setEvidence({ ...evidence, changeNote: e.target.value })}
                   className="w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground disabled:opacity-50"
                 />
@@ -218,6 +220,7 @@ export function MonitoringPanel({
                   disabled={disabled}
                   rows={2}
                   placeholder="Eskalationsnotiz"
+                  aria-label="Eskalationsnotiz"
                   onChange={(e) => setEvidence({ ...evidence, escalationNote: e.target.value })}
                   className="w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground disabled:opacity-50"
                 />
@@ -269,6 +272,7 @@ export function MonitoringPanel({
                 value={kpi.kpiName}
                 disabled={disabled}
                 placeholder="KPI-Name"
+                aria-label="KPI-Name"
                 onChange={(e) => setKpi({ ...kpi, kpiName: e.target.value })}
                 className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
               />
@@ -276,6 +280,7 @@ export function MonitoringPanel({
                 value={kpi.kpiTarget}
                 disabled={disabled}
                 placeholder="Zielwert"
+                aria-label="Zielwert"
                 onChange={(e) => setKpi({ ...kpi, kpiTarget: e.target.value })}
                 className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
               />
@@ -283,6 +288,7 @@ export function MonitoringPanel({
                 value={kpi.kpiAchieved}
                 disabled={disabled}
                 placeholder="Erreicht"
+                aria-label="Erreicht"
                 onChange={(e) => setKpi({ ...kpi, kpiAchieved: e.target.value })}
                 className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
               />
@@ -290,6 +296,7 @@ export function MonitoringPanel({
                 value={kpi.kpiComment}
                 disabled={disabled}
                 placeholder="Kommentar"
+                aria-label="Kommentar"
                 onChange={(e) => setKpi({ ...kpi, kpiComment: e.target.value })}
                 className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
               />

@@ -185,3 +185,16 @@ body {
 .card-hover:hover {
   border-color: var(--graphite-600-solid);
 }
+
+/* Most tables in the app (registers, checklists, matrices) are 5+ columns wide and were built
+   without individual overflow wrappers. Rather than retrofit every one of them, make the table
+   itself the horizontal scroll container below the point where it'd otherwise blow out the
+   viewport — internal thead/tbody/tr layout is untouched, only the outer element's box behavior
+   changes. */
+@media (max-width: 767px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

@@ -32,7 +32,8 @@ export function NormzuweisungDecision({ handshakeId, normId }: { handshakeId: st
         disabled={pending}
         rows={2}
         placeholder="Entscheidungsbegründung (Pflichtfeld)"
-        className="w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-copper-500 disabled:opacity-50"
+        aria-label="Entscheidungsbegründung"
+        className="w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500 disabled:opacity-50"
       />
       <Button className="px-2.5 py-1 text-xs" onClick={handleClick} disabled={pending || !note.trim()}>
         {pending ? "Speichert…" : "Entscheiden"}

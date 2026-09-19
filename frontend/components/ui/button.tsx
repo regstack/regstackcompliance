@@ -19,7 +19,7 @@ export const Button = forwardRef<
 >(({ variant = "primary", className = "", ...props }, ref) => (
   <button
     ref={ref}
-    className={`inline-flex items-center justify-center gap-2 rounded-[10px] px-3.5 py-2 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+    className={`inline-flex items-center justify-center gap-2 rounded-[10px] px-3.5 py-2 text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-500 ${variants[variant]} ${className}`}
     {...props}
   />
 ));

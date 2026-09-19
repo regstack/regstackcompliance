@@ -30,9 +30,9 @@ function AddMitteilungForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-[160px_1fr]">
-        <input type="date" className={inputCls} disabled={pending} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+        <input type="date" className={inputCls} disabled={pending} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} aria-label="Datum" />
         <input placeholder="Wesentliche Entscheidung" className={inputCls} disabled={pending} value={form.decision}
-          onChange={(e) => setForm((f) => ({ ...f, decision: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, decision: e.target.value }))} aria-label="Wesentliche Entscheidung" />
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
@@ -63,14 +63,14 @@ function AddSonderauftragForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
-        <input type="date" className={inputCls} disabled={pending} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+        <input type="date" className={inputCls} disabled={pending} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} aria-label="Datum" />
         <input placeholder="Angeordnet durch" className={inputCls} disabled={pending} value={form.ordered_by ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, ordered_by: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, ordered_by: e.target.value }))} aria-label="Angeordnet durch" />
         <input placeholder="Gegenstand" className={inputCls} disabled={pending} value={form.subject}
-          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} aria-label="Gegenstand" />
       </div>
       <input placeholder="Begründung" className={`mt-2 ${inputCls}`} disabled={pending} value={form.reason ?? ""}
-        onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+        onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} aria-label="Begründung" />
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
         <Button className="px-2.5 py-1 text-xs" disabled={pending || !form.subject.trim()} onClick={submit}>{pending ? "Speichert…" : "Speichern"}</Button>

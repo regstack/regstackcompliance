@@ -54,6 +54,9 @@ export default async function GovernancePage() {
                     <td className="px-2 py-2 font-mono text-xs text-muted-foreground">{b.bestellt_am ?? "—"}</td>
                   </tr>
                 ))}
+                {beauftragte.length === 0 && (
+                  <tr><td colSpan={4} className="px-2 py-6 text-center text-muted-foreground">Noch keine Beauftragten erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </CardBody>
@@ -105,6 +108,9 @@ export default async function GovernancePage() {
                   </td>
                 </tr>
               ))}
+              {erleichterungen.length === 0 && (
+                <tr><td colSpan={5} className="px-2 py-6 text-center text-muted-foreground">Keine Erleichterungen oder Ausnahmen erfasst.</td></tr>
+              )}
             </tbody>
           </table>
         </CardBody>
@@ -130,6 +136,9 @@ export default async function GovernancePage() {
                     <td className="px-2 py-2 text-foreground">{c.neu?.full_name ?? "—"}</td>
                   </tr>
                 ))}
+                {funktionswechsel.length === 0 && (
+                  <tr><td colSpan={4} className="px-2 py-6 text-center text-muted-foreground">Keine Funktionswechsel erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </CardBody>
@@ -155,6 +164,9 @@ export default async function GovernancePage() {
                     </tr>
                   );
                 })}
+                {stellenbeschreibungen.length === 0 && (
+                  <tr><td colSpan={3} className="px-2 py-6 text-center text-muted-foreground">Keine Stellenbeschreibungen erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </CardBody>
