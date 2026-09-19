@@ -12,16 +12,53 @@ bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Re
 ein Ordner je Modul unter `src/modules/`, Prisma-Modelle mit `institutionId`-Scoping, RBAC-Eintrag
 je Resource in `src/middleware/rbac.ts`, jeder Write über `withAudit(...)`.
 
-**Annahme, bitte gegenprüfen:** "MaRisk Novelle 9" wird hier als die aktuell gültigen
-Risikomanagement-Kapitel der MaRisk gelesen — AT 2.2 (Risikokultur), AT 3 (Gesamtverantwortung
-GL), AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.1–4.3.3 (IKS, RM-Prozesse,
-Stresstests), AT 4.4.1 (Risikocontrolling-Funktion) sowie die BTR-Risikoartenkapitel, inkl. der
-zuletzt ergänzten ESG-Risiko-Anforderungen. Die genaue Novellen-Nummerierung/-Fassung sollte vor
-dem Schema-Rollout einmal mit dem Vorschrifttext abgeglichen werden — analog zur Sorgfalt, mit der
-`AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md` für das Auslagerungsmodul geführt
-wurde. Gleiches gilt für die BAIT-Kapitelbezeichnungen unten (Rundschreiben 10/2017 (BA) i. d. F.
-der letzten Novellierung) — Tz.-Verweise sind hier bewusst ausgespart, bis der Text final
-verifiziert ist.
+**Gegen die Primärquelle geprüft (19.09.2026):** Die Annahme unten wurde gegen den tatsächlichen
+Text von Rundschreiben 06/2026 (BA), "BA 54 – MaRisk vom 30.06.2026" (9. MaRisk-Novelle) geprüft
+— dieselbe Fassung, auf die README.md und die Marketing-Seite bereits Bezug nehmen. Ergebnis:
+im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken, siehe
+"Korrekturen nach Quellenabgleich" unten. Die BAIT-Kapitelbezeichnungen (Rundschreiben 10/2017
+(BA)) sind davon unberührt und weiterhin ungeprüft — dafür liegt uns noch kein Primärtext vor.
+
+Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
+das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
+inkl. ESG sind in den Phase-1-Modellen abgedeckt. AT 3.1/3.2 (Aufsichtsorgan-Berichtswesen),
+AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht — siehe unten.
+
+### Korrekturen nach Quellenabgleich
+
+1. **AT 2.2 heißt "Risiken", nicht "Risikokultur"** — es definiert die vier verpflichtend als
+   wesentlich einzustufenden Basis-Risikoarten: Adressenausfallrisiken (inkl. Länderrisiken),
+   Marktpreisrisiken, Liquiditätsrisiken, operationelle Risiken (Tz. 1). IKT-Risiken sind darin
+   explizit als Bestandteil der operationellen Risiken zu behandeln — deckt sich mit der
+   `OPERATIONELLES_RISIKO`-Beschreibung im Seed ("IT-, Prozess- und Auslagerungsrisiken"). Als
+   Wesentlichkeitsschwelle in der ökonomischen Perspektive nennt der Text konkret **5 % des
+   Risikodeckungspotenzials** (Tz. 1) — ein reales Zahlenanker, kein Institutsermessen von Null.
+2. **"Risikokultur" steht in AT 3.1** (Gesamtverantwortung der Geschäftsleitung), nicht in AT 2.2.
+3. **Risikokonzentrationen sind im Text ein Querschnittsthema**, kein eigenständiger 5. Risikoart-
+   Eintrag — sie werden explizit bei der Risikoinventur, der RTF (AT 4.1 Tz. 1), der
+   Risikostrategie/Risikoappetit-Festlegung (AT 4.2 Tz. 2) und dem GL-Reporting (AT 4.3.2 Tz. 3)
+   mitgeführt. Der `KONZENTRATIONSRISIKO`-Eintrag im `RisikoartKategorie`-Enum bleibt trotzdem
+   sinnvoll (verbreitete Institutspraxis, eigene Registerzeile), sollte aber nicht als "die MaRisk
+   verlangt eine 5. Risikoart" zitiert werden.
+
+### Neu gefundene Lücken (nicht im aktuellen Modell)
+
+4. **AT 3.2 Verantwortung des Aufsichtsorgans** — mindestens vierteljährliches Reporting in
+   Textform an das Aufsichtsorgan (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen,
+   Compliance-Bericht, Revisionsberichte). Das ist ein eigenes, vom GL-Bericht (`RmReport`)
+   verschiedenes Berichtsziel/-publikum, das aktuell nirgends modelliert ist.
+5. **AT 4.2 Tz. 2 verlangt eine mit der Geschäftsstrategie konsistente IKT-Strategie** — direkt
+   durch die Geschäftsleitung, mit optionaler Zusammenlegung mit einer DOR-Strategie (DORA
+   digitale operationale Resilienz). Das ist dieselbe Sache wie `ItStrategie`/BAIT Kap. 1 — die
+   Mapping-Tabelle unten sollte "AT 4.2 Tz. 2" als Zweitquelle neben "BAIT Kap. 1" führen.
+6. **AT 4.2 Tz. 3: NPL-Strategie** für Institute mit hohem Bestand notleidender Risikopositionen,
+   inkl. vierteljährlichem KPI-Tracking des Abbaufortschritts — konditional (nur relevant bei
+   hohem NPL-Bestand), daher kein MVP-Kandidat, aber ein sauberer Phase-2-Kandidat, falls relevant.
+7. **AT 4.3.4 Verwendung von Modellen** — komplett neues Kapitel, deckt Modellrisiko-Governance ab
+   (Auswahl, Validierung, Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive
+   "technologiegestützter Innovation und künstlicher Intelligenz". Kein Modell dafür existiert
+   bisher; ein schlankes `Modellregister` (Modell, Zweck, letzte Validierung, Erklärbarkeits-
+   Bewertung) wäre der naheliegende Phase-2-Zuschnitt.
 
 Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 - IT-Auslagerungen bleiben `OutsourcingActivity` mit `scope = IKT_DORA` — BAIT Kap. 8 (Steuerung
@@ -225,7 +262,7 @@ write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9.
 
 | Baustein | Zweck | BAIT-Kapitel (Arbeitstitel) |
 |---|---|---|
-| IT-Strategie | Verabschiedung/Review, Konsistenz-Check zur Geschäftsstrategie | Kap. 1 IT-Strategie |
+| IT-Strategie | Verabschiedung/Review, Konsistenz-Check zur Geschäftsstrategie | Kap. 1 IT-Strategie · **verifiziert auch in MaRisk AT 4.2 Tz. 2** (Geschäftsleitung muss eine mit der Geschäftsstrategie konsistente IKT-Strategie festlegen, ggf. mit der DOR-Strategie zusammengelegt) |
 | Schutzbedarfsfeststellung | Asset-Register (Anwendung/System/Netz) mit Schutzbedarf C/I/A | Kap. 3 Informationsrisikomanagement |
 | Informationsrisiko-Register | Bedrohung → Maßnahme → Restrisiko je Asset, GL-Akzeptanz bei Restrisiko | Kap. 3 Informationsrisikomanagement |
 | IT-Sicherheitsvorfälle | Erfassung, Eskalation, BaFin-Meldepflicht-Flag | Kap. 4 Informationssicherheit (operativ) |
