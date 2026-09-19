@@ -1,11 +1,12 @@
 # Risikomanagement (MaRisk AT 4) & BAIT/IT-Risikomanagement — MVP-Spezifikation
 
 **Status:** Backend-Scaffolding, Seed-Daten und Frontend-Anbindung für beide Module sind umgesetzt
-und live gegen Postgres + Express verifiziert (siehe Commit-Historie). Von den drei ursprünglich
-offenen Fragen sind zwei geklärt (Novelle-9-Scope gegen den Primärtext geprüft; keine eigene
-ISB-Rolle). Offen: BAIT-Priorisierung (Frage 2 unten), Nachweis-Integration (`EvidenceModule` um
-`RISK_MANAGEMENT`/`IT_RISK` erweitern), Editing-UI für bestehende Einträge, und die vier Kapitel-
-Lücken aus dem Quellenabgleich (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4).
+und live gegen Postgres + Express verifiziert (siehe Commit-Historie). Alle drei ursprünglich
+offenen Fragen sind geklärt (Novelle-9-Scope gegen den Primärtext geprüft; keine eigene ISB-Rolle;
+BAIT-Reihenfolge bleibt Kap. 5 → 6 → 7). Offen ist nur noch Umsetzungsarbeit: Kap. 5
+Benutzerberechtigungsmanagement als nächstes BAIT-Modul, Nachweis-Integration (`EvidenceModule`
+um `RISK_MANAGEMENT`/`IT_RISK` erweitern), Editing-UI für bestehende Einträge, und die vier
+Kapitel-Lücken aus dem Quellenabgleich (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4).
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
@@ -477,12 +478,15 @@ Beide Module folgen den drei Grundsätzen aus dem README ausnahmslos:
 1. ~~Trifft die Eingrenzung oben ("MaRisk Novelle 9" = ...) das, was du meinst?~~ **Geklärt** —
    gegen den Primärtext (Rundschreiben 06/2026 (BA), Stand 30.06.2026) geprüft, siehe
    "Korrekturen nach Quellenabgleich" oben.
-2. Passt die BAIT-Priorisierung (IT-Strategie + Schutzbedarf + Risiko-Register + Sicherheitsvorfälle
-   zuerst, Berechtigungsmanagement/IT-Projekte/IT-Betrieb später), oder ist für euer Institut z. B.
-   das Berechtigungsmanagement (Kap. 5) dringlicher fürs MVP?
+2. ~~Passt die BAIT-Priorisierung (IT-Strategie + Schutzbedarf + Risiko-Register +
+   Sicherheitsvorfälle zuerst, Berechtigungsmanagement/IT-Projekte/IT-Betrieb später)?~~
+   **Geklärt (19.09.2026) — ja, Reihenfolge bleibt wie ursprünglich vorgeschlagen:** Kap. 5
+   Benutzerberechtigungsmanagement, dann Kap. 6 IT-Projekte, dann Kap. 7 IT-Betrieb.
 3. ~~Braucht Kap. 4 BAIT eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Login-Rolle?~~
    **Geklärt — nein**, `RISIKOCONTROLLING`/`ADMIN` bleiben zuständig (siehe RBAC-Abschnitt oben).
 
-Einzig offen: Frage 2 (BAIT-Priorisierung), plus die vier in "Neu gefundene Lücken" oben
-aufgeführten Kapitel (AT 3.2 Aufsichtsorgan-Reporting, AT 4.3.4 Modelle, AT 4.2 Tz. 3
-NPL-Strategie), Editing-UI für bestehende Einträge, und die Nachweis/`EvidenceModule`-Integration.
+Alle drei ursprünglichen Fragen sind jetzt geklärt. Offen bleibt nur noch Umsetzungsarbeit: die
+vier in "Neu gefundene Lücken" oben aufgeführten Kapitel (AT 3.2 Aufsichtsorgan-Reporting,
+AT 4.3.4 Modelle, AT 4.2 Tz. 3 NPL-Strategie), Editing-UI für bestehende Einträge, die
+Nachweis/`EvidenceModule`-Integration, und — jetzt priorisiert — Kap. 5
+Benutzerberechtigungsmanagement als nächstes BAIT-Modul.
