@@ -4,9 +4,11 @@ import {
   AlertTriangleIcon,
   BoxIcon,
   ClipboardListIcon,
+  CpuIcon,
   FileBarChartIcon,
   FileTextIcon,
   FlagIcon,
+  GaugeIcon,
   SearchCheckIcon,
   SettingsIcon,
   ShieldIcon,
@@ -16,8 +18,15 @@ import {
 export type NavLink = { href: string; label: string };
 export type NavGroup = { title: string | null; icon: ReactNode; items: NavLink[] };
 
+// Risikomanagement and IT-Risiko are backend-only modules (Express/Prisma, no Supabase
+// role_assignments row) — they have no place in the Supabase `module_type` enum ModuleType is
+// generated from, so the sidebar's own module union is widened here rather than by touching the
+// generated database.types.ts. Gating for these two runs entirely through the backend session
+// (getBackendSession + canWriteRiskManagement/canWriteItRisk), same as Outsourcing already does.
+export type AppModule = ModuleType | "risikomanagement" | "it_risiko";
+
 export type ModuleNav = {
-  module: ModuleType;
+  module: AppModule;
   label: string;
   href: string;
   switcherIcon: ReactNode;
@@ -29,7 +38,7 @@ export type ModuleNav = {
 
 const iconProps = { width: 14, height: 14 } as const;
 
-export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
+export const MODULE_NAV: Record<AppModule, ModuleNav> = {
   outsourcing: {
     module: "outsourcing",
     label: "Outsourcing",
@@ -140,11 +149,63 @@ export const MODULE_NAV: Record<ModuleType, ModuleNav> = {
       },
     ],
   },
+  risikomanagement: {
+    module: "risikomanagement",
+    label: "Risikomanagement",
+    href: "/risikomanagement",
+    switcherIcon: <GaugeIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/risikomanagement",
+    dashboardLabel: "Dashboard",
+    groups: [
+      {
+        title: "Inventur & Strategien · AT 4.1–4.2",
+        icon: <FileTextIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#inventur", label: "Risikoinventur" }, { href: "/risikomanagement#strategien", label: "Geschäfts- & Risikostrategien" }],
+      },
+      {
+        title: "Risikotragfähigkeit · AT 4.1",
+        icon: <GaugeIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#rtf", label: "RTF & Limitauslastung" }],
+      },
+      {
+        title: "Berichte · AT 4.4.1",
+        icon: <FileBarChartIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#bericht", label: "Bericht an die Geschäftsleitung" }],
+      },
+    ],
+  },
+  it_risiko: {
+    module: "it_risiko",
+    label: "IT-Risiko / BAIT",
+    href: "/it-risiko",
+    switcherIcon: <CpuIcon {...iconProps} />,
+    active: true,
+    dashboardHref: "/it-risiko",
+    dashboardLabel: "Dashboard",
+    groups: [
+      {
+        title: "IT-Strategie · Kap. 1",
+        icon: <FileTextIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#strategie", label: "IT-Strategie" }],
+      },
+      {
+        title: "Informationsrisiko · Kap. 3",
+        icon: <ShieldIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#assets", label: "Schutzbedarfsfeststellung" }, { href: "/it-risiko#risiken", label: "IT-Risikoregister" }],
+      },
+      {
+        title: "Informationssicherheit · Kap. 4",
+        icon: <AlertTriangleIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#vorfaelle", label: "Sicherheitsvorfälle" }],
+      },
+    ],
+  },
 };
 
-export const MODULE_ORDER: ModuleType[] = ["outsourcing", "compliance", "internal_audit"];
+export const MODULE_ORDER: AppModule[] = ["outsourcing", "compliance", "internal_audit", "risikomanagement", "it_risiko"];
 
-export function moduleForPathname(pathname: string): ModuleType | null {
+export function moduleForPathname(pathname: string): AppModule | null {
   for (const mod of MODULE_ORDER) {
     if (pathname.startsWith(MODULE_NAV[mod].href)) return mod;
   }

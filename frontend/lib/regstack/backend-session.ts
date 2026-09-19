@@ -83,3 +83,22 @@ const REVISION_WRITE_ROLES: BackendRole[] = ["INTERNE_REVISION", "ADMIN"];
 export function canWriteRevisions(role: BackendRole): boolean {
   return REVISION_WRITE_ROLES.includes(role);
 }
+
+// Mirrors src/middleware/rbac.ts's MATRIX.riskManagementRecord.write (riskStrategy.write and
+// riskManagementReport.write use the same role list). The Geschäftsleitung-only steps —
+// Risikostrategie verabschieden, RmReport acknowledge — are covered by isGeschaeftsleitung above,
+// same as every other GL-exclusive backend resource.
+const RISK_MANAGEMENT_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
+
+export function canWriteRiskManagement(role: BackendRole): boolean {
+  return RISK_MANAGEMENT_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.itGovernanceRecord.write (itRiskRecord.write and
+// itSecurityIncident.write use the same role list). itStrategy.approve and itRisk.accept are
+// Geschäftsleitung-only and covered by isGeschaeftsleitung above.
+const IT_RISK_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
+
+export function canWriteItRisk(role: BackendRole): boolean {
+  return IT_RISK_WRITE_ROLES.includes(role);
+}
