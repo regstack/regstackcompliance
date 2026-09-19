@@ -50,12 +50,12 @@ function VorfallForm({
             onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
         </label>
         <input placeholder="Betroffener Bereich" className={inputCls} disabled={pending} value={form.area ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} aria-label="Betroffener Bereich" />
         <input placeholder="Eskaliert an" className={inputCls} disabled={pending} value={form.escalated_to ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, escalated_to: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, escalated_to: e.target.value }))} aria-label="Eskaliert an" />
       </div>
       <textarea placeholder="Sachverhalt" rows={2} className={`mt-2 ${inputCls}`} disabled={pending}
-        value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+        value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} aria-label="Sachverhalt" />
       <label className="mt-2 flex flex-col gap-1 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
         Behoben am
         <input type="date" className={`${inputCls} normal-case max-w-xs`} disabled={pending} value={form.resolved_date ?? ""}

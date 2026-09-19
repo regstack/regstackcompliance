@@ -97,6 +97,7 @@ export function ChecklistRow({
               value={notiz}
               onChange={(e) => setNotiz(e.target.value)}
               placeholder="Notiz (optional)"
+              aria-label="Notiz"
               rows={2}
               className="mt-2 w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
             />

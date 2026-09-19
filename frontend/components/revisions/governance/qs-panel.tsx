@@ -43,18 +43,18 @@ function AddQsForm({ onDone }: { onDone: () => void }) {
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
         <input type="date" className={inputCls} disabled={pending} value={form.date}
-          onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} aria-label="Datum" />
         <select className={inputCls} disabled={pending} value={form.type}
-          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as "regelmaessig" | "anlassbezogen" }))}>
+          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as "regelmaessig" | "anlassbezogen" }))} aria-label="Art">
           <option value="regelmaessig">regelmäßig</option>
           <option value="anlassbezogen">anlassbezogen</option>
         </select>
         <input placeholder="Durchgeführt durch" className={inputCls} disabled={pending} value={form.reviewer ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, reviewer: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, reviewer: e.target.value }))} aria-label="Durchgeführt durch" />
       </div>
       {form.type === "anlassbezogen" && (
         <input placeholder="Anlass" className={`mt-2 ${inputCls}`} disabled={pending} value={form.anlass ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, anlass: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, anlass: e.target.value }))} aria-label="Anlass" />
       )}
       <div className="mt-2 flex flex-wrap gap-4">
         {SCOPE_ITEMS.map((s) => (
@@ -66,7 +66,7 @@ function AddQsForm({ onDone }: { onDone: () => void }) {
         ))}
       </div>
       <textarea placeholder="Ergebnis und Weiterentwicklungsmaßnahmen" rows={2} className={`mt-2 ${inputCls}`} disabled={pending}
-        value={form.result ?? ""} onChange={(e) => setForm((f) => ({ ...f, result: e.target.value }))} />
+        value={form.result ?? ""} onChange={(e) => setForm((f) => ({ ...f, result: e.target.value }))} aria-label="Ergebnis und Weiterentwicklungsmaßnahmen" />
       {form.type === "regelmaessig" && (
         <label className="mt-2 flex flex-col gap-1 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
           Nächste regelmäßige Überprüfung

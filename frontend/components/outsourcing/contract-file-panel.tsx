@@ -85,6 +85,7 @@ export function ContractFilePanel({
               ref={inputRef}
               type="file"
               accept="application/pdf,.doc,.docx,image/png,image/jpeg"
+              aria-label="Vertragsdokument auswählen"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];

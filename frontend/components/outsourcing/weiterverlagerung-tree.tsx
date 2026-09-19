@@ -44,6 +44,7 @@ function NodeForm({
           value={fields.provider}
           disabled={disabled}
           placeholder="Sub-Anbieter"
+          aria-label="Sub-Anbieter"
           onChange={(e) => setFields({ ...fields, provider: e.target.value })}
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50"
         />
@@ -51,6 +52,7 @@ function NodeForm({
           value={fields.country ?? ""}
           disabled={disabled}
           placeholder="Sitzstaat"
+          aria-label="Sitzstaat"
           onChange={(e) => setFields({ ...fields, country: e.target.value })}
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50"
         />
@@ -58,6 +60,7 @@ function NodeForm({
           value={fields.description ?? ""}
           disabled={disabled}
           placeholder="Leistungsbeschreibung (optional)"
+          aria-label="Leistungsbeschreibung (optional)"
           onChange={(e) => setFields({ ...fields, description: e.target.value })}
           className="col-span-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50"
         />

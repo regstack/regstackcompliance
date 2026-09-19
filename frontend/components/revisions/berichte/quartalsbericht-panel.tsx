@@ -133,6 +133,7 @@ function ReportCard({ r, canWrite, canAck }: { r: Report; canWrite: boolean; can
             value={planAdherence}
             disabled={r.frozen || !canWrite}
             onChange={(e) => setPlanAdherence(e.target.value)}
+            aria-label="Beurteilung der (voraussichtlichen) Einhaltung des Prüfungsplans"
             className={`w-full ${input}`}
           />
           {!r.frozen && canWrite && (
@@ -204,10 +205,10 @@ export function QuartalsberichtPanel({
     <div>
       {canWrite && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <select value={year} onChange={(e) => setYear(Number(e.target.value))} className={input}>
+          <select value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Jahr" className={input}>
             {[defaultYear - 1, defaultYear].map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select value={quarter} onChange={(e) => setQuarter(Number(e.target.value))} className={input}>
+          <select value={quarter} onChange={(e) => setQuarter(Number(e.target.value))} aria-label="Quartal" className={input}>
             {[1, 2, 3, 4].map((q) => <option key={q} value={q}>Q{q}</option>)}
           </select>
           <Button className="px-2.5 py-1 text-xs" disabled={pending} onClick={create}>

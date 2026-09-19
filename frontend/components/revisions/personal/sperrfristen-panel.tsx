@@ -49,14 +49,14 @@ function SperrfristForm({
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
         <select value={form.person_id ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, person_id: e.target.value || null }))} className={inputCls}>
+          onChange={(e) => setForm((f) => ({ ...f, person_id: e.target.value || null }))} className={inputCls} aria-label="Person">
           <option value="">— Person (optional) —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
         <input placeholder="Name (falls keine Stammdaten)" value={form.name ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} aria-label="Name (falls keine Stammdaten)" />
         <input placeholder="Bisherige Einheit" value={form.from_unit ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, from_unit: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, from_unit: e.target.value }))} className={inputCls} aria-label="Bisherige Einheit" />
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -82,7 +82,7 @@ function SperrfristForm({
       </label>
       {form.deviation && (
         <textarea placeholder="Begründung der Abweichung" rows={2} value={form.deviation_reason ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, deviation_reason: e.target.value }))} className={`mt-2 ${inputCls} normal-case`} />
+          onChange={(e) => setForm((f) => ({ ...f, deviation_reason: e.target.value }))} className={`mt-2 ${inputCls} normal-case`} aria-label="Begründung der Abweichung" />
       )}
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
