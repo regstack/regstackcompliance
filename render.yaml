@@ -1,0 +1,49 @@
+# Render Blueprint for the Express/Prisma backend — import via Render dashboard → New →
+# Blueprint, pointing at this repo. No database service is declared here: DATABASE_URL points at
+# the existing Supabase Postgres instance, not a Render-managed database.
+#
+# After creating the service from this blueprint:
+#   1. Fill in the `sync: false` env vars below in the Render dashboard (Environment tab) — their
+#      real values live only there, never in this file or in git.
+#   2. Copy the service's Deploy Hook URL (Settings → Deploy Hook) into this repo's GitHub Actions
+#      secret RENDER_DEPLOY_HOOK_URL — .github/workflows/ci.yml's `deploy` job uses it to trigger
+#      a deploy only once CI has passed on `main`, instead of Render's default deploy-on-push.
+#   3. In the Render dashboard, turn OFF "Auto-Deploy" for this service (Settings → Build & Deploy)
+#      so pushes only deploy via that CI-gated hook, not immediately on push.
+services:
+  - type: web
+    name: regstack-backend
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npm run build
+    preDeployCommand: npx prisma migrate deploy
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: RESEND_API_KEY
+        sync: false
+      - key: REMINDERS_FROM_EMAIL
+        sync: false
+      - key: REMINDERS_APP_URL
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: eu-central-1
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "false"

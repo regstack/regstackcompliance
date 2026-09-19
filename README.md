@@ -68,15 +68,39 @@ src/middleware/auditTrail.ts    withAudit() — transaktionaler Audit-Trail
 src/modules/…                   Ein Ordner je Entität/Prozess (Route + Validierung)
 prisma/seed.ts                  Musterdaten, deckungsgleich mit regstack_cockpit.html
 tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, ohne DB-Abhängigkeit
-.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build
+.github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build,
+                                 Deploy-Trigger (Render) nach grüner CI auf main
+render.yaml                     Render-Blueprint für den Backend-Dienst (siehe Abschnitt Deployment)
 ```
+
+## Deployment
+
+Die Datenbank ist Supabase-Postgres (Region eu-central-1/Frankfurt) — `DATABASE_URL` zeigt direkt
+darauf, es gibt keine separate RDS-/Hetzner-Datenbank. Der Node/Express-Prozess selbst läuft
+separat auf [Render](https://render.com) (`render.yaml` im Repo-Root ist die Blueprint-Definition
+dafür), da Supabase keine langlaufenden Node-Prozesse hostet.
+
+Einrichtung (einmalig):
+
+1. In Render: „New → Blueprint" und dieses Repo verbinden — übernimmt `render.yaml`.
+2. Die mit `sync: false` markierten Umgebungsvariablen (siehe `render.yaml`, u. a.
+   `DATABASE_URL`, `JWT_SECRET`, `S3_*`) im Render-Dashboard eintragen — deren echte Werte stehen
+   nie in diesem Repo.
+3. Auto-Deploy in Render deaktivieren (Settings → Build & Deploy) und stattdessen den
+   Deploy-Hook-Link (Settings → Deploy Hook) als GitHub-Actions-Secret
+   `RENDER_DEPLOY_HOOK_URL` in diesem Repo hinterlegen.
+
+Danach löst jeder Push auf `main`, der die CI-Jobs (Lint/Typecheck/Test/Build) übersteht, automatisch
+ein Deployment auf Render aus (`deploy`-Job in `.github/workflows/ci.yml`) — ein roter CI-Lauf
+deployt nie.
+
+Das Frontend (Next.js, `frontend/`) läuft auf Vercel; Vercels eigene Git-Integration deployt es
+bereits automatisch bei jedem Push, dafür ist kein zusätzlicher CI-Schritt nötig.
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
 - DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
   `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
-- Deployment-Pipeline (CD) — App und DB laufen in Frankfurt (eu-central-1), aber CI deckt bisher
-  nur Lint/Test/Build ab, keinen Deploy-Schritt.
 - Backup/Disaster-Recovery der Produktiv-DB: Plan liegt vor (`docs/backup-disaster-recovery.md`),
   konkrete Umsetzung steht noch aus.
 - Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
