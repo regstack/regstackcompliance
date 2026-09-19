@@ -154,6 +154,8 @@ enum EvidenceModule {
   OUTSOURCING
   COMPLIANCE
   INTERNAL_AUDIT
+  RISK_MANAGEMENT
+  IT_RISK
 }
 
 // ---------------------------------------------------------------------------

@@ -6,7 +6,13 @@ import { ValidationError } from "../../utils/errors";
 
 const router = Router();
 
-const moduleSchema = z.enum(["OUTSOURCING", "COMPLIANCE", "INTERNAL_AUDIT"]);
+const moduleSchema = z.enum([
+  "OUTSOURCING",
+  "COMPLIANCE",
+  "INTERNAL_AUDIT",
+  "RISK_MANAGEMENT",
+  "IT_RISK",
+]);
 
 // Generic evidence/document ledger shared across modules — read-only for now (no upload UI exists
 // for any module yet), filterable by `?module=` and optionally `?entityType=&entityId=` (Interne

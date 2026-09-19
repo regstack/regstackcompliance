@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "EvidenceModule" ADD VALUE 'RISK_MANAGEMENT';
+ALTER TYPE "EvidenceModule" ADD VALUE 'IT_RISK';

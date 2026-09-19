@@ -41,7 +41,13 @@ const STATUS_LABEL: Record<string, string> = {
   akzeptiertes_risiko: "Akzeptiertes Risiko",
 };
 
-const MODUL_LABEL: Record<string, string> = { OUTSOURCING: "Outsourcing", COMPLIANCE: "Compliance", INTERNAL_AUDIT: "Interne Revision" };
+const MODUL_LABEL: Record<string, string> = {
+  OUTSOURCING: "Outsourcing",
+  COMPLIANCE: "Compliance",
+  INTERNAL_AUDIT: "Interne Revision",
+  RISK_MANAGEMENT: "Risikomanagement",
+  IT_RISK: "IT-Risiko/BAIT",
+};
 
 const inputCls = "w-full rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50";
 
@@ -130,6 +136,8 @@ function AddFeststellungForm({
           <option value="OUTSOURCING">Outsourcing</option>
           <option value="COMPLIANCE">Compliance</option>
           <option value="INTERNAL_AUDIT">Interne Revision</option>
+          <option value="RISK_MANAGEMENT">Risikomanagement</option>
+          <option value="IT_RISK">IT-Risiko/BAIT</option>
         </select>
         <input placeholder="Fachbereich (Freitext)" className={inputCls} disabled={pending} value={form.fachbereich}
           onChange={(e) => setForm((f) => ({ ...f, fachbereich: e.target.value }))} />
