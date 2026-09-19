@@ -24,6 +24,7 @@ import revisionsFeststellungenRoutes from "../modules/revisions/feststellungen.r
 import revisionsPersonalRoutes from "../modules/revisions/personal.routes";
 import revisionsGovernanceRoutes from "../modules/revisions/governance.routes";
 import revisionsReportsRoutes from "../modules/revisions/reports.routes";
+import externePruefungenRoutes from "../modules/revisions/externePruefungen.routes";
 import { requireAuth } from "../middleware/auth";
 
 export const router = Router();
@@ -57,3 +58,4 @@ router.use("/revisions/feststellungen", revisionsFeststellungenRoutes);
 router.use("/revisions/personal", revisionsPersonalRoutes);
 router.use("/revisions/governance", revisionsGovernanceRoutes);
 router.use("/revisions/reports", revisionsReportsRoutes);
+router.use("/revisions/externe-pruefungen", externePruefungenRoutes);

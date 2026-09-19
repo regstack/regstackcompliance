@@ -93,6 +93,21 @@ export async function getLatestReports(): Promise<Record<ModuleType, LatestRepor
   return result;
 }
 
+export type PendingExternePruefung = { id: string; pruefer: string; jahr: number; berichtsdatum: string | null };
+
+type BackendExternePruefung = { id: string; pruefer: string; jahr: number; berichtsdatum: string | null; glKenntnisnahmeAt: string | null };
+
+/** Externe Prüfberichte, die die Geschäftsleitung noch nicht zur Kenntnis genommen hat — sobald
+ * sie das tut, verteilt die Interne Revision die Feststellungen an die Fachbereiche. */
+export async function getPendingExternePruefungen(): Promise<PendingExternePruefung[]> {
+  const session = await getBackendSession();
+  if (!session) return [];
+  const pruefungen = await apiFetch<BackendExternePruefung[]>("/revisions/externe-pruefungen");
+  return pruefungen
+    .filter((p) => !p.glKenntnisnahmeAt)
+    .map((p) => ({ id: p.id, pruefer: p.pruefer, jahr: p.jahr, berichtsdatum: p.berichtsdatum?.slice(0, 10) ?? null }));
+}
+
 export type AuditPlan = {
   id: string;
   year: number;
