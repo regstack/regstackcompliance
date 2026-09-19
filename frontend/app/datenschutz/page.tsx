@@ -7,9 +7,10 @@ export const metadata: Metadata = {
 
 // DSGVO-Datenschutzerklärung. Beschreibt die tatsächliche Datenverarbeitung dieser Codebase
 // (Supabase Auth für Login/Session, Backend-JWT + Audit-Trail für Anwendungsdaten, kein
-// Analytics/Tracking im Repo gefunden). Verbleibende [Platzhalter] sind unternehmensspezifische
-// Pflichtangaben, die noch nicht feststehen (DPO-Bestellung, Supabase-Projektregion,
-// Hosting-/Objektspeicher-Anbieter) — nicht erfunden.
+// Analytics/Tracking im Repo gefunden). Hosting-Region (eu-central-1/Frankfurt) und
+// DPO-Bestellung sind vom Inhaber bestätigt. Einziger verbleibender [Platzhalter]: der konkrete
+// Objektspeicher-Anbieter für hochgeladene Vertragsdokumente — noch nicht entschieden, nicht
+// erfunden.
 export default function DatenschutzPage() {
   return (
     <LegalPage title="Datenschutzerklärung" updated="19. September 2026">
@@ -36,18 +37,20 @@ export default function DatenschutzPage() {
 
       <LegalSection heading="2. Datenschutzbeauftragter">
         <p>
-          <Placeholder>
-            Name und Kontaktdaten eines Datenschutzbeauftragten, sofern nach
-            Art. 37 DSGVO bestellt — andernfalls diesen Abschnitt entfernen
-          </Placeholder>
+          Als Einzelunternehmen unterhalb der Schwellenwerte aus Art. 37
+          DSGVO/§ 38 BDSG ist Lumera Technologies gesetzlich nicht zur
+          Bestellung eines Datenschutzbeauftragten verpflichtet. Ansprechpartner
+          für Datenschutzanfragen ist der Verantwortliche selbst, Sascha
+          Beinert, erreichbar unter{" "}
+          <a href="mailto:admin@regstack.de">admin@regstack.de</a>.
         </p>
       </LegalSection>
 
       <LegalSection heading="3. Hosting und Serverstandort">
         <p>
-          Die Anwendung und die zugehörige Datenbank werden in
-          EU-Rechenzentren betrieben (u. a. AWS-EU-Region bzw.
-          Hetzner-Objektspeicher für hochgeladene Vertragsdokumente).
+          Die Anwendung und die zugehörige Datenbank werden in einem
+          Rechenzentrum in Frankfurt am Main betrieben (Supabase-Projektregion
+          eu-central-1; das Backend ist in derselben Region gehostet).
           Personenbezogene Daten werden nach unserem Kenntnisstand nicht in
           Drittländer außerhalb der EU/des EWR übertragen. Beim Aufruf der
           Website verarbeitet der Hosting-Provider technisch bedingt
@@ -72,11 +75,7 @@ export default function DatenschutzPage() {
         </p>
         <p>
           Supabase, Inc. wird dabei als Auftragsverarbeiter eingesetzt.
-          Region des Supabase-Projekts:{" "}
-          <Placeholder>
-            EU-Region angeben, z. B. eu-central-1 — mit AVV/DPA-Nachweis
-          </Placeholder>
-          .
+          Region des Supabase-Projekts: eu-central-1 (Frankfurt am Main).
         </p>
       </LegalSection>
 
@@ -106,13 +105,8 @@ export default function DatenschutzPage() {
       <LegalSection heading="7. Empfänger und Auftragsverarbeiter">
         <p>Im Rahmen des Betriebs setzen wir folgende Auftragsverarbeiter ein:</p>
         <ul className="ml-4 list-disc space-y-1">
-          <li>Supabase, Inc. — Authentifizierung/Session-Verwaltung</li>
-          <li>
-            <Placeholder>
-              Hosting-/Infrastrukturanbieter für Anwendung und Datenbank,
-              z. B. AWS EU
-            </Placeholder>
-          </li>
+          <li>Supabase, Inc. — Authentifizierung/Session-Verwaltung (Region eu-central-1, Frankfurt am Main)</li>
+          <li>Hosting-/Infrastrukturanbieter für Anwendung und Datenbank — Region eu-central-1, Frankfurt am Main</li>
           <li>
             <Placeholder>
               Objektspeicher-Anbieter für hochgeladene Vertragsdokumente,

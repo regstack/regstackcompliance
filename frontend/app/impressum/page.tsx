@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, LegalSection, Placeholder } from "@/components/marketing/legal-page";
+import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
 
 export const metadata: Metadata = {
   title: "Impressum — RegStack",
@@ -7,10 +7,9 @@ export const metadata: Metadata = {
 
 // Angaben gemäß § 5 TMG / § 18 Abs. 2 MStV. Lumera Technologies ist ein Einzelunternehmen
 // (Gewerbe), kein Handelsregister-Eintrag (kein HRB) — deshalb bewusst kein
-// "Registereintrag"-Abschnitt. Die PLZ (81735) wurde für die Adresse recherchiert, nicht vom
-// Karteninhaber selbst bestätigt — bei Zustellungsproblemen zuerst hier prüfen.
-// Verbleibende [Platzhalter] (USt-IdNr.) enthalten eine echte Pflichtangabe und dürfen NICHT mit
-// erfundenen Daten befüllt werden.
+// "Registereintrag"-Abschnitt. Keine USt-IdNr. vorhanden (bestätigt vom Inhaber). PLZ 81735 für
+// Kurt-Eisner-Straße 48 München mehrfach online recherchiert (stadtgeschichte-muenchen.de,
+// plzplz.de), nicht amtlich/durch den Inhaber selbst bestätigt.
 export default function ImpressumPage() {
   return (
     <LegalPage title="Impressum" updated="19. September 2026">
@@ -40,11 +39,7 @@ export default function ImpressumPage() {
       </LegalSection>
 
       <LegalSection heading="Umsatzsteuer-ID">
-        <p>
-          Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
-          <br />
-          <Placeholder>USt-IdNr., falls vorhanden — sonst Abschnitt entfernen</Placeholder>
-        </p>
+        <p>Es liegt derzeit keine Umsatzsteuer-Identifikationsnummer vor.</p>
       </LegalSection>
 
       <LegalSection heading="Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV">
