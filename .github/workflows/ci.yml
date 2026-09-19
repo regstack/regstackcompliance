@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 jobs:
@@ -36,3 +36,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+# No separate deploy job: both the frontend and this backend (as a Vercel serverless function,
+# see api/index.ts + vercel.json) deploy automatically via Vercel's own GitHub integration on
+# every push to master — nothing in this workflow needs to trigger that.

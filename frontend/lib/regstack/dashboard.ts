@@ -1,6 +1,9 @@
 import { apiFetch } from "@/lib/regstack/backend-client";
 import { getBackendSession } from "@/lib/regstack/backend-session";
+import { openClauseCount, type ContractRecord } from "@/lib/regstack/outsourcing";
 import type { Database } from "@/lib/database.types";
+import { listBalanceSheets, listIncomeStatements, buildBilanzSectionTotals, buildGuvSectionTotals, buildBiggestMovers } from "@/lib/regstack/accounting";
+import { listBusinessProcesses, listControls, listControlTests, controlsDueForTesting } from "@/lib/regstack/ics";
 
 export type ModuleType = Database["public"]["Enums"]["module_type"];
 
@@ -93,6 +96,21 @@ export async function getLatestReports(): Promise<Record<ModuleType, LatestRepor
   return result;
 }
 
+export type PendingExternePruefung = { id: string; pruefer: string; jahr: number; berichtsdatum: string | null };
+
+type BackendExternePruefung = { id: string; pruefer: string; jahr: number; berichtsdatum: string | null; glKenntnisnahmeAt: string | null };
+
+/** Externe Prüfberichte, die die Geschäftsleitung noch nicht zur Kenntnis genommen hat — sobald
+ * sie das tut, verteilt die Interne Revision die Feststellungen an die Fachbereiche. */
+export async function getPendingExternePruefungen(): Promise<PendingExternePruefung[]> {
+  const session = await getBackendSession();
+  if (!session) return [];
+  const pruefungen = await apiFetch<BackendExternePruefung[]>("/revisions/externe-pruefungen");
+  return pruefungen
+    .filter((p) => !p.glKenntnisnahmeAt)
+    .map((p) => ({ id: p.id, pruefer: p.pruefer, jahr: p.jahr, berichtsdatum: p.berichtsdatum?.slice(0, 10) ?? null }));
+}
+
 export type AuditPlan = {
   id: string;
   year: number;
@@ -163,29 +181,50 @@ export async function getDisputedNormzuweisungen(): Promise<DisputedNormzuweisun
 }
 
 export type ModuleOverview = {
-  outsourcing: { aktiv: number; wesentlich: number };
+  outsourcing: {
+    aktiv: number;
+    wesentlich: number;
+    // Monitoring (Tz. 9) and Contract (Tz. 7) sub-modules feed the same Outsourcing tile —
+    // neither has its own board-report, so this is the only place their state reaches the GL.
+    offeneEskalationen: number;
+    offeneVertragspunkte: number;
+    ausstehendeDependencyAcceptance: number;
+  };
   compliance: { offeneFeststellungen: number };
   internalAudit: { offeneFeststellungen: number; pruefungsobjekte: number };
 };
 
-type BackendActivity = { status: string; riskAnalysis: { materiality: boolean | null } | null };
+type BackendActivity = {
+  status: string;
+  isSubOutsourcing: boolean;
+  riskAnalysis: { materiality: boolean | null } | null;
+  contract: ContractRecord | null;
+  handlungsoption: { status: string | null; depApprover: string | null } | null;
+};
 type BackendFeststellung = { status: string };
 type BackendPruefungsobjekt = { id: string };
+type BackendMonitoringEscalation = { id: string };
 
 export async function getModuleOverview(): Promise<ModuleOverview> {
   const session = await getBackendSession();
 
-  const [activities, complianceFeststellungen, revisionFeststellungen, pruefungsobjekte] = await Promise.all([
+  const [activities, complianceFeststellungen, revisionFeststellungen, pruefungsobjekte, escalations] = await Promise.all([
     session ? apiFetch<BackendActivity[]>("/activities") : Promise.resolve([]),
     session ? apiFetch<BackendFeststellung[]>("/compliance/feststellungen") : Promise.resolve([]),
     session ? apiFetch<BackendFeststellung[]>("/revisions/feststellungen") : Promise.resolve([]),
     session ? apiFetch<BackendPruefungsobjekt[]>("/revisions/universum") : Promise.resolve([]),
+    session ? apiFetch<BackendMonitoringEscalation[]>("/activities/monitoring/escalations") : Promise.resolve([]),
   ]);
 
   return {
     outsourcing: {
       aktiv: activities.filter((a) => a.status === "AKTIV").length,
       wesentlich: activities.filter((a) => a.riskAnalysis?.materiality === true).length,
+      offeneEskalationen: escalations.length,
+      offeneVertragspunkte: activities.filter((a) => openClauseCount(a) > 0).length,
+      ausstehendeDependencyAcceptance: activities.filter(
+        (a) => a.handlungsoption?.status === "BCM_LINKED" && !a.handlungsoption?.depApprover
+      ).length,
     },
     compliance: { offeneFeststellungen: complianceFeststellungen.filter((f) => f.status !== "geschlossen").length },
     internalAudit: {
@@ -193,4 +232,103 @@ export async function getModuleOverview(): Promise<ModuleOverview> {
       pruefungsobjekte: pruefungsobjekte.length,
     },
   };
+}
+
+/** Feeds the dashboard's Bilanz/GuV period-over-period widget — same aggregation helpers the
+ * Buchhaltung overview page itself uses, so the two read the numbers identically. */
+export async function getAccountingAnalysis() {
+  const session = await getBackendSession();
+  if (!session) {
+    return { bilanzData: [], bilanzYears: [], guvData: [], guvYears: [], bilanzMovers: [], guvMovers: [] };
+  }
+  const [balanceSheets, incomeStatements] = await Promise.all([listBalanceSheets(), listIncomeStatements()]);
+  const { data: bilanzData, years: bilanzYears } = buildBilanzSectionTotals(balanceSheets);
+  const { data: guvData, years: guvYears } = buildGuvSectionTotals(incomeStatements);
+  return {
+    bilanzData,
+    bilanzYears,
+    guvData,
+    guvYears,
+    bilanzMovers: buildBiggestMovers(balanceSheets),
+    guvMovers: buildBiggestMovers(incomeStatements),
+  };
+}
+
+export type IcsAtAGlance = { processCount: number; controlCount: number; dueForTesting: number };
+
+export async function getIcsAtAGlance(): Promise<IcsAtAGlance> {
+  const session = await getBackendSession();
+  if (!session) return { processCount: 0, controlCount: 0, dueForTesting: 0 };
+  const [processes, controls, tests] = await Promise.all([listBusinessProcesses(), listControls(), listControlTests()]);
+  return { processCount: processes.length, controlCount: controls.length, dueForTesting: controlsDueForTesting(controls, tests) };
+}
+
+export type MonitoringEscalation = {
+  id: string;
+  activityId: string;
+  activityName: string;
+  evidenceDate: string | null;
+  evidenceDescription: string | null;
+  escalationNote: string | null;
+};
+
+type BackendMonitoringEscalationDetail = {
+  id: string;
+  evidenceDate: string | null;
+  evidenceDescription: string | null;
+  escalationNote: string | null;
+  activity: { id: string; name: string };
+};
+
+/** Monitoring-Einträge (Tz. 9) mit escalationNeeded=true — die Geschäftsleitung ist die
+ * naheliegende Eskalationsadresse für Auffälligkeiten aus dem laufenden Auslagerungsmonitoring. */
+export async function getMonitoringEscalations(): Promise<MonitoringEscalation[]> {
+  const session = await getBackendSession();
+  if (!session) return [];
+  const records = await apiFetch<BackendMonitoringEscalationDetail[]>("/activities/monitoring/escalations");
+  return records.map((r) => ({
+    id: r.id,
+    activityId: r.activity.id,
+    activityName: r.activity.name,
+    evidenceDate: r.evidenceDate,
+    evidenceDescription: r.evidenceDescription,
+    escalationNote: r.escalationNote,
+  }));
+}
+
+export type PendingDependencyApproval = {
+  activityId: string;
+  activityName: string;
+  ersetzbarkeit: string | null;
+  reviewDate: string | null;
+  depControls: string | null;
+};
+
+type BackendActivityWithHandlungsoption = {
+  id: string;
+  name: string;
+  handlungsoption: {
+    status: string | null;
+    depApprover: string | null;
+    ersetzbarkeit: string | null;
+    reviewDate: string | null;
+    depControls: string | null;
+  } | null;
+};
+
+/** Handlungsoptionen (Tz. 6) im BCM_LINKED-Pfad ohne depApprover — die Dependency-Acceptance
+ * darf ausschließlich die Geschäftsleitung bestätigen (RBAC "handlungsoption.approve"). */
+export async function getPendingDependencyApprovals(): Promise<PendingDependencyApproval[]> {
+  const session = await getBackendSession();
+  if (!session) return [];
+  const activities = await apiFetch<BackendActivityWithHandlungsoption[]>("/activities");
+  return activities
+    .filter((a) => a.handlungsoption?.status === "BCM_LINKED" && !a.handlungsoption?.depApprover)
+    .map((a) => ({
+      activityId: a.id,
+      activityName: a.name,
+      ersetzbarkeit: a.handlungsoption?.ersetzbarkeit ?? null,
+      reviewDate: a.handlungsoption?.reviewDate ?? null,
+      depControls: a.handlungsoption?.depControls ?? null,
+    }));
 }

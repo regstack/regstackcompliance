@@ -69,15 +69,54 @@ src/modules/…                   Ein Ordner je Entität/Prozess (Route + Validi
 prisma/seed.ts                  Musterdaten, deckungsgleich mit regstack_cockpit.html
 tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, ohne DB-Abhängigkeit
 .github/workflows/ci.yml        Lint, Typecheck, Test, Migration gegen Postgres-Service, Build
+api/index.ts                    Vercel-Serverless-Einstieg — exportiert dieselbe createApp() wie
+                                 src/server.ts, ohne app.listen() (siehe Abschnitt Deployment)
+vercel.json                     Leitet alle Pfade an die api/index.ts-Function weiter
 ```
+
+## Deployment
+
+Die Datenbank ist Supabase-Postgres (Region eu-central-1/Frankfurt) — `DATABASE_URL` zeigt direkt
+darauf, es gibt keine separate RDS-/Hetzner-Datenbank. Der Node/Express-Prozess selbst läuft als
+**Vercel-Serverless-Function**: `api/index.ts` exportiert dieselbe `createApp()` wie
+`src/server.ts` (nur ohne `app.listen()` — Vercels Node-Runtime nimmt eine exportierte
+Express-App direkt als Request-Handler), `vercel.json` leitet alle Pfade dorthin um.
+
+Sowohl das Frontend (Next.js, `frontend/`) als auch dieses Backend sind bei Vercel als eigene
+Projekte verbunden; Vercels Git-Integration deployt beide automatisch bei jedem Push auf `master`
+(und erzeugt Preview-Deployments für jeden Branch/PR) — dafür ist kein zusätzlicher CI-Schritt
+nötig, `ci.yml` deckt nur Lint/Typecheck/Test/Build ab. Umgebungsvariablen (`DATABASE_URL`,
+`JWT_SECRET`, `S3_*`, …) werden im jeweiligen Vercel-Projekt hinterlegt, nie in diesem Repo.
+
+### Datenbank-Backup
+
+`.github/workflows/backup.yml` sichert die Produktiv-DB täglich unabhängig von Supabases eigenen
+Backups (`npm run backup:run`, siehe `docs/backup-disaster-recovery.md`) und restauriert den Dump
+im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene GitHub-Secrets
+(`PRODUCTION_DATABASE_URL_DIRECT` — Supabases **direkte**, nicht gepoolte Verbindung — plus die
+`S3_*`-Zugangsdaten); ohne sie läuft der Workflow ins Leere, siehe Abschnitt 7 der Doku.
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- Objektspeicher-Anbindung für `Contract.fileObjectKey` (S3-kompatibel — AWS S3 EU oder Hetzner
-  Object Storage) inkl. Pre-Signed-Upload-Endpoint; aktuell nimmt die API nur die Metadaten
-  entgegen (siehe `contracts.routes.ts`).
-- DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
-  `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
+- DORA-Registermodul (Art. 28–30): eine erste Fassung ist da (`src/modules/ictRegister/`,
+  UI unter Outsourcing → „DORA-Register", `prisma/schema.prisma` — `IctProvider`/
+  `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
+  Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
+  der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+- Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
+  (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
+  `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
+  auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
+  Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
+  `Risikomanagement_BAIT_MVP_Spezifikation.md`.
+- Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
+  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
+  Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
+  (`docs/backup-disaster-recovery.md`, Abschnitt 7).
+- Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
+  S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
+  funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
+  und Zugangsdaten gesetzt sind (siehe `.env.example`).
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
-- Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).

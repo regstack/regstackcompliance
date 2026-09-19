@@ -36,4 +36,16 @@ describe("requirePermission — server-side RBAC (non-negotiable, not UI-only)",
   it("rejects an unauthenticated request", () => {
     expect(() => requirePermission("report", "read")(mockReq(undefined), mockRes, vi.fn())).toThrow(ForbiddenError);
   });
+
+  it("allows the same roles as outsourcingActivity to write the DORA ICT register, and VIEWER to read it", () => {
+    const next = vi.fn();
+    requirePermission("ictRegister", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+
+    expect(() => requirePermission("ictRegister", "write")(mockReq("VIEWER"), mockRes, vi.fn())).toThrow(ForbiddenError);
+
+    const readNext = vi.fn();
+    requirePermission("ictRegister", "read")(mockReq("VIEWER"), mockRes, readNext);
+    expect(readNext).toHaveBeenCalledOnce();
+  });
 });
