@@ -148,3 +148,24 @@ export function LogOutIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ScaleIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3v18M8 21h8" />
+      <path d="M5 7l-3 6a3 3 0 006 0l-3-6zM19 7l-3 6a3 3 0 006 0l-3-6z" />
+      <path d="M5 7h14" />
+    </svg>
+  );
+}
+
+export function NetworkIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="4.5" r="2" />
+      <circle cx="5" cy="19" r="2" />
+      <circle cx="19" cy="19" r="2" />
+      <path d="M12 6.5v6M12 12.5L5 17M12 12.5l7 4.5" />
+    </svg>
+  );
+}

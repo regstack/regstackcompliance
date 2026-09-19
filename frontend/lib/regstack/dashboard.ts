@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/regstack/backend-client";
 import { getBackendSession } from "@/lib/regstack/backend-session";
 import { openClauseCount, type ContractRecord } from "@/lib/regstack/outsourcing";
 import type { Database } from "@/lib/database.types";
+import { listBalanceSheets, listIncomeStatements, buildBilanzSectionTotals, buildGuvSectionTotals, buildBiggestMovers } from "@/lib/regstack/accounting";
+import { listBusinessProcesses, listControls, listControlTests, controlsDueForTesting } from "@/lib/regstack/ics";
 
 export type ModuleType = Database["public"]["Enums"]["module_type"];
 
@@ -230,6 +232,35 @@ export async function getModuleOverview(): Promise<ModuleOverview> {
       pruefungsobjekte: pruefungsobjekte.length,
     },
   };
+}
+
+/** Feeds the dashboard's Bilanz/GuV period-over-period widget — same aggregation helpers the
+ * Buchhaltung overview page itself uses, so the two read the numbers identically. */
+export async function getAccountingAnalysis() {
+  const session = await getBackendSession();
+  if (!session) {
+    return { bilanzData: [], bilanzYears: [], guvData: [], guvYears: [], bilanzMovers: [], guvMovers: [] };
+  }
+  const [balanceSheets, incomeStatements] = await Promise.all([listBalanceSheets(), listIncomeStatements()]);
+  const { data: bilanzData, years: bilanzYears } = buildBilanzSectionTotals(balanceSheets);
+  const { data: guvData, years: guvYears } = buildGuvSectionTotals(incomeStatements);
+  return {
+    bilanzData,
+    bilanzYears,
+    guvData,
+    guvYears,
+    bilanzMovers: buildBiggestMovers(balanceSheets),
+    guvMovers: buildBiggestMovers(incomeStatements),
+  };
+}
+
+export type IcsAtAGlance = { processCount: number; controlCount: number; dueForTesting: number };
+
+export async function getIcsAtAGlance(): Promise<IcsAtAGlance> {
+  const session = await getBackendSession();
+  if (!session) return { processCount: 0, controlCount: 0, dueForTesting: 0 };
+  const [processes, controls, tests] = await Promise.all([listBusinessProcesses(), listControls(), listControlTests()]);
+  return { processCount: processes.length, controlCount: controls.length, dueForTesting: controlsDueForTesting(controls, tests) };
 }
 
 export type MonitoringEscalation = {
