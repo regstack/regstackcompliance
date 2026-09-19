@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
@@ -7,8 +7,30 @@ import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { canReportMassnahmeErledigt } from "./ownership";
+import { sendEmail } from "../notifications/mailer";
+import { env } from "../../config/env";
 
 const router = Router();
+
+// Best-effort, immediate "you've been assigned this" notice — separate from (and in addition
+// to) the escalating deadline-reminder job in notifications/deadlineReminders.ts, which only
+// starts firing as the Frist approaches. A failed send never fails the distribution itself: the
+// database write (verantwortlichUserId + verteiltAm/Von) is the source of truth, this is just a
+// courtesy heads-up, so errors are logged and swallowed rather than thrown.
+async function notifyDistribution(req: Request, verantwortlichUserId: string, titel: string): Promise<void> {
+  try {
+    const recipient = await prisma.user.findUnique({ where: { id: verantwortlichUserId }, select: { email: true } });
+    if (!recipient) return;
+    const link = `${env.remindersAppUrl}/interne-revision/externe-pruefungen`;
+    await sendEmail({
+      to: recipient.email,
+      subject: `Ihnen wurde eine Feststellung aus einer externen Prüfung zugewiesen: ${titel}`,
+      text: `Die Feststellung „${titel}“ aus einer externen Prüfung wurde Ihnen von der Internen Revision zur Umsetzung zugewiesen.\n\nDetails: ${link}`,
+    });
+  } catch (err) {
+    req.log?.warn(err, "Benachrichtigung zur Verteilung einer externen Prüfungsfeststellung fehlgeschlagen");
+  }
+}
 
 // ---------------------------------------------------------------------------
 // ExternePruefung — the annual external auditor's report, once received by the
@@ -165,6 +187,7 @@ router.post(
           },
         })
     );
+    if (parsed.data.verantwortlichUserId) await notifyDistribution(req, parsed.data.verantwortlichUserId, created.titel);
     res.status(201).json(created);
   })
 );
@@ -197,6 +220,7 @@ router.patch(
           },
         })
     );
+    if (nowDistributing && parsed.data.verantwortlichUserId) await notifyDistribution(req, parsed.data.verantwortlichUserId, updated.titel);
     res.json(updated);
   })
 );
