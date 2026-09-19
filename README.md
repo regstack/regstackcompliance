@@ -73,13 +73,13 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
 
 ## Nächste Schritte (Phase 2–3 aus der Backend-Spezifikation)
 
-- Objektspeicher-Anbindung für `Contract.fileObjectKey` (S3-kompatibel — AWS S3 EU oder Hetzner
-  Object Storage) inkl. Pre-Signed-Upload-Endpoint; aktuell nimmt die API nur die Metadaten
-  entgegen (siehe `contracts.routes.ts`).
 - DORA-Registermodul (Art. 28–30) — bewusst außerhalb dieses MVP, siehe
   `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
-- Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
+- Deployment-Pipeline (CD) — App und DB laufen in Frankfurt (eu-central-1), aber CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
-- Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).
 - Backup/Disaster-Recovery der Produktiv-DB: Plan liegt vor (`docs/backup-disaster-recovery.md`),
-  konkrete Umsetzung hängt an der Hosting-Entscheidung.
+  konkrete Umsetzung steht noch aus.
+- Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
+  S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
+  funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
+  und Zugangsdaten gesetzt sind (siehe `.env.example`).
