@@ -80,8 +80,16 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
   komplett unabhängig vom AT9-Modul. Die fachliche Klassifizierungs-/Scoring-Logik analog
   `classify.ts` fehlt bewusst noch, siehe
   `AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md`, Abschnitt 2.
-- BAIT-Modul (Bankaufsichtliche Anforderungen an die IT) — eigenständiges 4. Compliance-Modul neben
-  AT9/Compliance/Interne Revision, Schwerpunkt IT-Prüfung (IT-Revision) und
-  Informationsrisikomanagement; siehe `src/modules/bait/`.
+- BAIT-Modul (Bankaufsichtliche Anforderungen an die IT) — Scaffold vorhanden für die beiden
+  Teilbereiche IT-Prüfung und Informationsrisikomanagement (BAIT Kap. 3), als eigenständiges,
+  standalone Modul wie DORA (`src/modules/bait/`, `BaitItPruefung` + `BaitItPruefungsfeststellung`
+  + `BaitInformationsverbund` + `BaitRisikobewertung` in `prisma/schema.prisma`, RBAC-Ressourcen
+  `baitPruefung`/`baitRisiko`, gemountet unter `/api/bait/pruefungen`, `/api/bait/feststellungen`,
+  `/api/bait/informationsverbuende`, `/api/bait/risikobewertungen`). Kein Pflicht-Link zu
+  AT9/Compliance/Interner Revision/DORA — der optionale `informationsverbundId`-Verweis von einer
+  IT-Prüfung auf einen Informationsverbund ist reine Querverlinkung innerhalb des Moduls selbst.
+  Die weiteren ~8 BAIT-Kapitel (Governance, IKT-Betrieb, IKT-Projekte, Auslagerungen/Fremdbezug
+  von IT-Dienstleistungen, Kritische Infrastrukturen, ...) sind bewusst noch nicht Teil dieses
+  Scaffolds.
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
