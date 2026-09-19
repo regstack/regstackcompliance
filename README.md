@@ -81,3 +81,5 @@ tests/                          Vitest — classify.ts (CSC/Tesla) und rbac.ts, 
 - Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
   nur Lint/Test/Build ab, keinen Deploy-Schritt.
 - Rate-Limiting/Login-Throttling vor Produktivbetrieb (aktuell nicht Teil von `auth.routes.ts`).
+- Backup/Disaster-Recovery der Produktiv-DB: Plan liegt vor (`docs/backup-disaster-recovery.md`),
+  konkrete Umsetzung hängt an der Hosting-Entscheidung.
