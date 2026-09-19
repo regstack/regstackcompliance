@@ -93,6 +93,7 @@ function HandshakeCard({
         {!handshake && canWrite && (
           <div className="flex flex-wrap items-center gap-2">
             <select value={target} onChange={(e) => setTarget(e.target.value)}
+              aria-label="Fachbereich"
               className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground">
               {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
             </select>
@@ -128,6 +129,7 @@ function HandshakeCard({
                   Bestätigen
                 </Button>
                 <input placeholder="Begründung der Bestreitung" value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)}
+                  aria-label="Begründung der Bestreitung"
                   className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground" />
                 <Button variant="danger" className="px-2.5 py-1 text-xs" disabled={pending}
                   onClick={() => run(() => respondNormZuweisung(handshake.id, normId, "widersprochen", disputeReason))}>
@@ -138,6 +140,7 @@ function HandshakeCard({
             {canDecide && (
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <input placeholder="Entscheidung der Geschäftsleitung" value={decisionNote} onChange={(e) => setDecisionNote(e.target.value)}
+                  aria-label="Entscheidung der Geschäftsleitung"
                   className="min-w-[220px] flex-1 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground" />
                 <Button className="px-2.5 py-1 text-xs" disabled={pending || !decisionNote.trim()}
                   onClick={() => run(() => decideNormZuweisung(handshake.id, normId, decisionNote))}>
@@ -175,15 +178,15 @@ function FeststellungForm({ normId, onDone, onCancel, personen }: { normId: stri
   return (
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <input placeholder="Titel" value={form.titel} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, titel: e.target.value }))} className={`sm:col-span-2 ${input}`} />
-        <textarea placeholder="Sachverhalt" value={form.beschreibung} disabled={pending} rows={2} onChange={(e) => setForm((f) => ({ ...f, beschreibung: e.target.value }))} className={`sm:col-span-2 ${input}`} />
-        <select value={form.schweregrad} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, schweregrad: e.target.value }))} className={input}>
+        <input placeholder="Titel" value={form.titel} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, titel: e.target.value }))} aria-label="Titel" className={`sm:col-span-2 ${input}`} />
+        <textarea placeholder="Sachverhalt" value={form.beschreibung} disabled={pending} rows={2} onChange={(e) => setForm((f) => ({ ...f, beschreibung: e.target.value }))} aria-label="Sachverhalt" className={`sm:col-span-2 ${input}`} />
+        <select value={form.schweregrad} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, schweregrad: e.target.value }))} aria-label="Schweregrad" className={input}>
           <option value="gering">gering</option><option value="mittel">mittel</option><option value="wesentlich">wesentlich</option>
         </select>
-        <input type="date" value={form.frist ?? ""} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, frist: e.target.value || null }))} className={input} />
-        <input placeholder="Maßnahme" value={form.massnahme} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, massnahme: e.target.value }))} className={`sm:col-span-2 ${input}`} />
-        <input placeholder="Quelle (z. B. Kontrolle, Selbstbewertung)" value={form.quelle} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, quelle: e.target.value }))} className={input} />
-        <select value={form.verantwortlich_person_id ?? ""} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, verantwortlich_person_id: e.target.value || null }))} className={input}>
+        <input type="date" value={form.frist ?? ""} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, frist: e.target.value || null }))} aria-label="Frist" className={input} />
+        <input placeholder="Maßnahme" value={form.massnahme} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, massnahme: e.target.value }))} aria-label="Maßnahme" className={`sm:col-span-2 ${input}`} />
+        <input placeholder="Quelle (z. B. Kontrolle, Selbstbewertung)" value={form.quelle} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, quelle: e.target.value }))} aria-label="Quelle (z. B. Kontrolle, Selbstbewertung)" className={input} />
+        <select value={form.verantwortlich_person_id ?? ""} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, verantwortlich_person_id: e.target.value || null }))} aria-label="Verantwortlich" className={input}>
           <option value="">— Verantwortlich —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
@@ -238,6 +241,7 @@ function FeststellungRow({ f, normId, canWrite }: { f: Feststellung; normId: str
             )}
             <div className="flex items-center gap-1">
               <input type="date" value={ueberpruefung} onChange={(e) => setUeberpruefung(e.target.value)}
+                aria-label="Überprüfung am"
                 className="w-28 rounded-md border border-border-strong bg-surface px-1.5 py-1 text-[11px] text-foreground" />
               <Button variant="ghost" className="px-2 py-1 text-[11px]" disabled={pending || !ueberpruefung}
                 onClick={() => run(() => setFeststellungAkzeptiertesRisiko(f.id, normId, ueberpruefung))}>

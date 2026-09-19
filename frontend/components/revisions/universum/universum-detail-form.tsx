@@ -160,10 +160,10 @@ export function CreatePruefungCard({ universumId, defaultSubject, canWrite }: { 
           <Button className="px-3 py-1.5 text-xs" onClick={() => setOpen(true)}>+ Prüfung zu diesem Objekt anlegen</Button>
         ) : (
           <div className="space-y-2">
-            <input placeholder="Prüfungsgegenstand" value={subject} disabled={pending} onChange={(e) => setSubject(e.target.value)} className={`w-full ${input}`} />
+            <input placeholder="Prüfungsgegenstand" value={subject} disabled={pending} onChange={(e) => setSubject(e.target.value)} aria-label="Prüfungsgegenstand" className={`w-full ${input}`} />
             <div className="grid gap-2 sm:grid-cols-2">
-              <input type="date" value={periodFrom} disabled={pending} onChange={(e) => setPeriodFrom(e.target.value)} className={input} />
-              <input type="date" value={periodTo} disabled={pending} onChange={(e) => setPeriodTo(e.target.value)} className={input} />
+              <input type="date" value={periodFrom} disabled={pending} onChange={(e) => setPeriodFrom(e.target.value)} aria-label="Zeitraum von" className={input} />
+              <input type="date" value={periodTo} disabled={pending} onChange={(e) => setPeriodTo(e.target.value)} aria-label="Zeitraum bis" className={input} />
             </div>
             <ErrorText error={error} />
             <div className="flex gap-2">

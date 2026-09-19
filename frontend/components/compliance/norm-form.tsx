@@ -50,28 +50,36 @@ export function NormForm({
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <input placeholder="Bezeichnung der Regelung" value={form.bezeichnung} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, bezeichnung: e.target.value }))} className={`sm:col-span-2 ${input}`} />
+          onChange={(e) => setForm((f) => ({ ...f, bezeichnung: e.target.value }))}
+          aria-label="Bezeichnung der Regelung" className={`sm:col-span-2 ${input}`} />
         <input placeholder="Sachgebiet" value={form.sachgebiet} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, sachgebiet: e.target.value }))} className={input} />
+          onChange={(e) => setForm((f) => ({ ...f, sachgebiet: e.target.value }))}
+          aria-label="Sachgebiet" className={input} />
         <input placeholder="Quelle (z. B. manuell, Repository)" value={form.quelle} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, quelle: e.target.value }))} className={input} />
+          onChange={(e) => setForm((f) => ({ ...f, quelle: e.target.value }))}
+          aria-label="Quelle (z. B. manuell, Repository)" className={input} />
         <select value={form.relevanz} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, relevanz: e.target.value as NormInput["relevanz"] }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, relevanz: e.target.value as NormInput["relevanz"] }))}
+          aria-label="Relevanz" className={input}>
           <option value="relevant">Stufe 1: relevant</option>
           <option value="nicht_relevant">Stufe 1: nicht relevant</option>
         </select>
         <select value={form.wesentlichkeit} disabled={pending || form.relevanz === "nicht_relevant"}
-          onChange={(e) => setForm((f) => ({ ...f, wesentlichkeit: e.target.value }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, wesentlichkeit: e.target.value }))}
+          aria-label="Wesentlichkeit" className={input}>
           {WESENTLICHKEIT_OPTS.map((w) => <option key={w} value={w}>{w || "Stufe 2: —"}</option>)}
         </select>
         <textarea placeholder="Begründung Stufe 1 (Relevanz)" value={form.relevanz_begruendung} disabled={pending} rows={2}
-          onChange={(e) => setForm((f) => ({ ...f, relevanz_begruendung: e.target.value }))} className={`sm:col-span-2 ${input}`} />
+          onChange={(e) => setForm((f) => ({ ...f, relevanz_begruendung: e.target.value }))}
+          aria-label="Begründung Stufe 1 (Relevanz)" className={`sm:col-span-2 ${input}`} />
         {form.relevanz === "relevant" && (
           <textarea placeholder="Begründung Stufe 2 (Wesentlichkeit)" value={form.wesentlichkeit_begruendung} disabled={pending} rows={2}
-            onChange={(e) => setForm((f) => ({ ...f, wesentlichkeit_begruendung: e.target.value }))} className={`sm:col-span-2 ${input}`} />
+            onChange={(e) => setForm((f) => ({ ...f, wesentlichkeit_begruendung: e.target.value }))}
+            aria-label="Begründung Stufe 2 (Wesentlichkeit)" className={`sm:col-span-2 ${input}`} />
         )}
         <select value={form.risiko} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, risiko: e.target.value }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, risiko: e.target.value }))}
+          aria-label="Risiko" className={input}>
           {RISIKO_OPTS.map((r) => <option key={r} value={r}>{r || "Risiko: —"}</option>)}
         </select>
       </div>

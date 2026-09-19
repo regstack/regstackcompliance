@@ -58,6 +58,7 @@ export function FeststellungForm({
           disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, pruefung_id: e.target.value }))}
           className={`sm:col-span-2 ${input}`}
+          aria-label="Prüfung"
         >
           <option value="">— Prüfung wählen —</option>
           {pruefungen.map((p) => (
@@ -73,6 +74,7 @@ export function FeststellungForm({
           disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, titel: e.target.value }))}
           className={`sm:col-span-2 ${input}`}
+          aria-label="Titel der Feststellung"
         />
 
         <textarea
@@ -82,6 +84,7 @@ export function FeststellungForm({
           disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, beschreibung: e.target.value }))}
           className={`sm:col-span-2 ${input}`}
+          aria-label="Beschreibung"
         />
 
         <select
@@ -89,6 +92,7 @@ export function FeststellungForm({
           disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, schweregrad: e.target.value }))}
           className={input}
+          aria-label="Schweregrad"
         >
           {SEVERITY_ORDER.map((s) => (
             <option key={s} value={s}>{severityLabel(s)}</option>
@@ -100,6 +104,7 @@ export function FeststellungForm({
           disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, verantwortlich_person_id: e.target.value || null }))}
           className={input}
+          aria-label="Verantwortlich"
         >
           <option value="">— Verantwortlich —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
@@ -115,6 +120,7 @@ export function FeststellungForm({
             disabled={pending}
             onChange={(e) => setForm((f) => ({ ...f, frist_urspruenglich: e.target.value || null }))}
             className={input}
+            aria-label="Ursprüngliche Frist"
           />
         </div>
 

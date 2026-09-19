@@ -89,6 +89,7 @@ function Row({ f, canWrite }: { f: Feststellung; canWrite: boolean }) {
             {(f.status === "offen" || f.status === "fachbereich_erledigt") && (
               <div className="flex items-center gap-1">
                 <input type="date" value={ueberpruefung} onChange={(e) => setUeberpruefung(e.target.value)}
+                  aria-label="Überprüfung am"
                   className="w-28 rounded-md border border-border-strong bg-surface px-1.5 py-1 text-[11px] text-foreground" />
                 <Button variant="ghost" className="px-2 py-1 text-[11px]" disabled={pending || !ueberpruefung}
                   onClick={() => run(() => setFeststellungAkzeptiertesRisiko(f.id, f.norm_id ?? "", ueberpruefung))}>

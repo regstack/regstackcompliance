@@ -101,14 +101,14 @@ export function QsPanel({
                         <td className="px-3 py-2.5 text-foreground">{q.punkt}</td>
                         <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">{q.tz}</td>
                         <td className="px-3 py-2.5">
-                          <select value={q.status} disabled={disabled} onChange={(e) => patch(q.id, { status: e.target.value as QsChecklistItem["status"] })} className={input}>
+                          <select value={q.status} disabled={disabled} onChange={(e) => patch(q.id, { status: e.target.value as QsChecklistItem["status"] })} className={input} aria-label={`Status: ${q.punkt}`}>
                             {QS_STATUS_OPTS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
                           </select>
                           <div className="mt-1"><Pill tone={STATUS_TONE[q.status]}>{QS_STATUS_OPTS.find((o) => o.v === q.status)?.l}</Pill></div>
                         </td>
                         <td className="px-3 py-2.5">
                           <input value={q.kommentar} disabled={disabled} placeholder={needsComment ? "Begründung erforderlich" : "—"}
-                            onChange={(e) => patch(q.id, { kommentar: e.target.value })} className={`w-full ${input}`} />
+                            onChange={(e) => patch(q.id, { kommentar: e.target.value })} className={`w-full ${input}`} aria-label={`Begründung / Kommentar: ${q.punkt}`} />
                           {needsComment && <div className="mt-1 text-[11px] text-status-danger">Jede Bewertung außer „erfüllt&ldquo; ist zu begründen.</div>}
                         </td>
                       </tr>

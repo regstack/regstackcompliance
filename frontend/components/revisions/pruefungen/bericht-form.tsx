@@ -88,7 +88,7 @@ export function BerichtForm({
           <h3 className="mb-1.5 text-[13px] font-semibold text-foreground">
             Gesamturteil <span className="text-xs font-normal text-muted-foreground">Tz. 7 — institutseigene Urteilsbildung</span>
           </h3>
-          <select value={form.overall_rating ?? ""} disabled={disabled} onChange={(e) => set("overall_rating", e.target.value || null)} className={input}>
+          <select value={form.overall_rating ?? ""} disabled={disabled} onChange={(e) => set("overall_rating", e.target.value || null)} className={input} aria-label="Gesamturteil">
             {OVERALL_RATING.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
           </select>
           {rm.desc && <p className="mt-1.5 text-xs text-muted-foreground">{rm.desc}</p>}

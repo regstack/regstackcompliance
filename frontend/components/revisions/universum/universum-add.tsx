@@ -36,24 +36,24 @@ function Form({ personen, onDone, onCancel }: { personen: { id: string; full_nam
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <input placeholder="Bezeichnung des Prüfungsobjekts" value={form.bezeichnung} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, bezeichnung: e.target.value }))} className={`sm:col-span-2 ${input}`} />
+          onChange={(e) => setForm((f) => ({ ...f, bezeichnung: e.target.value }))} aria-label="Bezeichnung des Prüfungsobjekts" className={`sm:col-span-2 ${input}`} />
         <input placeholder="Bereich" value={form.bereich ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, bereich: e.target.value }))} className={input} />
+          onChange={(e) => setForm((f) => ({ ...f, bereich: e.target.value }))} aria-label="Bereich" className={input} />
         <select value={form.category ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} aria-label="Kategorie" className={input}>
           {CATEGORY_OPTS.map((c) => <option key={c.v} value={c.v}>{c.label}</option>)}
         </select>
         <select value={form.materiality} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, materiality: e.target.value }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, materiality: e.target.value }))} aria-label="Wesentlichkeit" className={input}>
           {MATERIALITY_OPTS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
         </select>
         <select value={form.verantwortlicher_person_id ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, verantwortlicher_person_id: e.target.value || null }))} className={input}>
+          onChange={(e) => setForm((f) => ({ ...f, verantwortlicher_person_id: e.target.value || null }))} aria-label="Verantwortlicher" className={input}>
           <option value="">— Verantwortlicher —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
         <input placeholder="Regulatorischer Anker (z. B. BTO 1.2 MaRisk; § 25a KWG)" value={form.reg_anker ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, reg_anker: e.target.value }))} className={`sm:col-span-2 ${input}`} />
+          onChange={(e) => setForm((f) => ({ ...f, reg_anker: e.target.value }))} aria-label="Regulatorischer Anker (z. B. BTO 1.2 MaRisk; § 25a KWG)" className={`sm:col-span-2 ${input}`} />
         <label className="flex items-center gap-2 text-xs text-foreground">
           <input type="checkbox" checked={form.outsourced} disabled={pending}
             onChange={(e) => setForm((f) => ({ ...f, outsourced: e.target.checked }))} />

@@ -79,13 +79,13 @@ function AddSchulungForm({ personId, onDone }: { personId: string; onDone: () =>
     <div className="mt-2 rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-4">
         <input placeholder="Fortbildung / Titel" className={inputCls} disabled={pending} value={form.titel}
-          onChange={(e) => setForm((f) => ({ ...f, titel: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, titel: e.target.value }))} aria-label="Fortbildung / Titel" />
         <input type="date" className={inputCls} disabled={pending} value={form.datum ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, datum: e.target.value || null }))} />
+          onChange={(e) => setForm((f) => ({ ...f, datum: e.target.value || null }))} aria-label="Datum" />
         <input type="number" placeholder="Tage" className={inputCls} disabled={pending} value={form.umfang ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, umfang: e.target.value === "" ? null : Number(e.target.value) }))} />
+          onChange={(e) => setForm((f) => ({ ...f, umfang: e.target.value === "" ? null : Number(e.target.value) }))} aria-label="Tage" />
         <input placeholder="Nachweis" className={inputCls} disabled={pending} value={form.nachweis_text ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, nachweis_text: e.target.value }))} />
+          onChange={(e) => setForm((f) => ({ ...f, nachweis_text: e.target.value }))} aria-label="Nachweis" />
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">

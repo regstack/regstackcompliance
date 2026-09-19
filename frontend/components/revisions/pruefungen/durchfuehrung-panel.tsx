@@ -30,11 +30,11 @@ function EinsichtForm({ pruefungId, onDone }: { pruefungId: string; onDone: () =
   return (
     <div className="mt-2 rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <input type="date" value={datum} disabled={pending} onChange={(e) => setDatum(e.target.value)} className={input} />
-        <input placeholder="Durch" value={durch} disabled={pending} onChange={(e) => setDurch(e.target.value)} className={input} />
+        <input type="date" value={datum} disabled={pending} onChange={(e) => setDatum(e.target.value)} className={input} aria-label="Datum" />
+        <input placeholder="Durch" value={durch} disabled={pending} onChange={(e) => setDurch(e.target.value)} className={input} aria-label="Durch" />
       </div>
       <textarea placeholder="Ergebnis der Einsichtnahme" value={ergebnis} disabled={pending} rows={2}
-        onChange={(e) => setErgebnis(e.target.value)} className={`mt-2 w-full ${input}`} />
+        onChange={(e) => setErgebnis(e.target.value)} className={`mt-2 w-full ${input}`} aria-label="Ergebnis der Einsichtnahme" />
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
         <Button className="px-2.5 py-1 text-xs" disabled={pending || !durch.trim()} onClick={submit}>Dokumentieren</Button>

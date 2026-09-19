@@ -48,25 +48,25 @@ function SonderwissenForm({
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-3">
         <select value={form.person_id ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, person_id: e.target.value || null }))} className={inputCls}>
+          onChange={(e) => setForm((f) => ({ ...f, person_id: e.target.value || null }))} className={inputCls} aria-label="Person">
           <option value="">— Person (optional) —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </select>
         <input placeholder="Name (falls keine Stammdaten)" value={form.name ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} aria-label="Name (falls keine Stammdaten)" />
         <input placeholder="Bisherige Einheit" value={form.from_unit ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, from_unit: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, from_unit: e.target.value }))} className={inputCls} aria-label="Bisherige Einheit" />
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
         <input placeholder="Fachgebiet" value={form.topic ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, topic: e.target.value }))} className={inputCls} aria-label="Fachgebiet" />
         <select value={form.pruefung_id ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, pruefung_id: e.target.value || null }))} className={inputCls}>
+          onChange={(e) => setForm((f) => ({ ...f, pruefung_id: e.target.value || null }))} className={inputCls} aria-label="Bezug (Prüfung)">
           <option value="">— Bezug (Prüfung, optional) —</option>
           {pruefungen.map((p) => <option key={p.id} value={p.id}>{p.subject}</option>)}
         </select>
         <input placeholder="Dauer / Einsatzzeitraum" value={form.duration_text ?? ""} disabled={pending}
-          onChange={(e) => setForm((f) => ({ ...f, duration_text: e.target.value }))} className={inputCls} />
+          onChange={(e) => setForm((f) => ({ ...f, duration_text: e.target.value }))} className={inputCls} aria-label="Dauer / Einsatzzeitraum" />
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
