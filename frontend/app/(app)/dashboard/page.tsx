@@ -1,12 +1,18 @@
 import Link from "next/link";
+import {
+  getLatestReports, getPendingAuditPlans, getDisputedNormzuweisungen, getModuleOverview,
+  getAccountingAnalysis, getIcsAtAGlance,
+} from "@/lib/regstack/dashboard";
 import { getBackendSession, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
-import { getLatestReports, getPendingAuditPlans, getDisputedNormzuweisungen, getModuleOverview } from "@/lib/regstack/dashboard";
-import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
+import { Card, CardBody } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Button } from "@/components/ui/button";
+import { AlertTriangleIcon } from "@/components/ui/icons";
 import { ReportAckButton } from "@/components/dashboard/report-ack-button";
 import { AuditPlanApproveButton } from "@/components/dashboard/audit-plan-approve-button";
 import { NormzuweisungDecision } from "@/components/dashboard/normzuweisung-decision";
+import { AccountingAnalysis } from "@/components/buchhaltung/accounting-analysis";
 import type { Database } from "@/lib/database.types";
 
 type ModuleType = Database["public"]["Enums"]["module_type"];
@@ -36,113 +42,64 @@ export default async function DashboardPage() {
     );
   }
 
-  const [reports, auditPlans, disputes, overview] = await Promise.all([
+  const [reports, auditPlans, disputes, overview, accounting, ics] = await Promise.all([
     getLatestReports(),
     getPendingAuditPlans(),
     getDisputedNormzuweisungen(),
     getModuleOverview(),
+    getAccountingAnalysis(),
+    getIcsAtAGlance(),
   ]);
+
+  const actionItemCount = auditPlans.length + disputes.length;
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Geschäftsleitung — Übersicht</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Aktuelle Berichte, Prüfungsplan-Genehmigung und eskalierte Normzuweisungen aus allen drei Modulen.
+          Kennzahlen, Handlungsbedarf und aktuelle Berichte aus allen Modulen.
         </p>
       </div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Modulübersicht</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardBody>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outsourcing</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{overview.outsourcing.aktiv}</p>
-              <p className="text-xs text-muted-foreground">aktive Auslagerungen, davon {overview.outsourcing.wesentlich} wesentlich</p>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Compliance</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{overview.compliance.offeneFeststellungen}</p>
-              <p className="text-xs text-muted-foreground">offene Feststellungen</p>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Interne Revision</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{overview.internalAudit.pruefungsobjekte}</p>
-              <p className="text-xs text-muted-foreground">Prüfungsobjekte, {overview.internalAudit.offeneFeststellungen} offene Feststellungen</p>
-            </CardBody>
-          </Card>
-        </div>
+      {/* KPI strip — one compact row instead of the former "Modulübersicht" + "Aktuelle Berichte"
+          card grids stacked on top of each other. */}
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <StatCard label="Auslagerungen aktiv" value={overview.outsourcing.aktiv} hint={`${overview.outsourcing.wesentlich} davon wesentlich`} />
+        <StatCard
+          label="Compliance"
+          value={overview.compliance.offeneFeststellungen}
+          hint="offene Feststellungen"
+          tone={overview.compliance.offeneFeststellungen > 0 ? "warn" : "good"}
+        />
+        <StatCard
+          label="Interne Revision"
+          value={overview.internalAudit.offeneFeststellungen}
+          hint={`offene Feststellungen, ${overview.internalAudit.pruefungsobjekte} Prüfungsobjekte`}
+          tone={overview.internalAudit.offeneFeststellungen > 0 ? "warn" : "good"}
+        />
+        <StatCard label="IKS-Kontrollen" value={ics.controlCount} hint={`${ics.processCount} Geschäftsprozesse`} />
+        <StatCard
+          label="IKS-Tests fällig"
+          value={ics.dueForTesting}
+          hint="ohne abgeschlossenen Test"
+          tone={ics.dueForTesting > 0 ? "warn" : "good"}
+        />
       </div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Aktuelle Berichte je Modul</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {(Object.keys(MODULE_LABEL) as ModuleType[]).map((module) => {
-            const report = reports[module];
-            return (
-              <Card key={module}>
-                <CardHeader>
-                  <CardTitle>{MODULE_LABEL[module]}</CardTitle>
-                </CardHeader>
-                <CardBody>
-                  {!report ? (
-                    <p className="text-sm text-muted-foreground">Noch kein Bericht vorhanden.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-foreground capitalize">{report.report_type.replaceAll("_", " ")}</span>
-                        <StatusPill status={report.status} />
-                      </div>
-                      {report.period_from && (
-                        <p className="text-xs text-muted-foreground">
-                          Zeitraum: {report.period_from} – {report.period_to}
-                        </p>
-                      )}
-                      {report.status === "final" &&
-                        (module === "compliance" ? (
-                          report.acknowledgedByMe ? (
-                            <p className="text-xs text-status-success">Kenntnisnahme erfasst</p>
-                          ) : (
-                            <ReportAckButton reportId={report.id} module={module} />
-                          )
-                        ) : report.kenntnisnahme_at ? (
-                          <p className="text-xs text-status-success">
-                            Kenntnisnahme am {new Date(report.kenntnisnahme_at).toLocaleDateString("de-DE")}
-                          </p>
-                        ) : (
-                          <ReportAckButton reportId={report.id} module={module} />
-                        ))}
-                      {REPORT_HREF[module] && (
-                        <Link href={REPORT_HREF[module]!(report.report_type)} className="block pt-1">
-                          <Button variant="secondary" className="w-full">
-                            Bericht ansehen
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </CardBody>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Prüfungsplan-Genehmigung</h2>
-        {auditPlans.length === 0 ? (
-          <Card className="px-5 py-6">
-            <p className="text-sm text-muted-foreground">Kein Prüfungsplan wartet aktuell auf Genehmigung.</p>
-          </Card>
-        ) : (
+      {/* Action required — visually distinct from the passive KPI/report sections above and
+          below, so pending decisions never blend in with status reporting. */}
+      {actionItemCount > 0 ? (
+        <section className="rounded-2xl border border-status-warning/40 bg-status-warning-bg px-5 py-5">
+          <div className="mb-4 flex items-center gap-2">
+            <AlertTriangleIcon width={18} height={18} className="text-status-warning" />
+            <h2 className="text-sm font-bold uppercase tracking-wide text-status-warning">
+              Handlungsbedarf — {actionItemCount} {actionItemCount === 1 ? "Vorgang" : "Vorgänge"}
+            </h2>
+          </div>
           <div className="space-y-3">
             {auditPlans.map((plan) => (
-              <Card key={plan.id}>
+              <Card key={plan.id} className="border-status-warning/25">
                 <CardBody className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">Jahres-Prüfungsplan {plan.year}</p>
@@ -156,20 +113,8 @@ export default async function DashboardPage() {
                 </CardBody>
               </Card>
             ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Eskalierte Normzuweisungen</h2>
-        {disputes.length === 0 ? (
-          <Card className="px-5 py-6">
-            <p className="text-sm text-muted-foreground">Keine widersprochenen Normzuweisungen offen.</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
             {disputes.map((d) => (
-              <Card key={d.id}>
+              <Card key={d.id} className="border-status-warning/25">
                 <CardBody>
                   <p className="text-sm font-medium text-foreground">{d.normBezeichnung}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -185,7 +130,84 @@ export default async function DashboardPage() {
               </Card>
             ))}
           </div>
-        )}
+        </section>
+      ) : (
+        <Card className="border-status-success/25 bg-status-success-bg px-5 py-4">
+          <p className="text-sm text-status-success">Kein Handlungsbedarf — keine offenen Genehmigungen oder Widersprüche.</p>
+        </Card>
+      )}
+
+      {/* Accounting analysis — prominent per design brief, placed right after the action-required
+          section rather than buried below the report-status list. */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Buchhaltung — Jahresvergleich</h2>
+        <AccountingAnalysis
+          bilanzData={accounting.bilanzData}
+          bilanzYears={accounting.bilanzYears}
+          guvData={accounting.guvData}
+          guvYears={accounting.guvYears}
+          bilanzMovers={accounting.bilanzMovers}
+          guvMovers={accounting.guvMovers}
+          compact
+        />
+        <Link href="/buchhaltung" className="mt-2 inline-block text-xs text-copper-300 hover:underline">
+          Vollständige Bilanz- und GuV-Analyse →
+        </Link>
+      </div>
+
+      {/* Reports status — one compact table instead of three same-weight cards. */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Berichtsstatus je Modul</h2>
+        <Card className="divide-y divide-border-subtle">
+            {(Object.keys(MODULE_LABEL) as ModuleType[]).map((module) => {
+              const report = reports[module];
+              return (
+                <div key={module} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                  <div className="min-w-[140px]">
+                    <p className="text-sm font-medium text-foreground">{MODULE_LABEL[module]}</p>
+                  </div>
+                  {!report ? (
+                    <p className="text-sm text-muted-foreground">Noch kein Bericht vorhanden.</p>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm capitalize text-foreground">{report.report_type.replaceAll("_", " ")}</span>
+                        <StatusPill status={report.status} />
+                        {report.period_from && (
+                          <span className="text-xs text-muted-foreground">
+                            {report.period_from} – {report.period_to}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {report.status === "final" &&
+                          (module === "compliance" ? (
+                            report.acknowledgedByMe ? (
+                              <span className="text-xs text-status-success">Kenntnisnahme erfasst</span>
+                            ) : (
+                              <ReportAckButton reportId={report.id} module={module} />
+                            )
+                          ) : report.kenntnisnahme_at ? (
+                            <span className="text-xs text-status-success">
+                              Kenntnisnahme am {new Date(report.kenntnisnahme_at).toLocaleDateString("de-DE")}
+                            </span>
+                          ) : (
+                            <ReportAckButton reportId={report.id} module={module} />
+                          ))}
+                        {REPORT_HREF[module] && (
+                          <Link href={REPORT_HREF[module]!(report.report_type)}>
+                            <Button variant="secondary" className="px-2.5 py-1 text-xs">
+                              Ansehen
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+        </Card>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ enum Role {
   RISIKOCONTROLLING
   INTERNE_REVISION
   AUSLAGERUNGSBEAUFTRAGTER
+  BUCHHALTUNG
   ADMIN
   VIEWER
 }
@@ -256,211 +257,221 @@ enum RevisionsSchweregrad {
 // ---------------------------------------------------------------------------
 
 model InstitutionProfile {
-  id                     String    @id @default(uuid())
-  name                   String
-  sizeClass              SizeClass @default(KLEIN)
-  groupRelief            Boolean   @default(false) // Tz. 14 d — institutsweiter Schalter
-  reviewCycleYears        Int      @default(3) // aus sizeClass abgeleitet, aber überschreibbar
-  calculationModel       CalculationModel @default(CSC)
-  cscMaterialityThreshold Float    @default(2.5)
-  cscImpactThreshold      Float    @default(2.75)
-  teslaLogicAnd          Boolean   @default(false)
-  teslaThreshold         Float     @default(3.0)
-  revisionsbeauftragterName          String?
-  revisionsbeauftragterIstGeschaeftsleiter Boolean @default(false) // zulässig bei sehr kleinen Instituten, Tz. 10
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                                       String           @id @default(uuid())
+  name                                     String
+  sizeClass                                SizeClass        @default(KLEIN)
+  groupRelief                              Boolean          @default(false) // Tz. 14 d — institutsweiter Schalter
+  reviewCycleYears                         Int              @default(3) // aus sizeClass abgeleitet, aber überschreibbar
+  calculationModel                         CalculationModel @default(CSC)
+  cscMaterialityThreshold                  Float            @default(2.5)
+  cscImpactThreshold                       Float            @default(2.75)
+  teslaLogicAnd                            Boolean          @default(false)
+  teslaThreshold                           Float            @default(3.0)
+  revisionsbeauftragterName                String?
+  revisionsbeauftragterIstGeschaeftsleiter Boolean          @default(false) // zulässig bei sehr kleinen Instituten, Tz. 10
+  createdAt                                DateTime         @default(now())
+  updatedAt                                DateTime         @updatedAt
 
-  users                  User[]
-  activities             OutsourcingActivity[]
-  reports                Report[]
+  users      User[]
+  activities OutsourcingActivity[]
+  reports    Report[]
 
-  complianceQuellen        Quelle[]
-  complianceAenderungen    RegulatorischeAenderung[]
-  complianceNormen         Norm[]
-  complianceFeststellungen Feststellung[]
-  complianceRatings        ComplianceRating[]
-  complianceGovernance     ComplianceGovernanceSettings?
-  complianceReports        ComplianceReport[]
-  complianceRisiken        Risiko[]
-  complianceKontrollen     Kontrolle[]
-  complianceBeratung       BeratungSchulung[]
-  complianceBeauftragte    Beauftragtenfunktion[]
-  complianceFunktionswechsel Funktionswechsel[]
-  complianceErleichterungen  Erleichterung[]
+  complianceQuellen               Quelle[]
+  complianceAenderungen           RegulatorischeAenderung[]
+  complianceNormen                Norm[]
+  complianceFeststellungen        Feststellung[]
+  complianceRatings               ComplianceRating[]
+  complianceGovernance            ComplianceGovernanceSettings?
+  complianceReports               ComplianceReport[]
+  complianceRisiken               Risiko[]
+  complianceKontrollen            Kontrolle[]
+  complianceBeratung              BeratungSchulung[]
+  complianceBeauftragte           Beauftragtenfunktion[]
+  complianceFunktionswechsel      Funktionswechsel[]
+  complianceErleichterungen       Erleichterung[]
   complianceStellenbeschreibungen Stellenbeschreibung[]
-  complianceGremien        GremienZulieferung[]
-  complianceEreignisse     Ereignis[]
-  nachweise                Nachweis[]
+  complianceGremien               GremienZulieferung[]
+  complianceEreignisse            Ereignis[]
+  nachweise                       Nachweis[]
 
-  pruefungsobjekte         Pruefungsobjekt[]
-  auditPlans               AuditPlan[]
-  pruefungen               Pruefung[]
-  revisionsfeststellungen  Revisionsfeststellung[]
-  revisionPersonal         RevisionPersonal[]
-  revisionSchulungen       RevisionSchulung[]
-  revisionSperrfristen     RevisionSperrfrist[]
-  revisionSonderwissen     RevisionSonderwissen[]
-  revisionEinstellungen    RevisionEinstellungen?
-  revisionQs               RevisionQualitaetssicherung[]
+  pruefungsobjekte          Pruefungsobjekt[]
+  auditPlans                AuditPlan[]
+  pruefungen                Pruefung[]
+  revisionsfeststellungen   Revisionsfeststellung[]
+  revisionPersonal          RevisionPersonal[]
+  revisionSchulungen        RevisionSchulung[]
+  revisionSperrfristen      RevisionSperrfrist[]
+  revisionSonderwissen      RevisionSonderwissen[]
+  revisionEinstellungen     RevisionEinstellungen?
+  revisionQs                RevisionQualitaetssicherung[]
   revisionProjektbegleitung RevisionProjektbegleitung[]
   revisionZugriffsvorfaelle RevisionZugriffsvorfall[]
-  revisionGlMitteilungen   RevisionGlMitteilung[]
-  revisionSonderauftraege  RevisionSonderauftrag[]
-  revisionReports          RevisionReport[]
+  revisionGlMitteilungen    RevisionGlMitteilung[]
+  revisionSonderauftraege   RevisionSonderauftrag[]
+  revisionReports           RevisionReport[]
+
+  accountingBalanceSheets     BalanceSheet[]
+  accountingIncomeStatements  IncomeStatement[]
+  accountingNotes             AccountingNotes[]
+  accountingManagementReports ManagementReport[]
+  accountingSignOffs          AccountingSignOff[]
+
+  icsBusinessProcesses IcsBusinessProcess[]
+  icsControls          IcsControl[]
+  icsPolicyDocuments   IcsPolicyDocument[]
 
   @@map("institution_profiles")
 }
 
 model User {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-  email         String   @unique
+  email         String             @unique
   passwordHash  String
   name          String
   role          Role
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  active        Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
-  auditEvents   AuditLogEvent[]
+  auditEvents AuditLogEvent[]
 
-  @@map("users")
   @@index([institutionId])
+  @@map("users")
 }
 
 model OutsourcingActivity {
-  id                    String    @id @default(uuid())
-  institutionId         String
-  institution           InstitutionProfile @relation(fields: [institutionId], references: [id])
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  name                  String
-  category              String    // BaFin-Kategorie
-  provider              String?
-  bafinReferenceNumber  String?
+  name                 String
+  category             String // BaFin-Kategorie
+  provider             String?
+  bafinReferenceNumber String?
 
-  scope                 ScopeType
-  scopeJustification    String?   // Pflicht, sobald scope != AUSLAGERUNG (Tz. 1)
+  scope              ScopeType
+  scopeJustification String? // Pflicht, sobald scope != AUSLAGERUNG (Tz. 1)
 
-  contractStart         DateTime?
-  contractEnd           DateTime?
+  contractStart           DateTime?
+  contractEnd             DateTime?
   terminationNoticeMonths Int?
-  serviceLocations      String?
-  dataCategories        String?
+  serviceLocations        String?
+  dataCategories          String?
 
-  isCloud               Boolean   @default(false)
-  isSubOutsourcing      Boolean   @default(false)
-  groupInternal         Boolean   @default(false) // Tz. 14 d, nur wirksam wenn institution.groupRelief=true
-  specialFunction       SpecialFunction @default(KEINE) // Tz. 4/5 Hard-Trigger
+  isCloud          Boolean         @default(false)
+  isSubOutsourcing Boolean         @default(false)
+  groupInternal    Boolean         @default(false) // Tz. 14 d, nur wirksam wenn institution.groupRelief=true
+  specialFunction  SpecialFunction @default(KEINE) // Tz. 4/5 Hard-Trigger
 
-  deepDive              Boolean   @default(false) // volle 15+12 EBA/GL-Kriterien (Tesla-Modell)
-  status                ActivityStatus @default(ENTWURF)
+  deepDive Boolean        @default(false) // volle 15+12 EBA/GL-Kriterien (Tesla-Modell)
+  status   ActivityStatus @default(ENTWURF)
 
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  riskAnalysis          RiskAnalysis?
-  contract              Contract?
-  handlungsoption       HandlungsoptionRecord?
-  registryEntries       RegistryEntry[]
-  monitoringRecords     MonitoringRecord[]
-  weiterverlagerungen   Weiterverlagerung[]
+  riskAnalysis        RiskAnalysis?
+  contract            Contract?
+  handlungsoption     HandlungsoptionRecord?
+  registryEntries     RegistryEntry[]
+  monitoringRecords   MonitoringRecord[]
+  weiterverlagerungen Weiterverlagerung[]
 
-  @@map("outsourcing_activities")
   @@index([institutionId])
+  @@map("outsourcing_activities")
 }
 
 model RiskAnalysis {
-  id            String   @id @default(uuid())
-  activityId    String   @unique
-  activity      OutsourcingActivity @relation(fields: [activityId], references: [id])
+  id         String              @id @default(uuid())
+  activityId String              @unique
+  activity   OutsourcingActivity @relation(fields: [activityId], references: [id])
 
-  quickTriggers Json     @default("{}") // { t1: bool, ... t6: bool } — Hard-Trigger Quick-Check
-  materialityRatings Json @default("{}") // Kriterium-ID -> 1..5
+  quickTriggers          Json @default("{}") // { t1: bool, ... t6: bool } — Hard-Trigger Quick-Check
+  materialityRatings     Json @default("{}") // Kriterium-ID -> 1..5
   secondDimensionRatings Json @default("{}") // CSC: Umfassender-Auswirkungs-Kriterien; Tesla: Anbieter-Risiko-Kriterien
 
-  materialityScore Float?
-  secondScore      Float?  // impactScore (CSC) oder providerScore (Tesla)
-  inherentScore    Float?
-  computedMaterial Boolean?
+  materialityScore   Float?
+  secondScore        Float? // impactScore (CSC) oder providerScore (Tesla)
+  inherentScore      Float?
+  computedMaterial   Boolean?
   criticalSuggestion Boolean?
 
   // Finale Werte — NIEMALS rein aus dem Score abgeleitet gespeichert; das ist das "FIX" aus der
   // Vollständigkeitsprüfung: materiality und criticality sind zwei unabhängig speicherbare Felder.
-  materiality      Boolean? // finale Wesentlichkeits-Einstufung (Score-Ergebnis oder Override)
-  criticality      CriticalityAssessment @default(OFFEN) // eigenständige Einschätzung, Tz. 4/5
+  materiality       Boolean? // finale Wesentlichkeits-Einstufung (Score-Ergebnis oder Override)
+  criticality       CriticalityAssessment @default(OFFEN) // eigenständige Einschätzung, Tz. 4/5
   criticalityReason String?
 
-  overrideActive   Boolean  @default(false)
+  overrideActive   Boolean   @default(false)
   overrideMaterial Boolean?
   overrideCritical Boolean?
   overrideReason   String?
   overrideApprover String?
   overrideDate     DateTime?
 
-  integrationFeasibilityAnswers Json?  // CSC-Modell Schritt 4, nur relevant wenn materiality=true
+  integrationFeasibilityAnswers Json? // CSC-Modell Schritt 4, nur relevant wenn materiality=true
   integrationFeasibilityNotes   String?
 
-  scenarioPerformed Boolean  @default(false) // Tz. 2 — qualitativer Ansatz für kleine Institute
+  scenarioPerformed Boolean @default(false) // Tz. 2 — qualitativer Ansatz für kleine Institute
   scenarioNotes     String?
-  adHocTrigger      Boolean  @default(false) // Tz. 2 — außerplanmäßige Neubewertung
+  adHocTrigger      Boolean @default(false) // Tz. 2 — außerplanmäßige Neubewertung
   adHocNote         String?
 
-  lastReviewedAt   DateTime?
-  nextReviewDueAt  DateTime?
+  lastReviewedAt     DateTime?
+  nextReviewDueAt    DateTime?
   classifiedByUserId String?
-  classifiedAt     DateTime?
+  classifiedAt       DateTime?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("risk_analyses")
 }
 
 model Contract {
-  id                String   @id @default(uuid())
-  activityId        String   @unique
-  activity          OutsourcingActivity @relation(fields: [activityId], references: [id])
+  id         String              @id @default(uuid())
+  activityId String              @unique
+  activity   OutsourcingActivity @relation(fields: [activityId], references: [id])
 
   // Objektspeicher-Referenz (z. B. S3/Hetzner-Object-Storage-Key), NIEMALS Inline-Blob in der DB.
-  fileObjectKey     String?
-  fileName          String?
-  fileSize          Int?
-  fileMime          String?
-  uploadedAt        DateTime?
-  uploadedByUserId  String?
+  fileObjectKey    String?
+  fileName         String?
+  fileSize         Int?
+  fileMime         String?
+  uploadedAt       DateTime?
+  uploadedByUserId String?
 
   // a)–n) gem. §25b Abs.3 S.3 KWG / AT 9 Tz. 7 — je Punkt Status + Begründung bei "nicht erforderlich"
-  clauseChecklist         Json @default("{}")
+  clauseChecklist         Json  @default("{}")
   // Begründungstext je Punkt-Code, nur bei clauseChecklist[code] == "NICHT_ERFORDERLICH" gepflegt
-  clauseJustifications    Json @default("{}")
+  clauseJustifications    Json  @default("{}")
   // nur relevant wenn activity.isSubOutsourcing = true (Tz. 8)
   subOutsourcingChecklist Json?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("contracts")
 }
 
 model HandlungsoptionRecord {
-  id            String   @id @default(uuid())
-  activityId    String   @unique
-  activity      OutsourcingActivity @relation(fields: [activityId], references: [id])
+  id         String              @id @default(uuid())
+  activityId String              @unique
+  activity   OutsourcingActivity @relation(fields: [activityId], references: [id])
 
   status              HandlungsoptionStatus?
-  strategyDescription  String? // Transitionsplan bei EXIT_STRATEGY
-  ersetzbarkeit        ErsetzbarkeitOption?
-  transitionMonths     Int?
-  reviewDate           DateTime?
+  strategyDescription String? // Transitionsplan bei EXIT_STRATEGY
+  ersetzbarkeit       ErsetzbarkeitOption?
+  transitionMonths    Int?
+  reviewDate          DateTime?
 
-  depApprover   String? // Dependency-Acceptance-Genehmiger (Geschäftsleitung) bei BCM_LINKED
-  depDate       DateTime?
-  depControls   String?
+  depApprover String? // Dependency-Acceptance-Genehmiger (Geschäftsleitung) bei BCM_LINKED
+  depDate     DateTime?
+  depControls String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("handlungsoption_records")
 }
@@ -468,103 +479,103 @@ model HandlungsoptionRecord {
 // Punkt-in-Zeit-Schnappschuss der an BaFin gemeldeten/exportierten Registerfelder (EBA/GL 54-55 ∩
 // MVP-Portal-Formular). Getrennt von OutsourcingActivity, damit historische Meldestände erhalten bleiben.
 model RegistryEntry {
-  id           String   @id @default(uuid())
-  activityId   String
-  activity     OutsourcingActivity @relation(fields: [activityId], references: [id])
-  snapshotDate DateTime @default(now())
-  exportedFields Json
+  id               String              @id @default(uuid())
+  activityId       String
+  activity         OutsourcingActivity @relation(fields: [activityId], references: [id])
+  snapshotDate     DateTime            @default(now())
+  exportedFields   Json
   exportedByUserId String?
-  format       String   @default("CSV")
+  format           String              @default("CSV")
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  @@map("registry_entries")
   @@index([activityId])
+  @@map("registry_entries")
 }
 
 model MonitoringRecord {
-  id           String   @id @default(uuid())
-  activityId   String
-  activity     OutsourcingActivity @relation(fields: [activityId], references: [id])
-  type         MonitoringType
+  id         String              @id @default(uuid())
+  activityId String
+  activity   OutsourcingActivity @relation(fields: [activityId], references: [id])
+  type       MonitoringType
 
   // EVIDENCE_LOG (Tz. 9, Pflichtbasis für alle Auslagerungen)
-  evidenceDate        DateTime?
-  evidenceDescription String?
-  reviewedByUserId    String?
-  reviewedAt          DateTime?
-  confirmedAt         DateTime?
-  escalationNeeded    Boolean  @default(false)
-  escalationNote      String?
+  evidenceDate           DateTime?
+  evidenceDescription    String?
+  reviewedByUserId       String?
+  reviewedAt             DateTime?
+  confirmedAt            DateTime?
+  escalationNeeded       Boolean   @default(false)
+  escalationNote         String?
   assuranceReportDueDate DateTime?
 
   // KPI (optional, aus der Tesla-FS-Praxis — nur für Anbieter mit tatsächlichem Steuerungsbedarf)
-  kpiName      String?
-  kpiTarget    String?
-  kpiAchieved  String?
-  kpiComment   String?
+  kpiName     String?
+  kpiTarget   String?
+  kpiAchieved String?
+  kpiComment  String?
 
   // Nachweis-Metadaten (EVIDENCE_LOG) — reviewerName ist Freitext, unabhängig vom optionalen
   // reviewedByUserId-Verweis auf einen tatsächlichen User-Datensatz.
-  assuranceType   String?
-  bridgeCoverage  String?
-  reviewerName    String?
-  materialChange  Boolean  @default(false)
-  changeNote      String?
+  assuranceType  String?
+  bridgeCoverage String?
+  reviewerName   String?
+  materialChange Boolean @default(false)
+  changeNote     String?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  @@map("monitoring_records")
   @@index([activityId])
+  @@map("monitoring_records")
 }
 
 // Sub-Auslagerungskette (AT 9 Tz. 8/11) — Baumstruktur je Sub-Anbieter-Ebene. Entfernen setzt
 // status=ENTFERNT statt zu löschen, damit die Kette historisch nachvollziehbar bleibt.
 model Weiterverlagerung {
-  id           String   @id @default(uuid())
-  activityId   String
-  activity     OutsourcingActivity @relation(fields: [activityId], references: [id])
+  id         String              @id @default(uuid())
+  activityId String
+  activity   OutsourcingActivity @relation(fields: [activityId], references: [id])
 
-  parentId     String?
-  parent       Weiterverlagerung?  @relation("WeiterverlagerungChain", fields: [parentId], references: [id])
-  children     Weiterverlagerung[] @relation("WeiterverlagerungChain")
+  parentId String?
+  parent   Weiterverlagerung?  @relation("WeiterverlagerungChain", fields: [parentId], references: [id])
+  children Weiterverlagerung[] @relation("WeiterverlagerungChain")
 
-  level        Int
-  provider     String
-  country      String?
-  description  String?
-  status       WeiterverlagerungStatus @default(AKTIV)
+  level       Int
+  provider    String
+  country     String?
+  description String?
+  status      WeiterverlagerungStatus @default(AKTIV)
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("weiterverlagerungen")
   @@index([activityId])
   @@index([parentId])
+  @@map("weiterverlagerungen")
 }
 
 model Report {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  period                String
-  createdDate           DateTime @default(now())
+  period                  String
+  createdDate             DateTime     @default(now())
   conclusionContract      String // Drei Pflichtaussagen, Tz. 13
   conclusionSteuerbarkeit String
   conclusionMassnahmen    String
-  format                ReportFormat @default(SCHRIFTLICHER_BERICHT) // von sizeClass abgeleitet
-  includedActivityIds   Json
+  format                  ReportFormat @default(SCHRIFTLICHER_BERICHT) // von sizeClass abgeleitet
+  includedActivityIds     Json
 
-  status        ReportStatus @default(ENTWURF)
+  status           ReportStatus @default(ENTWURF)
   approvedByUserId String?
-  approvedAt    DateTime?
+  approvedAt       DateTime?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("reports")
   @@index([institutionId])
+  @@map("reports")
 }
 
 // Unveränderlicher Audit-Trail — wird serverseitig in derselben Transaktion wie der fachliche
@@ -583,9 +594,9 @@ model AuditLogEvent {
   ipAddress      String?
   timestamp      DateTime    @default(now())
 
-  @@map("audit_log_events")
   @@index([entityType, entityId])
   @@index([actorUserId])
+  @@map("audit_log_events")
 }
 
 // ---------------------------------------------------------------------------
@@ -597,7 +608,7 @@ model AuditLogEvent {
 // ---------------------------------------------------------------------------
 
 model Quelle {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -613,50 +624,50 @@ model Quelle {
 
   aenderungen RegulatorischeAenderung[]
 
-  @@map("compliance_quellen")
   @@index([institutionId])
+  @@map("compliance_quellen")
 }
 
 model RegulatorischeAenderung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  quelleId          String?
-  quelle            Quelle?  @relation(fields: [quelleId], references: [id])
-  erfasstAm         DateTime
-  gegenstand        String
-  kritikalitaet     String?
-  inkrafttreten     String?
+  quelleId           String?
+  quelle             Quelle?     @relation(fields: [quelleId], references: [id])
+  erfasstAm          DateTime
+  gegenstand         String
+  kritikalitaet      String?
+  inkrafttreten      String?
   zugewiesenAnUserId String?
-  disposition       Disposition @default(offen)
+  disposition        Disposition @default(offen)
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("compliance_aenderungen")
   @@index([institutionId])
+  @@map("compliance_aenderungen")
 }
 
 model Norm {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  bezeichnung  String
-  quelle       String? // Freitext ("manuell", Repository-Name, ...)
-  sachgebiet   String?
+  bezeichnung String
+  quelle      String? // Freitext ("manuell", Repository-Name, ...)
+  sachgebiet  String?
 
-  relevanz             Relevanz @default(relevant)
-  relevanzBegruendung  String?
-  relevanzUebersteuert Boolean  @default(false)
+  relevanz                  Relevanz @default(relevant)
+  relevanzBegruendung       String?
+  relevanzUebersteuert      Boolean  @default(false)
   wesentlichkeit            String? // "wesentlich" | "nicht_wesentlich" | null — Freitext wie im Vorgänger
   wesentlichkeitBegruendung String?
   risiko                    String? // "hoch" | "mittel" | "gering"
 
-  status        String   @default("manuell")
-  stand         String?
-  personalunion Boolean  @default(false)
+  status            String  @default("manuell")
+  stand             String?
+  personalunion     Boolean @default(false)
   // Spiegel des bestätigten Handshake-Ziels — wird ausschließlich vom Backend beim Bestätigen
   // eines NormAssignmentHandshake gesetzt, nie direkt vom Client (mirrors the Supabase trigger).
   fachbereichUserId String?
@@ -670,15 +681,15 @@ model Norm {
   kontrollen     Kontrolle[]
   normRisiken    NormRisiko[]
 
-  @@map("compliance_normen")
   @@index([institutionId])
+  @@map("compliance_normen")
 }
 
 model NormAssignmentHandshake {
-  id            String   @id @default(uuid())
+  id            String @id @default(uuid())
   institutionId String
   normId        String
-  norm          Norm     @relation(fields: [normId], references: [id])
+  norm          Norm   @relation(fields: [normId], references: [id])
 
   assignedUserId   String // der vorgeschlagene Fachbereich
   proposedByUserId String
@@ -691,24 +702,24 @@ model NormAssignmentHandshake {
   decisionAt       DateTime?
   decisionNote     String?
 
-  @@map("compliance_norm_handshakes")
   @@index([institutionId])
   @@index([normId])
+  @@map("compliance_norm_handshakes")
 }
 
 model Feststellung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  normId       String?
-  norm         Norm?    @relation(fields: [normId], references: [id])
-  titel        String
-  beschreibung String?
-  schweregrad  Schweregrad?
-  frist        DateTime?
-  massnahme    String?
-  quelle       String?
+  normId               String?
+  norm                 Norm?        @relation(fields: [normId], references: [id])
+  titel                String
+  beschreibung         String?
+  schweregrad          Schweregrad?
+  frist                DateTime?
+  massnahme            String?
+  quelle               String?
   verantwortlichUserId String?
 
   status FeststellungStatus @default(offen)
@@ -725,36 +736,36 @@ model Feststellung {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("compliance_feststellungen")
   @@index([institutionId])
   @@index([normId])
+  @@map("compliance_feststellungen")
 }
 
 model ComplianceRating {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  periode         String
-  rating          String
-  begruendung     String?
+  periode          String
+  rating           String
+  begruendung      String?
   erfasstVonUserId String?
-  erfasstAm       DateTime
+  erfasstAm        DateTime
 
   createdAt DateTime @default(now())
 
-  @@map("compliance_ratings")
   @@index([institutionId])
+  @@map("compliance_ratings")
 }
 
 // Tenant-weites Singleton (Tz. 3-4) — eigenes Modell statt Erweiterung von InstitutionProfile,
 // da es eine fachlich unabhängige Compliance-Governance-Frage ist, keine Outsourcing-Einstellung.
 model ComplianceGovernanceSettings {
-  id            String   @id @default(uuid())
-  institutionId String   @unique
+  id            String             @id @default(uuid())
+  institutionId String             @unique
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  sonderfallKleinesInstitut     Boolean @default(false)
+  sonderfallKleinesInstitut    Boolean @default(false)
   interessenkonfliktMassnahmen String?
   kombinationRationale         String?
   ressourcenausstattung        String?
@@ -766,15 +777,15 @@ model ComplianceGovernanceSettings {
 }
 
 model ComplianceReport {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  reportType String // "quartalsbericht" | "jahresbericht" | "anlassbericht"
-  periodFrom DateTime?
-  periodTo   DateTime?
-  status     ComplianceReportStatus @default(entwurf)
-  content    Json                   @default("{}") // { name, rating, defizite, gegenmassnahmen, weiterleitung_revision }
+  reportType  String // "quartalsbericht" | "jahresbericht" | "anlassbericht"
+  periodFrom  DateTime?
+  periodTo    DateTime?
+  status      ComplianceReportStatus @default(entwurf)
+  content     Json                   @default("{}") // { name, rating, defizite, gegenmassnahmen, weiterleitung_revision }
   finalizedAt DateTime?
 
   createdByUserId String?
@@ -783,18 +794,18 @@ model ComplianceReport {
 
   acknowledgements ComplianceReportAcknowledgement[]
 
-  @@map("compliance_reports")
   @@index([institutionId])
+  @@map("compliance_reports")
 }
 
 // Replaces the Supabase-era single-value kenntnisnahme_by/at + the app-level content.recipients
 // name-matching workaround with a real per-person acknowledgement row.
 model ComplianceReportAcknowledgement {
-  id             String   @id @default(uuid())
+  id             String           @id @default(uuid())
   reportId       String
   report         ComplianceReport @relation(fields: [reportId], references: [id])
   userId         String
-  acknowledgedAt DateTime @default(now())
+  acknowledgedAt DateTime         @default(now())
 
   @@unique([reportId, userId])
   @@map("compliance_report_acknowledgements")
@@ -803,36 +814,36 @@ model ComplianceReportAcknowledgement {
 // --- Read-only reference registers (no write UI in the frontend today — see Phase 2 plan) ---
 
 model Risiko {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  nr                        String?
-  bezeichnung               String
+  nr                          String?
+  bezeichnung                 String
   eintrittswahrscheinlichkeit String?
-  auswirkung                String?
-  inhaerent                 String?
-  kontrollbewertung         String?
-  restrisiko                String?
-  massnahme                 String?
-  verantwortlichUserId      String?
+  auswirkung                  String?
+  inhaerent                   String?
+  kontrollbewertung           String?
+  restrisiko                  String?
+  massnahme                   String?
+  verantwortlichUserId        String?
 
   createdAt DateTime @default(now())
 
-  normRisiken     NormRisiko[]
+  normRisiken      NormRisiko[]
   risikoKontrollen RisikoKontrolle[]
 
-  @@map("compliance_risiken")
   @@index([institutionId])
+  @@map("compliance_risiken")
 }
 
 model Kontrolle {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   normId               String?
-  norm                 Norm?    @relation(fields: [normId], references: [id])
+  norm                 Norm?     @relation(fields: [normId], references: [id])
   verfahren            String
   prozess              String?
   turnus               String?
@@ -848,9 +859,9 @@ model Kontrolle {
 
   risikoKontrollen RisikoKontrolle[]
 
-  @@map("compliance_kontrollen")
   @@index([institutionId])
   @@index([normId])
+  @@map("compliance_kontrollen")
 }
 
 model NormRisiko {
@@ -874,7 +885,7 @@ model RisikoKontrolle {
 }
 
 model BeratungSchulung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -884,12 +895,12 @@ model BeratungSchulung {
   format       String?
   nachweisText String?
 
-  @@map("compliance_beratung_schulung")
   @@index([institutionId])
+  @@map("compliance_beratung_schulung")
 }
 
 model Beauftragtenfunktion {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -902,12 +913,12 @@ model Beauftragtenfunktion {
 
   funktionswechsel Funktionswechsel[]
 
-  @@map("compliance_beauftragtenfunktionen")
   @@index([institutionId])
+  @@map("compliance_beauftragtenfunktionen")
 }
 
 model Funktionswechsel {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -917,14 +928,14 @@ model Funktionswechsel {
   bisherText      String?
   neuUserId       String?
   beschluss       String?
-  anzeigeAufsicht Boolean  @default(false)
+  anzeigeAufsicht Boolean               @default(false)
 
-  @@map("compliance_funktionswechsel")
   @@index([institutionId])
+  @@map("compliance_funktionswechsel")
 }
 
 model Erleichterung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -939,12 +950,12 @@ model Erleichterung {
   begruendung       String?
   ueberpruefung     DateTime?
 
-  @@map("compliance_erleichterungen")
   @@index([institutionId])
+  @@map("compliance_erleichterungen")
 }
 
 model Stellenbeschreibung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -954,12 +965,12 @@ model Stellenbeschreibung {
   genehmigtAm           DateTime?
   naechsteUeberpruefung DateTime?
 
-  @@map("compliance_stellenbeschreibungen")
   @@index([institutionId])
+  @@map("compliance_stellenbeschreibungen")
 }
 
 model GremienZulieferung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -969,12 +980,12 @@ model GremienZulieferung {
   turnus         String?
   letzterEingang DateTime?
 
-  @@map("compliance_gremien_zulieferungen")
   @@index([institutionId])
+  @@map("compliance_gremien_zulieferungen")
 }
 
 model Ereignis {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -984,14 +995,14 @@ model Ereignis {
   beteiligung String?
   votum       String?
 
-  @@map("compliance_ereignisse")
   @@index([institutionId])
+  @@map("compliance_ereignisse")
 }
 
 // Generic evidence/document ledger shared across modules (Compliance today, Interne Revision in
 // a later phase) — built generic now rather than Compliance-specific, since the shape is identical.
 model Nachweis {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1010,8 +1021,8 @@ model Nachweis {
   uploadedByUserId String?
   uploadedAt       DateTime @default(now())
 
-  @@map("nachweise")
   @@index([institutionId, module])
+  @@map("nachweise")
 }
 
 // ---------------------------------------------------------------------------
@@ -1021,43 +1032,43 @@ model Nachweis {
 // ---------------------------------------------------------------------------
 
 model Pruefungsobjekt {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  bezeichnung   String
-  bereich       String?
-  category      PruefungsobjektCategory
-  outsourced    Boolean  @default(false)
-  materiality   ObjektMaterialitaet?
-  risikokriterien Json?  // { potenzial, veraenderung, quellen, manipulation } — 1..5 je Kriterium
-  riskRationale   Json?
-  regAnker        String?
-  verantwortlichUserId String?
-  status          PruefungsobjektStatus @default(aktiv)
-  riskReviewDate  DateTime?
+  bezeichnung              String
+  bereich                  String?
+  category                 PruefungsobjektCategory
+  outsourced               Boolean                 @default(false)
+  materiality              ObjektMaterialitaet?
+  risikokriterien          Json? // { potenzial, veraenderung, quellen, manipulation } — 1..5 je Kriterium
+  riskRationale            Json?
+  regAnker                 String?
+  verantwortlichUserId     String?
+  status                   PruefungsobjektStatus   @default(aktiv)
+  riskReviewDate           DateTime?
   riskReviewReviewerUserId String?
-  lastAuditDate   DateTime?
-  planYear        Int?
+  lastAuditDate            DateTime?
+  planYear                 Int?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  pruefungen      Pruefung[]
-  feststellungen  Revisionsfeststellung[]
+  pruefungen     Pruefung[]
+  feststellungen Revisionsfeststellung[]
 
-  @@map("revision_pruefungsobjekte")
   @@index([institutionId])
+  @@map("revision_pruefungsobjekte")
 }
 
 model AuditPlan {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   year    Int
-  content Json @default("{}") // { kapazitaetPT, adjustments: [{date, desc, approvedBy}] }
+  content Json            @default("{}") // { kapazitaetPT, adjustments: [{date, desc, approvedBy}] }
   status  AuditPlanStatus @default(entwurf)
 
   submittedByUserId String?
@@ -1068,39 +1079,39 @@ model AuditPlan {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_audit_plans")
   @@index([institutionId])
+  @@map("revision_audit_plans")
 }
 
 model Pruefung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   pruefungsobjektId String?
   pruefungsobjekt   Pruefungsobjekt? @relation(fields: [pruefungsobjektId], references: [id])
 
-  subject       String
-  periodFrom    DateTime?
-  periodTo      DateTime?
-  status        PruefungStatus @default(geplant)
-  preparedBy    String?
-  reportDate    DateTime?
-  presentedTo   String?
-  presentedDate DateTime?
-  workpaperRef  String?
-  durchfuehrung Durchfuehrung @default(intern)
-  overallRating String? // "" | gut | befriedigend | verbesserungsbeduerftig | unzureichend
-  budgetDays    Int?
-  actualDays    Int?
+  subject             String
+  periodFrom          DateTime?
+  periodTo            DateTime?
+  status              PruefungStatus @default(geplant)
+  preparedBy          String?
+  reportDate          DateTime?
+  presentedTo         String?
+  presentedDate       DateTime?
+  workpaperRef        String?
+  durchfuehrung       Durchfuehrung  @default(intern)
+  overallRating       String? // "" | gut | befriedigend | verbesserungsbeduerftig | unzureichend
+  budgetDays          Int?
+  actualDays          Int?
   externDienstleister String?
-  externAblage         String?
-  externEinsicht       Json? // [{id, datum, durch, ergebnis}]
-  qsChecklist          Json? // [{id, punkt, tz, status, kommentar}]
-  qsCompletedByUserId  String?
-  qsCompletedAt        DateTime?
-  qsReviewedByUserId   String?
-  qsReviewedAt         DateTime?
+  externAblage        String?
+  externEinsicht      Json? // [{id, datum, durch, ergebnis}]
+  qsChecklist         Json? // [{id, punkt, tz, status, kommentar}]
+  qsCompletedByUserId String?
+  qsCompletedAt       DateTime?
+  qsReviewedByUserId  String?
+  qsReviewedAt        DateTime?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
@@ -1111,24 +1122,24 @@ model Pruefung {
   feststellungen Revisionsfeststellung[]
   sonderwissen   RevisionSonderwissen[]
 
-  @@map("revision_pruefungen")
   @@index([institutionId])
   @@index([pruefungsobjektId])
+  @@map("revision_pruefungen")
 }
 
 // Team assignment — insert/delete only, no update (matches today's frontend capability exactly).
 model PruefungZuweisung {
-  id         String   @id @default(uuid())
+  id         String         @id @default(uuid())
   pruefungId String
-  pruefung   Pruefung @relation(fields: [pruefungId], references: [id])
+  pruefung   Pruefung       @relation(fields: [pruefungId], references: [id])
   userId     String
   role       ZuweisungRolle
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_pruefung_zuweisungen")
   @@index([pruefungId])
+  @@map("revision_pruefung_zuweisungen")
 }
 
 model Pruefungsschritt {
@@ -1136,33 +1147,33 @@ model Pruefungsschritt {
   pruefungId String
   pruefung   Pruefung @relation(fields: [pruefungId], references: [id])
 
-  nummer      Int
-  bereich     String?
-  risiko      String?
-  handlung    String?
-  sollAussage String?
+  nummer       Int
+  bereich      String?
+  risiko       String?
+  handlung     String?
+  sollAussage  String?
   testschritte String?
-  ergebnis    String?
-  beurteilung String? // "" | ok | feststellung | nicht_pruefbar
+  ergebnis     String?
+  beurteilung  String? // "" | ok | feststellung | nicht_pruefbar
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
   arbeitspapiere Arbeitspapier[]
 
-  @@map("revision_pruefungsschritte")
   @@index([pruefungId])
+  @@map("revision_pruefungsschritte")
 }
 
 model Arbeitspapier {
-  id         String   @id @default(uuid())
-  schrittId  String
-  schritt    Pruefungsschritt @relation(fields: [schrittId], references: [id])
+  id        String           @id @default(uuid())
+  schrittId String
+  schritt   Pruefungsschritt @relation(fields: [schrittId], references: [id])
 
-  nummer   String?
-  titel    String
-  typ      String?
-  handlung String?
+  nummer          String?
+  titel           String
+  typ             String?
+  handlung        String?
   erstellerUserId String?
   erstelltAm      DateTime?
   inhalt          String?
@@ -1177,31 +1188,31 @@ model Arbeitspapier {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_arbeitspapiere")
   @@index([schrittId])
+  @@map("revision_arbeitspapiere")
 }
 
 model Revisionsfeststellung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   pruefungsobjektId String?
   pruefungsobjekt   Pruefungsobjekt? @relation(fields: [pruefungsobjektId], references: [id])
   pruefungId        String?
-  pruefung          Pruefung? @relation(fields: [pruefungId], references: [id])
+  pruefung          Pruefung?        @relation(fields: [pruefungId], references: [id])
 
-  titel       String
-  beschreibung String?
-  schweregrad RevisionsSchweregrad?
-  status      RevisionsfeststellungStatus @default(offen)
-  abschlussArt AbschlussArt?
+  titel                String
+  beschreibung         String?
+  schweregrad          RevisionsSchweregrad?
+  status               RevisionsfeststellungStatus @default(offen)
+  abschlussArt         AbschlussArt?
   verantwortlichUserId String?
   fristUrspruenglich   DateTime?
-  executiveTarget      Boolean @default(false)
+  executiveTarget      Boolean                     @default(false)
   execEscalation       Json? // Tz. 8: {glDate/By, bafinDate/By, bundesbankDate/By}
   escalation           Json? // Tz. 12: {zustaendigeGlDate/By, gesamteGlDate/By}
-  nachschauNeeded      Boolean @default(false)
+  nachschauNeeded      Boolean                     @default(false)
   nachschauDate        DateTime?
   stellungnahme        Json? // {verfasser, datum, status, text}
   abschluss            Json? // {nachweis, bestaetigtVon, bestaetigtAm, restrisiko, kompensation, akzeptiertVon}
@@ -1215,54 +1226,54 @@ model Revisionsfeststellung {
 
   fristverlaengerungen RevisionFristverlaengerung[]
 
-  @@map("revision_feststellungen")
   @@index([institutionId])
   @@index([pruefungsobjektId])
   @@index([pruefungId])
+  @@map("revision_feststellungen")
 }
 
 // Append-only — the originally-agreed Frist is never overwritten, each extension is its own row.
 model RevisionFristverlaengerung {
-  id             String   @id @default(uuid())
+  id             String                @id @default(uuid())
   feststellungId String
   feststellung   Revisionsfeststellung @relation(fields: [feststellungId], references: [id])
 
-  alt          DateTime?
-  neu          DateTime
+  alt           DateTime?
+  neu           DateTime
   antragsteller String?
   genehmiger    String?
   begruendung   String?
-  datum         DateTime @default(now())
+  datum         DateTime  @default(now())
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_fristverlaengerungen")
   @@index([feststellungId])
+  @@map("revision_fristverlaengerungen")
 }
 
 // One row per person — upsert-only (Tz. 3-4 qualification/training summary).
 model RevisionPersonal {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-  userId        String   @unique
+  userId        String             @unique
 
-  qualifikation        String?
-  sollFortbildungTage  Int?
-  nonAuditTasks        String?
-  advisoryActive       Boolean @default(false)
-  advisorySafeguard    String?
+  qualifikation       String?
+  sollFortbildungTage Int?
+  nonAuditTasks       String?
+  advisoryActive      Boolean @default(false)
+  advisorySafeguard   String?
 
   updatedByUserId String?
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_personal")
   @@index([institutionId])
+  @@map("revision_personal")
 }
 
 model RevisionSchulung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1275,12 +1286,12 @@ model RevisionSchulung {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_schulungen")
   @@index([institutionId])
+  @@map("revision_schulungen")
 }
 
 model RevisionSperrfrist {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1290,19 +1301,19 @@ model RevisionSperrfrist {
   transferDate    DateTime?
   barredAreas     String?
   barEndDate      DateTime?
-  deviation       Boolean @default(false)
+  deviation       Boolean   @default(false)
   deviationReason String?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_sperrfristen")
   @@index([institutionId])
+  @@map("revision_sperrfristen")
 }
 
 model RevisionSonderwissen {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1318,29 +1329,29 @@ model RevisionSonderwissen {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_sonderwissen")
   @@index([institutionId])
+  @@map("revision_sonderwissen")
 }
 
 // Tenant-wide singleton, split across two independent mutation endpoints (org-form/independence
 // vs. severity/interval settings) matching the frontend's existing deliberate column-ownership
 // split — both target this one row.
 model RevisionEinstellungen {
-  id            String   @id @default(uuid())
-  institutionId String   @unique
+  id            String             @id @default(uuid())
+  institutionId String             @unique
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  orgForm                 RevisionOrgForm?
+  orgForm                  RevisionOrgForm?
   disproportionalityReason String?
   conflictMeasures         String?
   headOfAuditUserId        String?
-  directSubordination      Boolean @default(false)
-  independenceConfirmed    Boolean @default(false)
+  directSubordination      Boolean          @default(false)
+  independenceConfirmed    Boolean          @default(false)
 
-  severitySettings              Json? // Partial<Record<RevisionsSchweregrad, {label?, desc?}>>
-  angemesseneZeitTage           Int     @default(90)
-  qsIntervallMonate             Int?
-  risikoReviewIntervallMonate   Int?
+  severitySettings            Json? // Partial<Record<RevisionsSchweregrad, {label?, desc?}>>
+  angemesseneZeitTage         Int   @default(90)
+  qsIntervallMonate           Int?
+  risikoReviewIntervallMonate Int?
 
   updatedByUserId String?
   updatedAt       DateTime @updatedAt
@@ -1349,7 +1360,7 @@ model RevisionEinstellungen {
 }
 
 model RevisionQualitaetssicherung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1364,34 +1375,34 @@ model RevisionQualitaetssicherung {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_qualitaetssicherung")
   @@index([institutionId])
+  @@map("revision_qualitaetssicherung")
 }
 
 model RevisionProjektbegleitung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  name           String
-  role           String?
-  startDate      DateTime?
-  endDate        DateTime?
-  status         ProjektbegleitungStatus @default(laufend)
+  name            String
+  role            String?
+  startDate       DateTime?
+  endDate         DateTime?
+  status          ProjektbegleitungStatus @default(laufend)
   irContactUserId String?
-  accessGranted  Boolean @default(false)
-  notes          String?
+  accessGranted   Boolean                 @default(false)
+  notes           String?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_projektbegleitung")
   @@index([institutionId])
+  @@map("revision_projektbegleitung")
 }
 
 model RevisionZugriffsvorfall {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1405,13 +1416,13 @@ model RevisionZugriffsvorfall {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_zugriffsvorfaelle")
   @@index([institutionId])
+  @@map("revision_zugriffsvorfaelle")
 }
 
 // Insert-only: writable by INTERNE_REVISION power_user or GESCHAEFTSLEITUNG, read-only otherwise.
 model RevisionGlMitteilung {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1421,42 +1432,42 @@ model RevisionGlMitteilung {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_gl_mitteilungen")
   @@index([institutionId])
+  @@map("revision_gl_mitteilungen")
 }
 
 // Insert-only — special assignments ordered by the Geschäftsleitung (Tz. 2 S.3).
 model RevisionSonderauftrag {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  date       DateTime
-  orderedBy  String?
-  subject    String
-  reason     String?
+  date      DateTime
+  orderedBy String?
+  subject   String
+  reason    String?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
 
-  @@map("revision_sonderauftraege")
   @@index([institutionId])
+  @@map("revision_sonderauftraege")
 }
 
 // Quartalsbericht/Jahresbericht (Tz. 9) — plain single-value ack (kenntnisnahmeByUserId/At,
 // "first confirmer wins"), unlike Compliance's ComplianceReport: this module never outgrew that
 // simple model, so it isn't given a per-user ack table it doesn't need.
 model RevisionReport {
-  id            String   @id @default(uuid())
+  id            String             @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  reportType String // "quartalsbericht" | "jahresbericht"
-  periodFrom DateTime?
-  periodTo   DateTime?
-  status     RevisionReportStatus @default(entwurf)
-  content    Json @default("{}")
-  finalizedAt DateTime?
+  reportType            String // "quartalsbericht" | "jahresbericht"
+  periodFrom            DateTime?
+  periodTo              DateTime?
+  status                RevisionReportStatus @default(entwurf)
+  content               Json                 @default("{}")
+  finalizedAt           DateTime?
   kenntnisnahmeByUserId String?
   kenntnisnahmeAt       DateTime?
 
@@ -1464,6 +1475,398 @@ model RevisionReport {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("revision_reports")
   @@index([institutionId])
+  @@map("revision_reports")
+}
+
+// ---------------------------------------------------------------------------
+// Accounting / Buchhaltung — Bilanz, GuV, Anhang, Lagebericht. One row per fiscal year per
+// document type; a correction supersedes the prior row via previousVersionId (same pattern as
+// Nachweis) instead of overwriting it, so a finalized figure is never silently rewritten.
+// Sign-off is intentionally one shared table (AccountingSignOff) across all four document types
+// rather than four near-identical ack tables — mirrors ComplianceReportAcknowledgement's
+// per-person model, generalized with a documentType discriminator.
+// ---------------------------------------------------------------------------
+
+enum AccountingDocStatus {
+  entwurf
+  final
+}
+
+enum AccountingDocumentType {
+  BILANZ
+  GUV
+  ANHANG
+  LAGEBERICHT
+}
+
+enum BilanzSeite {
+  AKTIVA
+  PASSIVA
+}
+
+enum BilanzSection {
+  ANLAGEVERMOEGEN
+  UMLAUFVERMOEGEN
+  RECHNUNGSABGRENZUNG_AKTIVA
+  EIGENKAPITAL
+  RUECKSTELLUNGEN
+  VERBINDLICHKEITEN
+  RECHNUNGSABGRENZUNG_PASSIVA
+}
+
+enum GuvSection {
+  ERTRAEGE
+  AUFWENDUNGEN
+  ERGEBNIS
+}
+
+model BalanceSheet {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  fiscalYear  Int
+  periodLabel String?
+  status      AccountingDocStatus @default(entwurf)
+  finalizedAt DateTime?
+
+  previousVersionId String?
+  previousVersion   BalanceSheet?  @relation("BalanceSheetVersion", fields: [previousVersionId], references: [id])
+  laterVersions     BalanceSheet[] @relation("BalanceSheetVersion")
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lineItems BalanceSheetLineItem[]
+
+  @@index([institutionId, fiscalYear])
+  @@map("accounting_balance_sheets")
+}
+
+model BalanceSheetLineItem {
+  id             String       @id @default(uuid())
+  balanceSheetId String
+  balanceSheet   BalanceSheet @relation(fields: [balanceSheetId], references: [id])
+
+  side            BilanzSeite
+  section         BilanzSection
+  label           String
+  currentAmount   Float
+  priorYearAmount Float?
+  sortOrder       Int           @default(0)
+
+  @@index([balanceSheetId])
+  @@map("accounting_balance_sheet_line_items")
+}
+
+model IncomeStatement {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  fiscalYear  Int
+  periodLabel String?
+  status      AccountingDocStatus @default(entwurf)
+  finalizedAt DateTime?
+
+  previousVersionId String?
+  previousVersion   IncomeStatement?  @relation("IncomeStatementVersion", fields: [previousVersionId], references: [id])
+  laterVersions     IncomeStatement[] @relation("IncomeStatementVersion")
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lineItems IncomeStatementLineItem[]
+
+  @@index([institutionId, fiscalYear])
+  @@map("accounting_income_statements")
+}
+
+model IncomeStatementLineItem {
+  id                String          @id @default(uuid())
+  incomeStatementId String
+  incomeStatement   IncomeStatement @relation(fields: [incomeStatementId], references: [id])
+
+  section         GuvSection
+  label           String
+  currentAmount   Float
+  priorYearAmount Float?
+  sortOrder       Int        @default(0)
+
+  @@index([incomeStatementId])
+  @@map("accounting_income_statement_line_items")
+}
+
+// Free-text/structured notes, each section optionally tied to a line item by label (a plain
+// string, not a foreign key — Bilanz and GuV line items don't share one id space, and a note may
+// reference either).
+model AccountingNotes {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  fiscalYear  Int
+  status      AccountingDocStatus @default(entwurf)
+  finalizedAt DateTime?
+
+  previousVersionId String?
+  previousVersion   AccountingNotes?  @relation("AccountingNotesVersion", fields: [previousVersionId], references: [id])
+  laterVersions     AccountingNotes[] @relation("AccountingNotesVersion")
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sections AccountingNotesSection[]
+
+  @@index([institutionId, fiscalYear])
+  @@map("accounting_notes")
+}
+
+model AccountingNotesSection {
+  id      String          @id @default(uuid())
+  notesId String
+  notes   AccountingNotes @relation(fields: [notesId], references: [id])
+
+  title               String
+  content             String
+  linkedLineItemLabel String?
+  sortOrder           Int     @default(0)
+
+  @@index([notesId])
+  @@map("accounting_notes_sections")
+}
+
+model ManagementReport {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  fiscalYear  Int
+  status      AccountingDocStatus @default(entwurf)
+  finalizedAt DateTime?
+
+  previousVersionId String?
+  previousVersion   ManagementReport?  @relation("ManagementReportVersion", fields: [previousVersionId], references: [id])
+  laterVersions     ManagementReport[] @relation("ManagementReportVersion")
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sections ManagementReportSection[]
+
+  @@index([institutionId, fiscalYear])
+  @@map("accounting_management_reports")
+}
+
+model ManagementReportSection {
+  id       String           @id @default(uuid())
+  reportId String
+  report   ManagementReport @relation(fields: [reportId], references: [id])
+
+  title     String
+  content   String
+  sortOrder Int    @default(0)
+
+  @@index([reportId])
+  @@map("accounting_management_report_sections")
+}
+
+model AccountingSignOff {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  documentType   AccountingDocumentType
+  documentId     String
+  userId         String
+  acknowledgedAt DateTime               @default(now())
+
+  @@unique([documentType, documentId, userId])
+  @@index([institutionId])
+  @@map("accounting_sign_offs")
+}
+
+// ---------------------------------------------------------------------------
+// Internal Control System (IKS) — business processes, the controls mapped to them, control
+// testing with evidence, and a policy/workflow document library. "UserId" attribution fields
+// follow the same plain-column convention as the rest of this schema (no FK), except
+// controlOwnerUserId which mirrors Kontrolle.verantwortlichUserId.
+// ---------------------------------------------------------------------------
+
+enum IcsControlType {
+  ITGC
+  AUTOMATED
+  MANUAL
+}
+
+enum IcsControlFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+  AD_HOC
+  PER_TRANSACTION
+}
+
+enum IcsControlTestStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum IcsControlTestResult {
+  EFFECTIVE
+  DEFICIENT
+  NOT_TESTED
+}
+
+model IcsBusinessProcess {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  name        String
+  owner       String?
+  description String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  controls IcsControlProcess[]
+  policies IcsPolicyProcess[]
+
+  @@index([institutionId])
+  @@map("ics_business_processes")
+}
+
+model IcsControl {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  name               String
+  controlType        IcsControlType
+  description        String?
+  frequency          IcsControlFrequency
+  controlOwnerUserId String?
+  risksAddressed     String?
+  active             Boolean             @default(true)
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  businessProcesses IcsControlProcess[]
+  tests             IcsControlTest[]
+  policies          IcsPolicyControl[]
+
+  @@index([institutionId])
+  @@map("ics_controls")
+}
+
+model IcsControlProcess {
+  controlId         String
+  control           IcsControl         @relation(fields: [controlId], references: [id])
+  businessProcessId String
+  businessProcess   IcsBusinessProcess @relation(fields: [businessProcessId], references: [id])
+
+  @@id([controlId, businessProcessId])
+  @@map("ics_control_processes")
+}
+
+model IcsControlTest {
+  id        String     @id @default(uuid())
+  controlId String
+  control   IcsControl @relation(fields: [controlId], references: [id])
+
+  plannedPeriod  String?
+  plannedDate    DateTime?
+  status         IcsControlTestStatus  @default(PLANNED)
+  result         IcsControlTestResult?
+  resultNotes    String?
+  testedByUserId String?
+  testedAt       DateTime?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  evidence IcsControlTestEvidence[]
+
+  @@index([controlId])
+  @@map("ics_control_tests")
+}
+
+// Objektspeicher-Referenz (Supabase Storage), NIEMALS Inline-Blob in der DB — same convention as
+// Contract.fileObjectKey elsewhere in this schema.
+model IcsControlTestEvidence {
+  id     String         @id @default(uuid())
+  testId String
+  test   IcsControlTest @relation(fields: [testId], references: [id])
+
+  fileObjectKey String
+  fileName      String
+  fileSize      Int?
+  fileMime      String?
+
+  uploadedByUserId String?
+  uploadedAt       DateTime @default(now())
+
+  @@index([testId])
+  @@map("ics_control_test_evidence")
+}
+
+model IcsPolicyDocument {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  title        String
+  description  String?
+  documentType String?
+
+  fileObjectKey String?
+  fileName      String?
+  fileSize      Int?
+  fileMime      String?
+
+  uploadedByUserId String?
+  uploadedAt       DateTime?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  businessProcesses IcsPolicyProcess[]
+  controls          IcsPolicyControl[]
+
+  @@index([institutionId])
+  @@map("ics_policy_documents")
+}
+
+model IcsPolicyProcess {
+  policyDocumentId  String
+  policyDocument    IcsPolicyDocument  @relation(fields: [policyDocumentId], references: [id])
+  businessProcessId String
+  businessProcess   IcsBusinessProcess @relation(fields: [businessProcessId], references: [id])
+
+  @@id([policyDocumentId, businessProcessId])
+  @@map("ics_policy_processes")
+}
+
+model IcsPolicyControl {
+  policyDocumentId String
+  policyDocument   IcsPolicyDocument @relation(fields: [policyDocumentId], references: [id])
+  controlId        String
+  control          IcsControl        @relation(fields: [controlId], references: [id])
+
+  @@id([policyDocumentId, controlId])
+  @@map("ics_policy_controls")
 }

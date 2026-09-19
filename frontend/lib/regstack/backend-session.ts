@@ -12,6 +12,7 @@ export type BackendRole =
   | "RISIKOCONTROLLING"
   | "INTERNE_REVISION"
   | "AUSLAGERUNGSBEAUFTRAGTER"
+  | "BUCHHALTUNG"
   | "ADMIN"
   | "VIEWER";
 
@@ -82,4 +83,33 @@ const REVISION_WRITE_ROLES: BackendRole[] = ["INTERNE_REVISION", "ADMIN"];
 
 export function canWriteRevisions(role: BackendRole): boolean {
   return REVISION_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.accountingRecord.write (and accountingReport.write).
+const ACCOUNTING_WRITE_ROLES: BackendRole[] = ["BUCHHALTUNG", "ADMIN"];
+
+export function canWriteAccounting(role: BackendRole): boolean {
+  return ACCOUNTING_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.icsControl.write / icsProcess.write.
+const ICS_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
+
+export function canWriteIcs(role: BackendRole): boolean {
+  return ICS_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.icsTesting.write — Risikocontrolling and Interne
+// Revision both plan/record control tests.
+const ICS_TESTING_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "INTERNE_REVISION", "ADMIN"];
+
+export function canWriteIcsTesting(role: BackendRole): boolean {
+  return ICS_TESTING_WRITE_ROLES.includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's MATRIX.icsPolicy.write.
+const ICS_POLICY_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "COMPLIANCE", "ADMIN"];
+
+export function canWriteIcsPolicy(role: BackendRole): boolean {
+  return ICS_POLICY_WRITE_ROLES.includes(role);
 }

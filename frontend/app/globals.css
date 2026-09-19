@@ -42,6 +42,17 @@
   --status-open: #8c8069;
   --status-open-bg: #262219;
 
+  /* Chart tokens — ordinal copper ramp for year-over-year series (light→dark = older→newest),
+     plus a diverging pair for increase/decrease movers. Deliberately distinct from the
+     success/danger status tokens above: a bigger liability balance isn't "bad" the way a failed
+     control is, so financial polarity gets its own hues instead of borrowing status meaning. */
+  --chart-year-1: var(--copper-300);
+  --chart-year-2: var(--copper-500);
+  --chart-year-3: var(--copper-700);
+  --chart-increase: #d2925c;
+  --chart-decrease: #6f9aa5;
+  --chart-neutral: var(--graphite-400);
+
   /* Semantic tokens (dark, primary theme) */
   --background: var(--graphite-950);
   --surface: var(--graphite-900);
@@ -97,6 +108,13 @@
   --color-status-danger-bg: var(--status-danger-bg);
   --color-status-open: var(--status-open);
   --color-status-open-bg: var(--status-open-bg);
+
+  --color-chart-year-1: var(--chart-year-1);
+  --color-chart-year-2: var(--chart-year-2);
+  --color-chart-year-3: var(--chart-year-3);
+  --color-chart-increase: var(--chart-increase);
+  --color-chart-decrease: var(--chart-decrease);
+  --color-chart-neutral: var(--chart-neutral);
 
   --font-sans: var(--font-public-sans), "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-fraunces), Georgia, serif;

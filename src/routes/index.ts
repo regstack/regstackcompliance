@@ -24,6 +24,14 @@ import revisionsFeststellungenRoutes from "../modules/revisions/feststellungen.r
 import revisionsPersonalRoutes from "../modules/revisions/personal.routes";
 import revisionsGovernanceRoutes from "../modules/revisions/governance.routes";
 import revisionsReportsRoutes from "../modules/revisions/reports.routes";
+import accountingBalanceSheetsRoutes from "../modules/accounting/balanceSheets.routes";
+import accountingIncomeStatementsRoutes from "../modules/accounting/incomeStatements.routes";
+import accountingNotesRoutes from "../modules/accounting/notes.routes";
+import accountingManagementReportsRoutes from "../modules/accounting/managementReports.routes";
+import icsBusinessProcessesRoutes from "../modules/ics/businessProcesses.routes";
+import icsControlsRoutes from "../modules/ics/controls.routes";
+import icsControlTestsRoutes from "../modules/ics/controlTests.routes";
+import icsPolicyDocumentsRoutes from "../modules/ics/policyDocuments.routes";
 import { requireAuth } from "../middleware/auth";
 
 export const router = Router();
@@ -57,3 +65,11 @@ router.use("/revisions/feststellungen", revisionsFeststellungenRoutes);
 router.use("/revisions/personal", revisionsPersonalRoutes);
 router.use("/revisions/governance", revisionsGovernanceRoutes);
 router.use("/revisions/reports", revisionsReportsRoutes);
+router.use("/accounting/balance-sheets", accountingBalanceSheetsRoutes);
+router.use("/accounting/income-statements", accountingIncomeStatementsRoutes);
+router.use("/accounting/notes", accountingNotesRoutes);
+router.use("/accounting/management-reports", accountingManagementReportsRoutes);
+router.use("/ics/processes", icsBusinessProcessesRoutes);
+router.use("/ics/controls", icsControlsRoutes);
+router.use("/ics/control-tests", icsControlTestsRoutes);
+router.use("/ics/policies", icsPolicyDocumentsRoutes);
