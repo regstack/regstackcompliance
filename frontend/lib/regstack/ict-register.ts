@@ -22,10 +22,36 @@ export type IctArrangement = {
   contractStart: string | null;
   contractEnd: string | null;
   terminationNoticeMonths: number | null;
+  annualCostEur: number | null;
+  exitStrategyNote: string | null;
   dataCategories: string | null;
   hasSubcontracting: boolean;
   subcontractingNote: string | null;
   status: IctArrangementStatus;
+};
+
+// ITS-Ebene 4/6 (Durchführungsverordnung (EU) 2024/2956) — additiv zu IctArrangement: mehrere
+// IKT-Dienstleistungen je Vertrag und die strukturierte Weiterverlagerungskette. Noch ohne eigenes
+// Frontend-Panel; die Backend-Routen (/ict-register/arrangements/:id/services und
+// .../subcontracting) sind fertig und getestet.
+export type IctService = {
+  id: string;
+  arrangementId: string;
+  serviceDescription: string;
+  serviceLevelObjective: string | null;
+};
+
+export type IctSubcontractingStatus = "AKTIV" | "ENTFERNT";
+
+export type IctSubcontracting = {
+  id: string;
+  arrangementId: string;
+  parentId: string | null;
+  level: number;
+  provider: string;
+  country: string | null;
+  description: string | null;
+  status: IctSubcontractingStatus;
 };
 
 export async function listIctProviders(): Promise<IctProvider[]> {

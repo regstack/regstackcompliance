@@ -153,6 +153,8 @@ const emptyArrangement = (providerId: string): ArrangementInput => ({
   contractStart: "",
   contractEnd: "",
   terminationNoticeMonths: "",
+  annualCostEur: "",
+  exitStrategyNote: "",
   dataCategories: "",
   hasSubcontracting: false,
   subcontractingNote: "",
@@ -177,6 +179,8 @@ function ArrangementForm({
           contractStart: initial.contractStart?.slice(0, 10) ?? "",
           contractEnd: initial.contractEnd?.slice(0, 10) ?? "",
           terminationNoticeMonths: initial.terminationNoticeMonths?.toString() ?? "",
+          annualCostEur: initial.annualCostEur?.toString() ?? "",
+          exitStrategyNote: initial.exitStrategyNote ?? "",
           dataCategories: initial.dataCategories ?? "",
           hasSubcontracting: initial.hasSubcontracting,
           subcontractingNote: initial.subcontractingNote ?? "",
@@ -227,8 +231,12 @@ function ArrangementForm({
         </label>
         <input type="number" placeholder="Kündigungsfrist (Monate)" value={form.terminationNoticeMonths} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, terminationNoticeMonths: e.target.value }))} className={inputClass} />
+        <input type="number" placeholder="Jahreskosten (EUR)" value={form.annualCostEur} disabled={pending}
+          onChange={(e) => setForm((f) => ({ ...f, annualCostEur: e.target.value }))} className={inputClass} />
         <input placeholder="Datenkategorien" value={form.dataCategories} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, dataCategories: e.target.value }))} className={inputClass} />
+        <input placeholder="Exit-Strategie" value={form.exitStrategyNote} disabled={pending}
+          onChange={(e) => setForm((f) => ({ ...f, exitStrategyNote: e.target.value }))} className={inputClass} />
       </div>
 
       <label className="mt-2 flex items-center gap-2 text-xs text-foreground">
@@ -300,6 +308,7 @@ export function IctArrangementsPanel({
                 <th className="px-3 py-2 font-medium">Anbieter</th>
                 <th className="px-3 py-2 font-medium">Funktion</th>
                 <th className="px-3 py-2 font-medium">Kritisch/Wichtig</th>
+                <th className="px-3 py-2 font-medium">Jahreskosten</th>
                 <th className="px-3 py-2 font-medium">Vertragsende</th>
                 <th className="px-3 py-2 font-medium">Status</th>
                 {canWrite && <th className="px-3 py-2" />}
@@ -308,12 +317,13 @@ export function IctArrangementsPanel({
             <tbody>
               {arrangements.map((a) =>
                 editingId === a.id ? (
-                  <tr key={a.id}><td colSpan={6} className="px-3 py-3"><ArrangementForm initial={a} providers={providers} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} /></td></tr>
+                  <tr key={a.id}><td colSpan={7} className="px-3 py-3"><ArrangementForm initial={a} providers={providers} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} /></td></tr>
                 ) : (
                   <tr key={a.id} className="border-b border-border-subtle last:border-0">
                     <td className="px-3 py-2 font-medium text-foreground">{a.provider.name}</td>
                     <td className="px-3 py-2 text-muted-foreground">{a.functionDescription}</td>
                     <td className="px-3 py-2">{a.supportsCriticalFunction ? <StatusPill status="wesentlich" label="Kritisch/wichtig" /> : "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{a.annualCostEur != null ? `${a.annualCostEur.toLocaleString("de-DE")} €` : "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground">{a.contractEnd?.slice(0, 10) ?? "—"}</td>
                     <td className="px-3 py-2"><StatusPill status={a.status === "AKTIV" ? "aktiv" : "beendet"} /></td>
                     {canWrite && <td className="px-3 py-2 text-right"><Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(a.id)}>Bearbeiten</Button></td>}
@@ -321,7 +331,7 @@ export function IctArrangementsPanel({
                 )
               )}
               {arrangements.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">Noch keine Vertragsverhältnisse erfasst.</td></tr>
+                <tr><td colSpan={7} className="px-3 py-6 text-center text-xs text-muted-foreground">Noch keine Vertragsverhältnisse erfasst.</td></tr>
               )}
             </tbody>
           </table>

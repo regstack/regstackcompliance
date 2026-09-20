@@ -45,6 +45,8 @@ export type ArrangementInput = {
   contractStart: string;
   contractEnd: string;
   terminationNoticeMonths: string;
+  annualCostEur: string;
+  exitStrategyNote: string;
   dataCategories: string;
   hasSubcontracting: boolean;
   subcontractingNote: string;
@@ -63,6 +65,8 @@ function arrangementBody(fields: ArrangementInput) {
     contractStart: fields.contractStart ? new Date(fields.contractStart).toISOString() : undefined,
     contractEnd: fields.contractEnd ? new Date(fields.contractEnd).toISOString() : undefined,
     terminationNoticeMonths: fields.terminationNoticeMonths ? Number(fields.terminationNoticeMonths) : undefined,
+    annualCostEur: fields.annualCostEur ? Number(fields.annualCostEur) : undefined,
+    exitStrategyNote: fields.exitStrategyNote || undefined,
     dataCategories: fields.dataCategories || undefined,
     hasSubcontracting: fields.hasSubcontracting,
     subcontractingNote: fields.hasSubcontracting ? fields.subcontractingNote || undefined : undefined,

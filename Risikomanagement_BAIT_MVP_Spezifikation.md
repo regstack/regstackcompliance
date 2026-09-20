@@ -122,14 +122,25 @@ Zweigstellen, (2) IKT-Drittanbieter inkl. konzerninterner Anbieter, (3) Vertrags
 (1 Datensatz je Vertrag) + Jahreskosten + Exit-Strategie, (4) je Vertrag bezogene IKT-Dienstleistungen
 + Service-Level-Objectives, (5) unterstützte Funktionen (mit CIF-Flag "kritisch oder wichtig") +
 IKT-Assets + Datenklassifizierung, (6) Weiterverlagerungskette bei kritischen/wichtigen
-Vertragsverhältnissen. Gegen `IctProvider`/`IctArrangement` (`prisma/schema.prisma`) geprüft ergeben
-sich drei konkrete strukturelle Lücken (siehe auch README „Nächste Schritte"):
-1. Keine Felder für **Jahreskosten** oder **Exit-Strategie** je Vertragsverhältnis (Ebene 3).
-2. **Mehrere IKT-Dienstleistungen/SLA je Vertrag** werden nicht strukturiert abgebildet — nur ein
-   einzelnes `functionDescription`-Freitextfeld (Ebene 4 fehlt als eigene Tabelle).
-3. Die **Weiterverlagerungskette** (Ebene 6) ist nur ein Freitextfeld (`subcontractingNote`), nicht
-   strukturiert, obwohl RegStack für AT 9 (`Weiterverlagerung`-Modell bei `OutsourcingActivity`)
-   bereits ein Muster für strukturierte Ketten hat, das hier nicht wiederverwendet wird.
+Vertragsverhältnissen. Gegen `IctProvider`/`IctArrangement` (`prisma/schema.prisma`) geprüft ergaben
+sich drei konkrete strukturelle Lücken (siehe auch README „Nächste Schritte") — **alle drei
+inzwischen additiv geschlossen (20.09.2026):**
+1. ~~Keine Felder für Jahreskosten oder Exit-Strategie je Vertragsverhältnis (Ebene 3).~~ —
+   `IctArrangement.annualCostEur`/`exitStrategyNote`.
+2. ~~Mehrere IKT-Dienstleistungen/SLA je Vertrag wurden nicht strukturiert abgebildet.~~ — neues
+   Modell `IctService` (`ict_services`), additiv neben `functionDescription` als Kurzbeschreibung
+   für den Normalfall.
+3. ~~Die Weiterverlagerungskette (Ebene 6) war nur ein Freitextfeld.~~ — neues Modell
+   `IctSubcontracting` (`ict_subcontracting`), dieselbe Baumstruktur (selbstreferenzierend,
+   `level`, server-seitig berechneter Kaskaden-Entfernen-Endpunkt) wie `Weiterverlagerung` bei
+   AT 9, hier an `IctArrangement` gehängt statt an `OutsourcingActivity`. `hasSubcontracting`/
+   `subcontractingNote` bleiben als schnelle Freitext-Filterung ohne Join erhalten.
+
+Migration lokal gegen ein frisches Postgres 16 verifiziert (`prisma migrate deploy` + `prisma
+migrate diff` ohne Drift), inkl. Smoke-Test der dreistufigen Kaskaden-Entfernung über
+`IctSubcontracting`. Weiterhin offen: eine echte Feld-für-Feld-Prüfung gegen die XBRL-CSV-Taxonomie
+der Annexe I–IV selbst — der obige Abgleich ist strukturell (sechs Ebenen), nicht auf Ebene jedes
+einzelnen Meldefelds.
 
 Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 - IT-Auslagerungen bleiben `OutsourcingActivity` mit `scope = IKT_DORA` — BAIT Kap. 8 (Steuerung
