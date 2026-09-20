@@ -12,6 +12,7 @@ const labelCls = "flex flex-col gap-1 text-[11px] font-semibold uppercase tracki
 export function ControlForm({ businessProcessId }: { businessProcessId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [controlType, setControlType] = useState<keyof typeof CONTROL_TYPE_LABELS>("MANUAL");
   const [frequency, setFrequency] = useState<keyof typeof CONTROL_FREQUENCY_LABELS>("MONTHLY");
@@ -37,6 +38,7 @@ export function ControlForm({ businessProcessId }: { businessProcessId: string }
     startTransition(async () => {
       try {
         const id = await createControl({
+          code: code || undefined,
           name,
           controlType,
           frequency,
@@ -54,6 +56,10 @@ export function ControlForm({ businessProcessId }: { businessProcessId: string }
   return (
     <div className="space-y-3 rounded-lg border border-border-subtle p-4">
       <div className="grid gap-3 sm:grid-cols-2">
+        <label className={labelCls}>
+          Kontroll-ID
+          <input className={inputCls} value={code} onChange={(e) => setCode(e.target.value)} placeholder="z. B. P2P-01" />
+        </label>
         <label className={labelCls}>
           Bezeichnung
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />

@@ -23,12 +23,16 @@ export default async function KontrolleDetailPage({ params }: { params: Promise<
             ← {control.businessProcesses[0].name}
           </Link>
         )}
-        <h2 className="mt-1 text-lg font-semibold text-foreground">{control.name}</h2>
+        <h2 className="mt-1 text-lg font-semibold text-foreground">
+          {control.code && <span className="text-muted-foreground">{control.code} · </span>}
+          {control.name}
+        </h2>
         {control.description && <p className="mt-1 text-sm text-muted-foreground">{control.description}</p>}
       </div>
 
       <Card>
         <CardBody className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          <Kv k="Kontroll-ID">{control.code ?? "—"}</Kv>
           <Kv k="Kontrolltyp">{CONTROL_TYPE_LABELS[control.controlType]}</Kv>
           <Kv k="Häufigkeit">{CONTROL_FREQUENCY_LABELS[control.frequency]}</Kv>
           <Kv k="Adressierte Risiken">{control.risksAddressed ?? "—"}</Kv>

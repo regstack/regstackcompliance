@@ -1787,6 +1787,7 @@ model IcsControl {
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
+  code               String?
   name               String
   controlType        IcsControlType
   description        String?
@@ -1803,6 +1804,7 @@ model IcsControl {
   tests             IcsControlTest[]
   policies          IcsPolicyControl[]
 
+  @@unique([institutionId, code])
   @@index([institutionId])
   @@map("ics_controls")
 }

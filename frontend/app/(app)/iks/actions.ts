@@ -17,6 +17,7 @@ export async function updateBusinessProcess(id: string, input: { name?: string; 
 }
 
 export type ControlInput = {
+  code?: string;
   name: string;
   controlType: "ITGC" | "AUTOMATED" | "MANUAL";
   description?: string;
