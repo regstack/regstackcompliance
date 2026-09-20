@@ -332,6 +332,7 @@ model InstitutionProfile {
   rmRisikotragfaehigkeit   Risikotragfaehigkeit[]
   rmReports                RmReport[]
   aufsichtsorganBerichte   AufsichtsorganBericht[]
+  rmModellregister         Modellregister[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -2221,6 +2222,43 @@ model AufsichtsorganBericht {
   updatedAt       DateTime @updatedAt
 
   @@map("rm_aufsichtsorgan_berichte")
+  @@index([institutionId])
+}
+
+enum ModellStatus {
+  in_entwicklung
+  aktiv
+  ausser_betrieb
+}
+
+// AT 4.3.4 Verwendung von Modellen — Modellrisiko-Governance (Auswahl, Validierung,
+// Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive "technologiegestützter
+// Innovation und künstlicher Intelligenz" (daher `istKiBasiert` statt nur klassischer
+// Scoring-/Rating-Modelle). Bewusst ein schlankes Register (Modell, Zweck, letzte Validierung,
+// Erklärbarkeits-Bewertung) statt eines vollen Validierungs-Workflows mit eigenem
+// Freigabe-Prozess — das wäre ein eigenständiges Phase-3-Thema.
+model Modellregister {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  bezeichnung   String
+  zweck         String
+  istKiBasiert  Boolean @default(false)
+  status        ModellStatus @default(in_entwicklung)
+
+  verantwortlichUserId          String?
+  letzteValidierung             DateTime?
+  naechsteValidierung           DateTime?
+  validierungsergebnis          String?
+  erklaerbarkeitBewertung       String?
+  ueberschreibungenBeschreibung String? // Prozess/Umfang von Überschreibungen des Modellergebnisses, Freitext
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_modellregister")
   @@index([institutionId])
 }
 

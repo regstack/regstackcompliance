@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
-import type { RisikoartKategorie, RmStrategieArt, RtfAnsatz } from "@/lib/regstack/risikomanagement";
+import type { RisikoartKategorie, RmStrategieArt, RtfAnsatz, ModellStatus } from "@/lib/regstack/risikomanagement";
 
 export type RisikoinventurInput = {
   jahr: number;
@@ -143,5 +143,43 @@ export async function finalizeAufsichtsorganBericht(id: string) {
 // AT 3.2, da es keinen Kenntnisnahme-Flow wie bei RmReport geben kann (kein Login).
 export async function markAufsichtsorganBerichtSent(id: string) {
   await apiFetch(`/risikomanagement/aufsichtsorganberichte/${id}/mark-sent`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}
+
+export type ModellregisterInput = {
+  bezeichnung: string;
+  zweck: string;
+  istKiBasiert: boolean;
+  erklaerbarkeitBewertung: string;
+  ueberschreibungenBeschreibung: string;
+  naechsteValidierung: string;
+};
+
+export async function addModellregisterEintrag(fields: ModellregisterInput) {
+  await apiFetch("/risikomanagement/modellregister", {
+    method: "POST",
+    body: JSON.stringify({
+      bezeichnung: fields.bezeichnung,
+      zweck: fields.zweck,
+      istKiBasiert: fields.istKiBasiert,
+      erklaerbarkeitBewertung: fields.erklaerbarkeitBewertung || undefined,
+      ueberschreibungenBeschreibung: fields.ueberschreibungenBeschreibung || undefined,
+      naechsteValidierung: fields.naechsteValidierung ? new Date(fields.naechsteValidierung).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+// Deckt sowohl den Statuswechsel (z. B. nach einer abgeschlossenen Validierung) als auch das
+// Nachtragen des Validierungsergebnisses ab — ein PUT auf denselben Eintrag wie bei Risikoinventur.
+export async function setModellStatus(id: string, status: ModellStatus, validierungsergebnis?: string) {
+  await apiFetch(`/risikomanagement/modellregister/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      status,
+      ...(status === "aktiv" ? { letzteValidierung: new Date().toISOString() } : {}),
+      ...(validierungsergebnis ? { validierungsergebnis } : {}),
+    }),
+  });
   revalidatePath("/risikomanagement");
 }

@@ -99,3 +99,24 @@ export type AufsichtsorganBericht = {
 export async function listAufsichtsorganBerichte() {
   return apiFetch<AufsichtsorganBericht[]>("/risikomanagement/aufsichtsorganberichte");
 }
+
+export type ModellStatus = "in_entwicklung" | "aktiv" | "ausser_betrieb";
+
+// AT 4.3.4 — Modellrisiko-Governance, explizit inklusive KI/ML-Modelle (istKiBasiert).
+export type Modellregister = {
+  id: string;
+  bezeichnung: string;
+  zweck: string;
+  istKiBasiert: boolean;
+  status: ModellStatus;
+  verantwortlichUserId: string | null;
+  letzteValidierung: string | null;
+  naechsteValidierung: string | null;
+  validierungsergebnis: string | null;
+  erklaerbarkeitBewertung: string | null;
+  ueberschreibungenBeschreibung: string | null;
+};
+
+export async function listModellregister() {
+  return apiFetch<Modellregister[]>("/risikomanagement/modellregister");
+}

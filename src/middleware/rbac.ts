@@ -42,6 +42,7 @@ export type Resource =
   | "riskManagementReport"
   | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
   | "supervisoryBoardReport" // AT 3.2 — GL-Berichterstattung an das Aufsichtsorgan
+  | "modelGovernanceRecord" // AT 4.3.4 — Modellregister (Auswahl, Validierung, Erklärbarkeit)
   | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
@@ -202,6 +203,10 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   supervisoryBoardReport: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  modelGovernanceRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
   },
   itGovernanceRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],

@@ -41,6 +41,7 @@ import risikomanagementStrategienRoutes from "../modules/risikomanagement/strate
 import risikomanagementRtfRoutes from "../modules/risikomanagement/risikotragfaehigkeit.routes";
 import risikomanagementReportsRoutes from "../modules/risikomanagement/reports.routes";
 import risikomanagementAufsichtsorganBerichteRoutes from "../modules/risikomanagement/aufsichtsorganBerichte.routes";
+import risikomanagementModellregisterRoutes from "../modules/risikomanagement/modellregister.routes";
 import itRisikoStrategieRoutes from "../modules/itRisiko/strategie.routes";
 import itRisikoAssetsRoutes from "../modules/itRisiko/assets.routes";
 import itRisikoRisikenRoutes from "../modules/itRisiko/risiken.routes";
@@ -95,6 +96,7 @@ router.use("/risikomanagement/strategien", risikomanagementStrategienRoutes);
 router.use("/risikomanagement/risikotragfaehigkeit", risikomanagementRtfRoutes);
 router.use("/risikomanagement/reports", risikomanagementReportsRoutes);
 router.use("/risikomanagement/aufsichtsorganberichte", risikomanagementAufsichtsorganBerichteRoutes);
+router.use("/risikomanagement/modellregister", risikomanagementModellregisterRoutes);
 router.use("/it-risiko/strategie", itRisikoStrategieRoutes);
 router.use("/it-risiko/assets", itRisikoAssetsRoutes);
 router.use("/it-risiko/risiken", itRisikoRisikenRoutes);

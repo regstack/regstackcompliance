@@ -12,6 +12,8 @@ const tones: Record<Tone, string> = {
 // (auslagerungen.status, auslagerung_vertragscheckliste.status, etc.) to a tone.
 const STATUS_TONE: Record<string, Tone> = {
   aktiv: "success",
+  in_entwicklung: "open",
+  ausser_betrieb: "danger",
   erfuellt: "success",
   bestaetigt: "success",
   offen: "open",

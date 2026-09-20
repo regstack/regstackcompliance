@@ -49,6 +49,15 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     requirePermission("supervisoryBoardReport", "read")(mockReq("VIEWER"), mockRes, read);
     expect(read).toHaveBeenCalledOnce();
   });
+
+  it("allows RISIKOCONTROLLING to write a modelGovernanceRecord (AT 4.3.4), but not COMPLIANCE", () => {
+    const next = vi.fn();
+    requirePermission("modelGovernanceRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("modelGovernanceRecord", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+  });
 });
 
 describe("requirePermission — IT-Risiko/BAIT resources", () => {

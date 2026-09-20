@@ -123,10 +123,11 @@ export function canWriteIctRegister(role: BackendRole): boolean {
   return ICT_REGISTER_WRITE_ROLES.includes(role);
 }
 
-// Mirrors src/middleware/rbac.ts's MATRIX.riskManagementRecord.write (riskStrategy.write and
-// riskManagementReport.write use the same role list). The Geschäftsleitung-only steps —
-// Risikostrategie verabschieden, RmReport acknowledge — are covered by isGeschaeftsleitung above,
-// same as every other GL-exclusive backend resource.
+// Mirrors src/middleware/rbac.ts's MATRIX.riskManagementRecord.write (riskStrategy.write,
+// riskManagementReport.write, and modelGovernanceRecord.write use the same role list). The
+// Geschäftsleitung-only steps — Risikostrategie verabschieden, RmReport acknowledge, AT 3.2
+// Aufsichtsorgan-Bericht — are covered by isGeschaeftsleitung above, same as every other
+// GL-exclusive backend resource.
 const RISK_MANAGEMENT_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
 
 export function canWriteRiskManagement(role: BackendRole): boolean {

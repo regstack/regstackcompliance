@@ -3,8 +3,9 @@
 **Status:** Beide Module sind vollständig umgesetzt — Prisma-Modelle, Migration, RBAC-Einträge
 und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/` (siehe
 Commit-Historie), das Frontend ist unter `/risikomanagement` und `/it-risiko` angebunden, und
-`prisma/seed.ts` liefert Musterdaten für alle acht Modelle (Risikoinventur, Risikostrategie,
-Risikotragfähigkeit, RmReport, ItStrategie, ItAsset, ItRisiko, ItSicherheitsvorfall). Migration
+`prisma/seed.ts` liefert Musterdaten für alle Modelle (Risikoinventur, Risikostrategie,
+Risikotragfähigkeit, RmReport, AufsichtsorganBericht, Modellregister, ItStrategie, ItAsset,
+ItRisiko, ItSicherheitsvorfall). Migration
 lokal gegen ein frisches Postgres 16 verifiziert (`prisma migrate deploy` + `prisma migrate diff`
 ohne Drift + Smoke-Test über den generierten Client). `EvidenceModule` wurde um `RISK_MANAGEMENT`
 und `IT_RISK` erweitert, sodass Nachweise und Feststellungen aus externen Prüfungen jetzt auch
@@ -27,9 +28,10 @@ BAIT-Kapitelliste, gegen die unten gemappt wird, ist unvollständig, siehe dort.
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
 das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion), die AT-2.2-Pflichtrisikoarten
-inkl. ESG sowie AT 3.2 (Aufsichtsorgan-Berichtswesen, `AufsichtsorganBericht`/
-`rm_aufsichtsorgan_berichte`, siehe Punkt 4 unten) sind in den Phase-1-Modellen abgedeckt.
-AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht — siehe unten.
+inkl. ESG, AT 3.2 (Aufsichtsorgan-Berichtswesen, `AufsichtsorganBericht`/
+`rm_aufsichtsorgan_berichte`, siehe Punkt 4 unten) sowie AT 4.3.4 (Modelle,
+`Modellregister`/`rm_modellregister`, siehe Punkt 7 unten) sind in den Phase-1-Modellen abgedeckt.
+Nur die konditionale AT-4.2-Tz.-3-NPL-Strategie ist es nicht — siehe unten (Punkt 6).
 
 ### Korrekturen nach Quellenabgleich
 
@@ -71,9 +73,17 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
    hohem NPL-Bestand), daher kein MVP-Kandidat, aber ein sauberer Phase-2-Kandidat, falls relevant.
 7. **AT 4.3.4 Verwendung von Modellen** — komplett neues Kapitel, deckt Modellrisiko-Governance ab
    (Auswahl, Validierung, Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive
-   "technologiegestützter Innovation und künstlicher Intelligenz". Kein Modell dafür existiert
-   bisher; ein schlankes `Modellregister` (Modell, Zweck, letzte Validierung, Erklärbarkeits-
-   Bewertung) wäre der naheliegende Phase-2-Zuschnitt.
+   "technologiegestützter Innovation und künstlicher Intelligenz" — **umgesetzt** als schlankes
+   `Modellregister` (`src/modules/risikomanagement/modellregister.routes.ts`, Route
+   `/risikomanagement/modellregister`, RBAC-Resource `modelGovernanceRecord`,
+   RISIKOCONTROLLING/ADMIN-exklusiv, gleiche Rollenliste wie `riskManagementRecord`): Bezeichnung,
+   Zweck, `istKiBasiert`-Flag für den KI/ML-Fall, Status (`in_entwicklung` → `aktiv` →
+   `ausser_betrieb`), Validierungstermine/-ergebnis, Erklärbarkeits-Bewertung und
+   Überschreibungen-Beschreibung als Freitext — bewusst kein voller Validierungs-Workflow mit
+   eigenem Freigabeprozess, das wäre ein eigenständiges Phase-3-Thema. Migration lokal gegen ein
+   frisches Postgres 16 verifiziert, Frontend unter `/risikomanagement`
+   (`ModellregisterPanel`) angebunden, Musterdaten in `prisma/seed.ts` (ein klassisches
+   Scoring-Modell und ein KI-basiertes Modell in Entwicklung).
 
 ### Primärquellen-Abgleich BAIT/DORA (20.09.2026)
 

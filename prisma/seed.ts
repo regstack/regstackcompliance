@@ -1218,6 +1218,39 @@ async function main() {
     },
   });
 
+  // AT 4.3.4 — Modellrisiko-Governance, explizit inklusive KI/ML-Modelle. Ein klassisches
+  // Scoring-Modell (validiert, aktiv) und ein KI-basiertes Modell (in Entwicklung, noch keine
+  // erste Validierung) demonstrieren beide vom Rundschreiben ausdrücklich genannten Fälle.
+  await prisma.modellregister.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "Kreditscoring-Modell Firmenkunden",
+      zweck: "Bonitätseinstufung im Kreditvergabeprozess für Firmenkunden.",
+      istKiBasiert: false,
+      status: "aktiv",
+      verantwortlichUserId: risikocontrolling.id,
+      letzteValidierung: new Date("2026-02-01"),
+      naechsteValidierung: new Date("2027-02-01"),
+      validierungsergebnis: "Trennschärfe und Kalibrierung im Zielkorridor, keine Auffälligkeiten.",
+      erklaerbarkeitBewertung: "Hoch — lineares Scorecard-Modell, jede Einzelentscheidung nachvollziehbar.",
+      ueberschreibungenBeschreibung: "Manuelle Überschreibung nur durch Kreditrisikocontrolling, mit Begründungspflicht im Kreditakt.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.modellregister.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "KI-gestützte Betrugserkennung Zahlungsverkehr",
+      zweck: "Anomalieerkennung bei Zahlungsaufträgen zur Betrugsprävention.",
+      istKiBasiert: true,
+      status: "in_entwicklung",
+      verantwortlichUserId: risikocontrolling.id,
+      naechsteValidierung: new Date("2026-06-30"),
+      erklaerbarkeitBewertung: "Noch offen — Machine-Learning-Modell, Erklärbarkeitskonzept vor Produktivsetzung erforderlich.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
   // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
 
   const itStrategie2026 = await prisma.itStrategie.create({
