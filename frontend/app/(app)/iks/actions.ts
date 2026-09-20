@@ -57,6 +57,13 @@ export async function updateControlTest(
   revalidatePath(REVALIDATE);
 }
 
+export async function getIcsEvidenceUploadUrl(testId: string, fileName: string, fileMime: string, fileSize: number) {
+  return apiFetch<{ uploadUrl: string; objectKey: string }>(`/ics/control-tests/${testId}/evidence/upload-url`, {
+    method: "POST",
+    body: JSON.stringify({ fileName, fileMime, fileSize }),
+  });
+}
+
 export async function addControlTestEvidence(
   testId: string,
   file: { fileObjectKey: string; fileName: string; fileSize?: number; fileMime?: string }
@@ -76,6 +83,13 @@ export type PolicyInput = {
   businessProcessIds: string[];
   controlIds: string[];
 };
+
+export async function getIcsPolicyUploadUrl(fileName: string, fileMime: string, fileSize: number) {
+  return apiFetch<{ uploadUrl: string; objectKey: string }>("/ics/policies/upload-url", {
+    method: "POST",
+    body: JSON.stringify({ fileName, fileMime, fileSize }),
+  });
+}
 
 export async function createPolicyDocument(input: PolicyInput) {
   const created = await apiFetch<{ id: string }>("/ics/policies", { method: "POST", body: JSON.stringify(input) });

@@ -3,8 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createPolicyDocument } from "@/app/(app)/iks/actions";
-import { uploadIcsFile } from "@/lib/regstack/storage";
+import { createPolicyDocument, getIcsPolicyUploadUrl } from "@/app/(app)/iks/actions";
 
 const inputCls = "rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground";
 const labelCls = "flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
@@ -56,7 +55,10 @@ export function PolicyForm({
         const file = fileInput.current?.files?.[0];
         if (file) {
           setUploading(true);
-          fileFields = await uploadIcsFile(file, "ics-policies");
+          const { uploadUrl, objectKey } = await getIcsPolicyUploadUrl(file.name, file.type, file.size);
+          const putRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+          if (!putRes.ok) throw new Error("Hochladen zum Objektspeicher fehlgeschlagen.");
+          fileFields = { fileObjectKey: objectKey, fileName: file.name, fileSize: file.size, fileMime: file.type };
           setUploading(false);
         }
         await createPolicyDocument({
