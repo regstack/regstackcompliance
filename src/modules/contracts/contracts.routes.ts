@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
-import { createDownloadUrl, createUploadUrl } from "./objectStorage";
+import { assertObjectKeyBelongsToInstitution, createDownloadUrl, createUploadUrl } from "./objectStorage";
 
 const router = Router({ mergeParams: true });
 
@@ -91,6 +91,13 @@ router.put(
 
     if (parsed.data.subOutsourcingChecklist && !activity.isSubOutsourcing) {
       throw new ValidationError("subOutsourcingChecklist ist nur bei isSubOutsourcing=true relevant (Tz. 8)");
+    }
+
+    // The client only ever legitimately echoes back a key this server itself minted via
+    // POST /upload-url (which scopes it to req.user!.institutionId) -- reject anything else before
+    // it can be stored and later signed into a download URL for another tenant's file.
+    if (parsed.data.fileObjectKey !== undefined) {
+      assertObjectKeyBelongsToInstitution(parsed.data.fileObjectKey, req.user!.institutionId);
     }
 
     const before = activity.contract as unknown as Record<string, unknown> | null;

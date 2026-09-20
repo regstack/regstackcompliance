@@ -21,17 +21,19 @@ const loginSchema = z.object({
 // Keyed by IP + email so one throttled account can't be used to lock out everyone on the same
 // IP, and one IP can't brute-force many accounts by rotating the email.
 const loginLimiter = rateLimit({
+  name: "login",
   windowMs: 15 * 60 * 1000,
   max: 10,
   keyFn: (req) => `${req.ip}:${typeof req.body?.email === "string" ? req.body.email.toLowerCase() : ""}`,
 });
 
-const exchangeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+const exchangeLimiter = rateLimit({ name: "exchange", windowMs: 15 * 60 * 1000, max: 30 });
 
 const verify2faLimiter = rateLimit({
+  name: "verify-2fa",
   windowMs: 15 * 60 * 1000,
   max: 10,
-  keyFn: (req) => `2fa-login:${req.ip}:${typeof req.body?.mfaToken === "string" ? req.body.mfaToken.slice(-16) : ""}`,
+  keyFn: (req) => `${req.ip}:${typeof req.body?.mfaToken === "string" ? req.body.mfaToken.slice(-16) : ""}`,
 });
 
 function sessionResponse(user: User) {

@@ -1,3 +1,4 @@
+import { appendFileSync } from "fs";
 import { runDatabaseBackup } from "../modules/backup/backupDatabase";
 import { logger } from "../utils/logger";
 
@@ -16,7 +17,15 @@ if (!databaseUrl) {
 }
 
 runDatabaseBackup(databaseUrl)
-  .then((result) => logger.info(result, "Backup abgeschlossen"))
+  .then((result) => {
+    logger.info(result, "Backup abgeschlossen");
+    // Lets .github/workflows/backup.yml's verify-restore job fetch this exact backup straight
+    // from S3 (already access-controlled + encrypted-at-rest) instead of ever handling the
+    // plaintext dump.sql itself or passing it around as a broadly-downloadable Actions artifact.
+    if (process.env.GITHUB_OUTPUT) {
+      appendFileSync(process.env.GITHUB_OUTPUT, `dump-key=${result.key}\n`);
+    }
+  })
   .catch((err) => {
     logger.error(err, "Backup fehlgeschlagen");
     process.exitCode = 1;

@@ -590,6 +590,20 @@ model DeadlineReminder {
   @@map("deadline_reminders")
 }
 
+// Backs src/middleware/rateLimit.ts. Deliberately Postgres, not in-memory: the backend deploys as
+// a Vercel serverless function (multi-instance, ephemeral per invocation/cold start), so a
+// per-process store would silently share nothing across concurrent requests and the limiter would
+// do essentially nothing in production. `key` already embeds a per-limiter namespace (see
+// rateLimit.ts) so two different limiters keyed the same way (e.g. both by req.ip) can never
+// collide in this one shared table.
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@map("rate_limit_buckets")
+}
+
 model Report {
   id            String             @id @default(uuid())
   institutionId String

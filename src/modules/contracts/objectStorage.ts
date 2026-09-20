@@ -37,7 +37,21 @@ export async function createUploadUrl(params: {
   return { uploadUrl, objectKey };
 }
 
+// objectKey must already be known to belong to the caller's institution — this function signs a
+// URL for whatever key it's given, it does not itself check tenancy. Callers MUST validate the key
+// (e.g. via assertObjectKeyBelongsToInstitution) before ever reaching this function with anything
+// other than a key the server itself looked up from a tenant-scoped row.
 export async function createDownloadUrl(objectKey: string): Promise<string> {
   const command = new GetObjectCommand({ Bucket: requireBucket(), Key: objectKey });
   return getSignedUrl(s3Client(), command, { expiresIn: DOWNLOAD_URL_EXPIRY_SECONDS });
+}
+
+// Defense against a client posting an arbitrary/foreign fileObjectKey to a write endpoint (e.g.
+// PUT /activities/:id/contract): the key's own path must start with this institution's prefix, the
+// same prefix buildObjectKey() mints keys under. Cheap and structural — doesn't require a
+// round-trip to the object store to reject an obviously-foreign key.
+export function assertObjectKeyBelongsToInstitution(objectKey: string, institutionId: string): void {
+  if (!objectKey.startsWith(`contracts/${institutionId}/`)) {
+    throw new HttpError(403, "Objektschlüssel gehört nicht zu dieser Institution");
+  }
 }
