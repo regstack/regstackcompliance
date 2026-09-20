@@ -103,7 +103,17 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
   Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
   der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
-  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen. Ein
+  Strukturvergleich (20.09.2026, nur Sekundärquellen — BaFin/EUR-Lex waren aus der Sandbox nicht
+  erreichbar, siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` Abschnitt „Primärquellen-Abgleich
+  BAIT/DORA (20.09.2026)") zeigt drei konkrete Lücken: den 15
+  Meldevorlagen liegt ein Sechs-Ebenen-Modell zugrunde (Meldepflichtige Einheit, Anbieter,
+  Vertragsverhältnis, IKT-Dienstleistung, Funktion/Asset, Weiterverlagerungskette) — `IctArrangement`
+  hat (1) keine Felder für Jahreskosten oder Exit-Strategie je Vertrag, (2) bildet mehrere
+  IKT-Dienstleistungen/SLA je Vertrag nicht strukturiert ab (nur ein `functionDescription`-Freitext),
+  und (3) bildet die Weiterverlagerungskette nur als Freitext (`subcontractingNote`) statt
+  strukturiert ab. Vor einer echten Meldung ergänzen oder bewusst als "nicht meldefähig, nur
+  internes Register" dokumentieren.
 - Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
   (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
   `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
