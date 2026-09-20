@@ -141,6 +141,7 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-[10px] border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
               placeholder="name@institut.de"
+              aria-label="E-Mail"
             />
           </div>
 
@@ -155,6 +156,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-[10px] border border-border-strong bg-graphite-950 px-3 py-2 text-sm text-foreground outline-none focus:border-copper-500 focus:ring-1 focus:ring-copper-500"
               placeholder="••••••••"
+              aria-label="Passwort"
             />
           </div>
 

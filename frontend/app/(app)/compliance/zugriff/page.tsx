@@ -41,6 +41,9 @@ export default async function ZugriffPage() {
                   </tr>
                 );
               })}
+              {gremien.length === 0 && (
+                <tr><td colSpan={6} className="px-2 py-6 text-center text-muted-foreground">Keine Gremien oder Zulieferungen erfasst.</td></tr>
+              )}
             </tbody>
           </table>
         </CardBody>
@@ -66,6 +69,9 @@ export default async function ZugriffPage() {
                   <td className="px-2 py-2"><StatusPill status={e.votum === "offen" ? "offen" : e.votum?.startsWith("ablehnend") ? "abgelehnt" : "bestaetigt"} label={e.votum ?? "—"} /></td>
                 </tr>
               ))}
+              {ereignisse.length === 0 && (
+                <tr><td colSpan={5} className="px-2 py-6 text-center text-muted-foreground">Keine Ereignisse erfasst.</td></tr>
+              )}
             </tbody>
           </table>
         </CardBody>

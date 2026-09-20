@@ -112,6 +112,45 @@ export default function MarketingPage() {
           </div>
         </section>
 
+        <section className="border-t border-border-subtle">
+          <div className="mx-auto max-w-5xl px-6 py-16">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Vision &amp; Mission
+            </h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardBody>
+                  <h3 className="text-sm font-semibold text-copper-400">
+                    Vision
+                  </h3>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Regulatorische Nachweispflicht darf kein Fleißarbeit-
+                    Projekt aus Excel-Listen und E-Mail-Ketten sein. Wir
+                    wollen, dass jedes regulierte Institut in der EU seine
+                    Prüfungsbereitschaft jederzeit auf Knopfdruck belegen
+                    kann — nicht erst in den Wochen vor der Prüfung.
+                  </p>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody>
+                  <h3 className="text-sm font-semibold text-copper-400">
+                    Mission
+                  </h3>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    RegStack macht Compliance zum Teil der täglichen Arbeit
+                    statt zur Nacharbeit: Wir bauen Audit-Trail, RBAC und
+                    Fristenmanagement direkt in die Workflows für
+                    Auslagerungsmanagement, Compliance und Interne Revision
+                    ein — damit Nachweis kein Sonderaufwand mehr ist,
+                    sondern automatisches Nebenprodukt der Arbeit selbst.
+                  </p>
+                </CardBody>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-5xl px-6 py-16">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Ihr Vorteil

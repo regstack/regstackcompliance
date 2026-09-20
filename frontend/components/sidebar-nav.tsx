@@ -28,10 +28,15 @@ export function SidebarNav({
   fullName,
   email,
   roles,
+  onNavigate,
 }: {
   fullName: string;
   email: string | null;
   roles: { module: ModuleType | null; role: InternalRole }[];
+  /** Called whenever a navigation link inside the sidebar is followed — used on mobile to close
+   * the off-canvas drawer after a route change, since it isn't dismissed by the route change
+   * itself (the sidebar isn't unmounted, just overlaid). */
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const isGeschaeftsleitung = roles.some((r) => r.role === "geschaeftsleitung");
@@ -47,12 +52,24 @@ export function SidebarNav({
         setSwitcherOpen(false);
       }
     }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setSwitcherOpen(false);
+    }
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   return (
-    <aside className="flex w-[292px] shrink-0 flex-col bg-surface border-r border-border-subtle">
+    <aside
+      className="flex h-full w-[292px] shrink-0 flex-col overflow-y-auto bg-surface border-r border-border-subtle"
+      onClickCapture={(e) => {
+        if (onNavigate && (e.target as HTMLElement).closest("a")) onNavigate();
+      }}
+    >
       <div className="flex items-center gap-3 px-[22px] pb-4 pt-[22px]">
         <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-copper-400 to-copper-600 text-accent-foreground">
           <ShieldIcon width={17} height={17} strokeWidth={1.8} />
@@ -64,7 +81,9 @@ export function SidebarNav({
         <button
           type="button"
           onClick={() => setSwitcherOpen((v) => !v)}
-          className="switcher flex w-full items-center gap-2.5 rounded-[11px] border border-border-subtle bg-surface px-3 py-2.5 text-left transition-colors"
+          aria-haspopup="true"
+          aria-expanded={switcherOpen}
+          className="switcher flex w-full items-center gap-2.5 rounded-[11px] border border-border-subtle bg-surface px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-500"
         >
           <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] bg-copper-500/[0.16] text-copper-300">
             {onDashboard ? <GridIcon width={13} height={13} /> : activeModule ? MODULE_NAV[activeModule].switcherIcon : <GridIcon width={13} height={13} />}
@@ -192,6 +211,14 @@ export function SidebarNav({
             Konto & Sicherheit
           </Link>
           <SignOutButton variant="link" />
+        </div>
+        <div className="flex gap-3 text-[10px] text-graphite-500">
+          <Link href="/impressum" className="hover:text-copper-400">
+            Impressum
+          </Link>
+          <Link href="/datenschutz" className="hover:text-copper-400">
+            Datenschutz
+          </Link>
         </div>
       </div>
     </aside>

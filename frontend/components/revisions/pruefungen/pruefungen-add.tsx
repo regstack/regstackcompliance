@@ -36,13 +36,13 @@ export function PruefungenAdd({ universum }: { universum: { id: string; bezeichn
   return (
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <select value={pruefungsobjektId} disabled={pending} onChange={(e) => setPruefungsobjektId(e.target.value)} className={`sm:col-span-2 ${input}`}>
+        <select value={pruefungsobjektId} disabled={pending} onChange={(e) => setPruefungsobjektId(e.target.value)} className={`sm:col-span-2 ${input}`} aria-label="Prüfungsobjekt">
           {universum.length === 0 && <option value="">— kein Prüfungsobjekt vorhanden —</option>}
           {universum.map((u) => <option key={u.id} value={u.id}>{u.bezeichnung}</option>)}
         </select>
-        <input placeholder="Prüfungsgegenstand" value={subject} disabled={pending} onChange={(e) => setSubject(e.target.value)} className={`sm:col-span-2 ${input}`} />
-        <input type="date" value={periodFrom} disabled={pending} onChange={(e) => setPeriodFrom(e.target.value)} className={input} />
-        <input type="date" value={periodTo} disabled={pending} onChange={(e) => setPeriodTo(e.target.value)} className={input} />
+        <input placeholder="Prüfungsgegenstand" value={subject} disabled={pending} onChange={(e) => setSubject(e.target.value)} className={`sm:col-span-2 ${input}`} aria-label="Prüfungsgegenstand" />
+        <input type="date" value={periodFrom} disabled={pending} onChange={(e) => setPeriodFrom(e.target.value)} className={input} aria-label="Zeitraum von" />
+        <input type="date" value={periodTo} disabled={pending} onChange={(e) => setPeriodTo(e.target.value)} className={input} aria-label="Zeitraum bis" />
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">

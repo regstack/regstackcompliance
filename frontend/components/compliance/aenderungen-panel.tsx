@@ -52,22 +52,28 @@ function AenderungForm({
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <select value={form.quelle_id ?? ""} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, quelle_id: e.target.value || null }))}
+          aria-label="Quelle"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50">
           <option value="">— Quelle —</option>
           {quellen.map((q) => <option key={q.id} value={q.id}>{q.bezeichnung}</option>)}
         </select>
         <input type="date" value={form.erfasst_am} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, erfasst_am: e.target.value }))}
+          aria-label="Erfasst am"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <input placeholder="Gegenstand" value={form.gegenstand} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, gegenstand: e.target.value }))}
+          aria-label="Gegenstand"
           className="sm:col-span-2 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <select value={form.kritikalitaet} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, kritikalitaet: e.target.value }))}
+          aria-label="Kritikalität"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50">
           {KRITIKALITAET_OPTS.map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
         <input placeholder="Inkrafttreten" value={form.inkrafttreten} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, inkrafttreten: e.target.value }))}
+          aria-label="Inkrafttreten"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <select value={form.zugewiesen_an_person_id ?? ""} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, zugewiesen_an_person_id: e.target.value || null }))}
+          aria-label="Zuständige Person"
           className="sm:col-span-2 rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50">
           <option value="">— Zuständige Person —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
@@ -90,6 +96,7 @@ function DispositionCell({ aenderung, canWrite }: { aenderung: Aenderung; canWri
       value={aenderung.disposition}
       disabled={pending}
       onChange={(e) => startTransition(() => setAenderungDisposition(aenderung.id, e.target.value as Disposition))}
+      aria-label="Disposition"
       className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
     >
       {DISPOSITIONS.map((d) => <option key={d} value={d}>{d}</option>)}

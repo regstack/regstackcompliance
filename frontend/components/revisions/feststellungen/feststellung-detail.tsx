@@ -186,10 +186,10 @@ export function FeststellungDetail({
         )}
         {canEditJson && showFristForm && (
           <div className="grid gap-2 sm:grid-cols-2">
-            <input type="date" value={neu} onChange={(e) => setNeu(e.target.value)} className={input} placeholder="Neue Frist" />
-            <input value={antragsteller} onChange={(e) => setAntragsteller(e.target.value)} className={input} placeholder="Antragsteller" />
-            <input value={genehmiger} onChange={(e) => setGenehmiger(e.target.value)} className={input} placeholder="Genehmiger (Personen-ID)" />
-            <input value={begruendung} onChange={(e) => setBegruendung(e.target.value)} className={input} placeholder="Begründung" />
+            <input type="date" value={neu} onChange={(e) => setNeu(e.target.value)} className={input} placeholder="Neue Frist" aria-label="Neue Frist" />
+            <input value={antragsteller} onChange={(e) => setAntragsteller(e.target.value)} className={input} placeholder="Antragsteller" aria-label="Antragsteller" />
+            <input value={genehmiger} onChange={(e) => setGenehmiger(e.target.value)} className={input} placeholder="Genehmiger (Personen-ID)" aria-label="Genehmiger (Personen-ID)" />
+            <input value={begruendung} onChange={(e) => setBegruendung(e.target.value)} className={input} placeholder="Begründung" aria-label="Begründung" />
             <div className="flex gap-2 sm:col-span-2">
               <Button
                 className="px-2 py-1 text-[11px]"
@@ -216,14 +216,17 @@ export function FeststellungDetail({
           <input
             placeholder="Verfasser" value={stellungnahmeForm.verfasser ?? ""} disabled={!canEditJson}
             onChange={(e) => setStellungnahmeForm((s) => ({ ...s, verfasser: e.target.value }))} className={input}
+            aria-label="Verfasser"
           />
           <input
             type="date" value={stellungnahmeForm.datum ?? ""} disabled={!canEditJson}
             onChange={(e) => setStellungnahmeForm((s) => ({ ...s, datum: e.target.value }))} className={input}
+            aria-label="Datum der Stellungnahme"
           />
           <select
             value={stellungnahmeForm.status ?? ""} disabled={!canEditJson}
             onChange={(e) => setStellungnahmeForm((s) => ({ ...s, status: e.target.value }))} className={input}
+            aria-label="Status der Stellungnahme"
           >
             <option value="">— keine Stellungnahme</option>
             <option value="zugestimmt">zugestimmt</option>
@@ -233,6 +236,7 @@ export function FeststellungDetail({
           <textarea
             placeholder="Stellungnahme" rows={2} value={stellungnahmeForm.text ?? ""} disabled={!canEditJson}
             onChange={(e) => setStellungnahmeForm((s) => ({ ...s, text: e.target.value }))} className={`sm:col-span-3 ${input}`}
+            aria-label="Stellungnahme"
           />
         </div>
         {canEditJson && (
@@ -256,14 +260,17 @@ export function FeststellungDetail({
           <input
             placeholder="Erledigungsnachweis" value={abschlussForm.nachweis ?? ""} disabled={!canEditJson}
             onChange={(e) => setAbschlussForm((a) => ({ ...a, nachweis: e.target.value }))} className={input}
+            aria-label="Erledigungsnachweis"
           />
           <input
             placeholder="Bestätigt durch (Revision)" value={abschlussForm.bestaetigtVon ?? ""} disabled={!canEditJson}
             onChange={(e) => setAbschlussForm((a) => ({ ...a, bestaetigtVon: e.target.value }))} className={input}
+            aria-label="Bestätigt durch (Revision)"
           />
           <input
             type="date" value={abschlussForm.bestaetigtAm ?? ""} disabled={!canEditJson}
             onChange={(e) => setAbschlussForm((a) => ({ ...a, bestaetigtAm: e.target.value }))} className={input}
+            aria-label="Bestätigt am"
           />
         </div>
 
@@ -279,14 +286,17 @@ export function FeststellungDetail({
             <input
               placeholder="Beschreibung des Restrisikos" value={abschlussForm.restrisiko ?? ""} disabled={!canEditJson}
               onChange={(e) => setAbschlussForm((a) => ({ ...a, restrisiko: e.target.value }))} className={input}
+              aria-label="Beschreibung des Restrisikos"
             />
             <input
               placeholder="Kompensierende Maßnahme" value={abschlussForm.kompensation ?? ""} disabled={!canEditJson}
               onChange={(e) => setAbschlussForm((a) => ({ ...a, kompensation: e.target.value }))} className={input}
+              aria-label="Kompensierende Maßnahme"
             />
             <input
               placeholder="Restrisiko akzeptiert durch" value={abschlussForm.akzeptiertVon ?? ""} disabled={!canEditJson}
               onChange={(e) => setAbschlussForm((a) => ({ ...a, akzeptiertVon: e.target.value }))} className={input}
+              aria-label="Restrisiko akzeptiert durch"
             />
           </div>
         )}
@@ -314,6 +324,7 @@ export function FeststellungDetail({
                   value={abschlussArt}
                   onChange={(e) => setAbschlussArt(e.target.value as "erledigt" | "restrisiko")}
                   className={input}
+                  aria-label="Abschlussart"
                 >
                   <option value="erledigt">Abschlussart: erledigt</option>
                   <option value="restrisiko">Abschlussart: Restrisiko akzeptiert</option>
@@ -349,6 +360,7 @@ export function FeststellungDetail({
           <input
             type="checkbox" checked={f.executive_target} disabled={!canEditJson || toggleExecutiveTarget.pending}
             onChange={(e) => toggleExecutiveTarget.run(e.target.checked)}
+            aria-label="Richtet sich gegen einen Geschäftsleiter"
           />
         </div>
 
@@ -365,21 +377,21 @@ export function FeststellungDetail({
             <div className="grid gap-2 sm:grid-cols-3">
               <div className="space-y-1">
                 <input type="date" value={execForm.glDate ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, glDate: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, glDate: e.target.value }))} className={input} aria-label="Geschäftsleitung informiert am" />
                 <input placeholder="informiert durch" value={execForm.glBy ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, glBy: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, glBy: e.target.value }))} className={input} aria-label="informiert durch" />
               </div>
               <div className="space-y-1">
                 <input type="date" value={execForm.bafinDate ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, bafinDate: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, bafinDate: e.target.value }))} className={input} aria-label="BaFin informiert am" />
                 <input placeholder="informiert durch (GL)" value={execForm.bafinBy ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, bafinBy: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, bafinBy: e.target.value }))} className={input} aria-label="informiert durch (GL)" />
               </div>
               <div className="space-y-1">
                 <input type="date" value={execForm.bundesbankDate ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, bundesbankDate: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, bundesbankDate: e.target.value }))} className={input} aria-label="Deutsche Bundesbank informiert am" />
                 <input placeholder="informiert durch (GL)" value={execForm.bundesbankBy ?? ""} disabled={!canEditJson}
-                  onChange={(e) => setExecForm((s) => ({ ...s, bundesbankBy: e.target.value }))} className={input} />
+                  onChange={(e) => setExecForm((s) => ({ ...s, bundesbankBy: e.target.value }))} className={input} aria-label="informiert durch (GL)" />
               </div>
             </div>
             {canEditJson && (
@@ -405,7 +417,7 @@ export function FeststellungDetail({
             Nachschauprüfung angesetzt
           </label>
           <input type="date" value={nachschauDate} disabled={!canEditJson || !nachschauNeeded}
-            onChange={(e) => setNachschauDate(e.target.value)} className={input} />
+            onChange={(e) => setNachschauDate(e.target.value)} className={input} aria-label="Datum der Nachschauprüfung" />
         </div>
         {canEditJson && (
           <div className="mt-2 flex items-center gap-2">
@@ -425,16 +437,16 @@ export function FeststellungDetail({
             <div className="space-y-1">
               <label className="text-[11px] text-muted-foreground">Zuständige GL-Mitglieder informiert am (Tz. 12 S.1)</label>
               <input type="date" value={escalationForm.zustaendigeGlDate ?? ""} disabled={!canEditJson}
-                onChange={(e) => setEscalationForm((s) => ({ ...s, zustaendigeGlDate: e.target.value }))} className={input} />
+                onChange={(e) => setEscalationForm((s) => ({ ...s, zustaendigeGlDate: e.target.value }))} className={input} aria-label="Zuständige GL-Mitglieder informiert am (Tz. 12 S.1)" />
               <input placeholder="informiert durch (Leiter IR)" value={escalationForm.zustaendigeGlBy ?? ""} disabled={!canEditJson}
-                onChange={(e) => setEscalationForm((s) => ({ ...s, zustaendigeGlBy: e.target.value }))} className={input} />
+                onChange={(e) => setEscalationForm((s) => ({ ...s, zustaendigeGlBy: e.target.value }))} className={input} aria-label="informiert durch (Leiter IR)" />
             </div>
             <div className="space-y-1">
               <label className="text-[11px] text-muted-foreground">Gesamte Geschäftsleitung informiert am (Tz. 12 S.2)</label>
               <input type="date" value={escalationForm.gesamteGlDate ?? ""} disabled={!canEditJson || !escalationForm.zustaendigeGlDate}
-                onChange={(e) => setEscalationForm((s) => ({ ...s, gesamteGlDate: e.target.value }))} className={input} />
+                onChange={(e) => setEscalationForm((s) => ({ ...s, gesamteGlDate: e.target.value }))} className={input} aria-label="Gesamte Geschäftsleitung informiert am (Tz. 12 S.2)" />
               <input placeholder="informiert durch" value={escalationForm.gesamteGlBy ?? ""} disabled={!canEditJson || !escalationForm.zustaendigeGlDate}
-                onChange={(e) => setEscalationForm((s) => ({ ...s, gesamteGlBy: e.target.value }))} className={input} />
+                onChange={(e) => setEscalationForm((s) => ({ ...s, gesamteGlBy: e.target.value }))} className={input} aria-label="informiert durch" />
             </div>
           </div>
           {canEditJson && (
