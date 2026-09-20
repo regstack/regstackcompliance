@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { getTwoFactorStatus } from "./actions";
+import { getBackendSession } from "@/lib/regstack/backend-session";
 import { TwoFactorSettings } from "@/components/konto/two-factor-settings";
 
 export default async function KontoPage() {
-  const status = await getTwoFactorStatus().catch(() => null);
+  const [status, session] = await Promise.all([getTwoFactorStatus().catch(() => null), getBackendSession()]);
 
   return (
     <div className="space-y-6">
@@ -24,6 +26,18 @@ export default async function KontoPage() {
           Die Zwei-Faktor-Authentifizierung steht aktuell nur für die Rollen Geschäftsleitung und
           Admin zur Verfügung.
         </p>
+      )}
+
+      {session?.role === "ADMIN" && (
+        <div className="rounded-[10px] border border-border-subtle bg-surface p-4">
+          <p className="text-sm font-medium text-foreground">Nutzerverwaltung</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Konten für dieses Institut anlegen, Rollen ändern oder deaktivieren.
+          </p>
+          <Link href="/konto/nutzerverwaltung" className="mt-2 inline-block text-sm text-copper-300 hover:underline">
+            Zur Nutzerverwaltung →
+          </Link>
+        </div>
       )}
     </div>
   );
