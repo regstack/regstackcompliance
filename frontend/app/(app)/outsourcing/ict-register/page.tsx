@@ -1,4 +1,4 @@
-import { listIctArrangements, listIctProviders } from "@/lib/regstack/ict-register";
+import { listIctArrangements, listIctProviders, listIctServices, listIctSubcontracting, type IctService, type IctSubcontracting } from "@/lib/regstack/ict-register";
 import { getBackendSession, canWriteIctRegister } from "@/lib/regstack/backend-session";
 import { Card } from "@/components/ui/card";
 import { IctArrangementsPanel, IctProvidersPanel } from "@/components/outsourcing/ict-register-panels";
@@ -16,6 +16,18 @@ export default async function IctRegisterPage() {
   const [providers, arrangements] = await Promise.all([listIctProviders(), listIctArrangements()]);
   const canWrite = canWriteIctRegister(session.role);
 
+  // Services/Weiterverlagerungskette je Vertragsverhältnis eagerly geladen (kleine, überschaubare
+  // Registergröße) statt on-demand nachzuladen — apiFetch ist server-only (httpOnly-Cookie), ein
+  // Client-Fetch beim Aufklappen wäre hier nicht ohne zusätzliche Infrastruktur möglich.
+  const servicesEntries = await Promise.all(
+    arrangements.map(async (a) => [a.id, await listIctServices(a.id)] as [string, IctService[]])
+  );
+  const subcontractingEntries = await Promise.all(
+    arrangements.map(async (a) => [a.id, await listIctSubcontracting(a.id)] as [string, IctSubcontracting[]])
+  );
+  const servicesByArrangement = Object.fromEntries(servicesEntries);
+  const subcontractingByArrangement = Object.fromEntries(subcontractingEntries);
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,7 +41,13 @@ export default async function IctRegisterPage() {
       </div>
 
       <IctProvidersPanel providers={providers} canWrite={canWrite} />
-      <IctArrangementsPanel arrangements={arrangements} providers={providers} canWrite={canWrite} />
+      <IctArrangementsPanel
+        arrangements={arrangements}
+        providers={providers}
+        servicesByArrangement={servicesByArrangement}
+        subcontractingByArrangement={subcontractingByArrangement}
+        canWrite={canWrite}
+      />
     </div>
   );
 }

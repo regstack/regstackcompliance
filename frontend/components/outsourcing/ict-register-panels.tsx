@@ -7,13 +7,16 @@ import { StatusPill } from "@/components/ui/status-pill";
 import {
   addIctArrangement,
   addIctProvider,
+  addIctService,
   deleteIctProvider,
   updateIctArrangement,
   updateIctProvider,
   type ArrangementInput,
   type ProviderInput,
+  type ServiceInput,
 } from "@/app/(app)/outsourcing/ict-register/actions";
-import type { IctArrangement, IctProvider } from "@/lib/regstack/ict-register";
+import { IctSubcontractingTree } from "@/components/outsourcing/ict-subcontracting-tree";
+import type { IctArrangement, IctProvider, IctService, IctSubcontracting } from "@/lib/regstack/ict-register";
 
 const inputClass =
   "rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs normal-case text-foreground disabled:opacity-50";
@@ -272,15 +275,76 @@ function ArrangementForm({
   );
 }
 
+const emptyService: ServiceInput = { serviceDescription: "", serviceLevelObjective: "" };
+
+// ITS-Ebene 4 — mehrere separate IKT-Dienstleistungen je Vertragsverhältnis mit eigenen
+// Service-Level-Objectives, additiv zur Kurzbeschreibung in functionDescription.
+function IctServicesList({ arrangementId, services, canWrite }: { arrangementId: string; services: IctService[]; canWrite: boolean }) {
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState<ServiceInput>(emptyService);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function submit() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await addIctService(arrangementId, form);
+        setForm(emptyService);
+        setAdding(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-graphite-500">IKT-Dienstleistungen</h4>
+        {canWrite && !adding && <Button variant="ghost" className="px-2 py-0.5 text-xs" onClick={() => setAdding(true)}>+ Dienstleistung</Button>}
+      </div>
+      {services.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">Keine separaten Dienstleistungen erfasst.</p>
+      ) : (
+        <ul className="mt-2 space-y-1.5">
+          {services.map((s) => (
+            <li key={s.id} className="rounded-md border border-border-subtle bg-graphite-900/60 px-3 py-2 text-xs">
+              <span className="text-foreground">{s.serviceDescription}</span>
+              {s.serviceLevelObjective && <span className="ml-2 text-muted-foreground">— SLO: {s.serviceLevelObjective}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {adding && (
+        <div className="mt-2 space-y-2 rounded-md border border-border-strong bg-graphite-950 p-3">
+          <input value={form.serviceDescription} disabled={pending} placeholder="Dienstleistung"
+            onChange={(e) => setForm({ ...form, serviceDescription: e.target.value })} className={`${inputClass} w-full`} />
+          <input value={form.serviceLevelObjective ?? ""} disabled={pending} placeholder="Service-Level-Objective (optional)"
+            onChange={(e) => setForm({ ...form, serviceLevelObjective: e.target.value })} className={`${inputClass} w-full`} />
+          {error && <p className="text-xs text-status-danger">{error}</p>}
+          <div className="flex gap-2">
+            <Button className="px-2.5 py-1 text-xs" disabled={pending || !form.serviceDescription.trim()} onClick={submit}>Speichern</Button>
+            <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={pending} onClick={() => setAdding(false)}>Abbrechen</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function IctArrangementsPanel({
-  arrangements, providers, canWrite,
+  arrangements, providers, servicesByArrangement, subcontractingByArrangement, canWrite,
 }: {
   arrangements: IctArrangement[];
   providers: IctProvider[];
+  servicesByArrangement: Record<string, IctService[]>;
+  subcontractingByArrangement: Record<string, IctSubcontracting[]>;
   canWrite: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
     <Card>
@@ -311,7 +375,7 @@ export function IctArrangementsPanel({
                 <th className="px-3 py-2 font-medium">Jahreskosten</th>
                 <th className="px-3 py-2 font-medium">Vertragsende</th>
                 <th className="px-3 py-2 font-medium">Status</th>
-                {canWrite && <th className="px-3 py-2" />}
+                <th className="px-3 py-2" />
               </tr>
             </thead>
             <tbody>
@@ -319,15 +383,36 @@ export function IctArrangementsPanel({
                 editingId === a.id ? (
                   <tr key={a.id}><td colSpan={7} className="px-3 py-3"><ArrangementForm initial={a} providers={providers} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} /></td></tr>
                 ) : (
-                  <tr key={a.id} className="border-b border-border-subtle last:border-0">
-                    <td className="px-3 py-2 font-medium text-foreground">{a.provider.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{a.functionDescription}</td>
-                    <td className="px-3 py-2">{a.supportsCriticalFunction ? <StatusPill status="wesentlich" label="Kritisch/wichtig" /> : "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{a.annualCostEur != null ? `${a.annualCostEur.toLocaleString("de-DE")} €` : "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{a.contractEnd?.slice(0, 10) ?? "—"}</td>
-                    <td className="px-3 py-2"><StatusPill status={a.status === "AKTIV" ? "aktiv" : "beendet"} /></td>
-                    {canWrite && <td className="px-3 py-2 text-right"><Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(a.id)}>Bearbeiten</Button></td>}
-                  </tr>
+                  <>
+                    <tr key={a.id} className="border-b border-border-subtle last:border-0">
+                      <td className="px-3 py-2 font-medium text-foreground">{a.provider.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{a.functionDescription}</td>
+                      <td className="px-3 py-2">{a.supportsCriticalFunction ? <StatusPill status="wesentlich" label="Kritisch/wichtig" /> : "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{a.annualCostEur != null ? `${a.annualCostEur.toLocaleString("de-DE")} €` : "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{a.contractEnd?.slice(0, 10) ?? "—"}</td>
+                      <td className="px-3 py-2"><StatusPill status={a.status === "AKTIV" ? "aktiv" : "beendet"} /></td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap">
+                        <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}>
+                          {expandedId === a.id ? "Details schließen" : "Details"}
+                        </Button>
+                        {canWrite && <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(a.id)}>Bearbeiten</Button>}
+                      </td>
+                    </tr>
+                    {expandedId === a.id && (
+                      <tr key={`${a.id}-details`} className="border-b border-border-subtle last:border-0">
+                        <td colSpan={7} className="space-y-4 bg-graphite-950/40 px-4 py-4">
+                          <IctServicesList arrangementId={a.id} services={servicesByArrangement[a.id] ?? []} canWrite={canWrite} />
+                          {a.exitStrategyNote && (
+                            <div>
+                              <h4 className="text-xs font-semibold uppercase tracking-wide text-graphite-500">Exit-Strategie</h4>
+                              <p className="mt-1 text-xs text-foreground">{a.exitStrategyNote}</p>
+                            </div>
+                          )}
+                          <IctSubcontractingTree arrangementId={a.id} chain={subcontractingByArrangement[a.id] ?? []} canWrite={canWrite} />
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )
               )}
               {arrangements.length === 0 && (
