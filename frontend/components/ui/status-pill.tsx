@@ -46,6 +46,7 @@ const STATUS_TONE: Record<string, Tone> = {
   kritisch: "danger",
   // Compliance: Kontrollen (Wirksamkeit), Compliance-Rating, Matrix-Abdeckung, Kontrollbewertung
   final: "success",
+  versendet: "success",
   wirksam: "success",
   "eingeschraenkt wirksam": "warning",
   "in Aufbau": "danger",

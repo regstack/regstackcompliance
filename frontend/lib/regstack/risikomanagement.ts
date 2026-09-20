@@ -80,3 +80,22 @@ export async function listRisikotragfaehigkeit() {
 export async function listRmReports() {
   return apiFetch<RmReport[]>("/risikomanagement/reports");
 }
+
+export type AufsichtsorganBerichtStatus = "entwurf" | "final" | "versendet";
+
+// AT 3.2 — eigenes Berichtsziel/-publikum (das Aufsichtsorgan), verschieden vom GL-internen
+// RmReport oben. "versendet" dokumentiert die tatsächliche Übermittlung, da das Aufsichtsorgan
+// selbst keinen RegStack-Login hat.
+export type AufsichtsorganBericht = {
+  id: string;
+  periodFrom: string | null;
+  periodTo: string | null;
+  status: AufsichtsorganBerichtStatus;
+  content: { geschaeftslage?: string; risikosituation?: string; strategien?: string; complianceBericht?: string; revisionsberichte?: string };
+  finalizedAt: string | null;
+  versendetAm: string | null;
+};
+
+export async function listAufsichtsorganBerichte() {
+  return apiFetch<AufsichtsorganBericht[]>("/risikomanagement/aufsichtsorganberichte");
+}

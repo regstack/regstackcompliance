@@ -104,3 +104,44 @@ export async function acknowledgeRmReport(id: string) {
   await apiFetch(`/risikomanagement/reports/${id}/acknowledge`, { method: "POST" });
   revalidatePath("/risikomanagement");
 }
+
+export type AufsichtsorganBerichtInput = {
+  periodFrom: string;
+  periodTo: string;
+  geschaeftslage: string;
+  risikosituation: string;
+  strategien: string;
+  complianceBericht: string;
+  revisionsberichte: string;
+};
+
+// AT 3.2, Geschäftsleitung/Admin-only ("supervisoryBoardReport") — serverseitig erzwungen.
+export async function addAufsichtsorganBericht(fields: AufsichtsorganBerichtInput) {
+  await apiFetch("/risikomanagement/aufsichtsorganberichte", {
+    method: "POST",
+    body: JSON.stringify({
+      periodFrom: fields.periodFrom ? new Date(fields.periodFrom).toISOString() : undefined,
+      periodTo: fields.periodTo ? new Date(fields.periodTo).toISOString() : undefined,
+      content: {
+        geschaeftslage: fields.geschaeftslage || undefined,
+        risikosituation: fields.risikosituation || undefined,
+        strategien: fields.strategien || undefined,
+        complianceBericht: fields.complianceBericht || undefined,
+        revisionsberichte: fields.revisionsberichte || undefined,
+      },
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+export async function finalizeAufsichtsorganBericht(id: string) {
+  await apiFetch(`/risikomanagement/aufsichtsorganberichte/${id}/finalize`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}
+
+// Dokumentiert die tatsächliche Übermittlung an das Aufsichtsorgan — der eigentliche Nachweis für
+// AT 3.2, da es keinen Kenntnisnahme-Flow wie bei RmReport geben kann (kein Login).
+export async function markAufsichtsorganBerichtSent(id: string) {
+  await apiFetch(`/risikomanagement/aufsichtsorganberichte/${id}/mark-sent`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}

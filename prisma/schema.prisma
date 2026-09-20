@@ -331,6 +331,7 @@ model InstitutionProfile {
   rmStrategien             Risikostrategie[]
   rmRisikotragfaehigkeit   Risikotragfaehigkeit[]
   rmReports                RmReport[]
+  aufsichtsorganBerichte   AufsichtsorganBericht[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -2186,6 +2187,41 @@ model RmReportAcknowledgement {
 
   @@unique([reportId, userId])
   @@map("rm_report_acknowledgements")
+}
+
+enum AufsichtsorganBerichtStatus {
+  entwurf
+  final
+  versendet
+}
+
+// AT 3.2: mindestens vierteljährliches Reporting der Geschäftsleitung an das Aufsichtsorgan
+// (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen, Compliance-Bericht,
+// Revisionsberichte) — ein eigenes Berichtsziel/-publikum, verschieden vom GL-internen RmReport
+// oben. Das Aufsichtsorgan selbst hat keinen RegStack-Login (kein Role-Eintrag dafür), deshalb
+// kein Kenntnisnahme-Mechanismus wie bei RmReport/ComplianceReport — stattdessen ein dritter
+// Status "versendet", der die tatsächliche Übermittlung an das Aufsichtsorgan dokumentiert und so
+// selbst zum Nachweis wird.
+model AufsichtsorganBericht {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  periodFrom  DateTime?
+  periodTo    DateTime?
+  status      AufsichtsorganBerichtStatus @default(entwurf)
+  content     Json @default("{}")
+  finalizedAt DateTime?
+
+  versendetAm         DateTime?
+  versendetVonUserId  String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_aufsichtsorgan_berichte")
+  @@index([institutionId])
 }
 
 // ---------------------------------------------------------------------------

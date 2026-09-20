@@ -1195,6 +1195,29 @@ async function main() {
     },
   });
 
+  // AT 3.2 — eigenes Berichtsziel/-publikum (Aufsichtsorgan), verschieden vom GL-internen RmReport
+  // oben; hier bereits als versendet demonstriert, um den vollen Entwurf → final → versendet-Zyklus
+  // in den Musterdaten zu zeigen.
+  await prisma.aufsichtsorganBericht.create({
+    data: {
+      institutionId: institution.id,
+      periodFrom: new Date("2026-01-01"),
+      periodTo: new Date("2026-03-31"),
+      status: "versendet",
+      content: {
+        geschaeftslage: "Stabile Geschäftsentwicklung im ersten Quartal, keine wesentlichen Planabweichungen.",
+        risikosituation: "Risikotragfähigkeit durchgängig eingehalten, Konzentrationsrisiko Bauwirtschaft nahe Limit, Gegenmaßnahme eingeleitet.",
+        strategien: "Geschäfts- und Risikostrategie 2026 unverändert; IT-Strategie 2026 verabschiedet (siehe unten).",
+        complianceBericht: "Compliance-Bericht Q1/2026 ohne wesentliche Feststellungen.",
+        revisionsberichte: "Interne Revision: keine offenen wesentlichen Feststellungen aus dem laufenden Prüfungsplan.",
+      },
+      finalizedAt: new Date("2026-04-10"),
+      versendetAm: new Date("2026-04-15"),
+      versendetVonUserId: geschaeftsleitung.id,
+      createdByUserId: geschaeftsleitung.id,
+    },
+  });
+
   // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
 
   const itStrategie2026 = await prisma.itStrategie.create({

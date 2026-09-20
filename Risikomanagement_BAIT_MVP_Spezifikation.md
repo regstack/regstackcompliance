@@ -24,8 +24,9 @@ im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken,
 (BA)) sind davon unberührt und weiterhin ungeprüft — dafür liegt uns noch kein Primärtext vor.
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
-das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
-inkl. ESG sind in den Phase-1-Modellen abgedeckt. AT 3.1/3.2 (Aufsichtsorgan-Berichtswesen),
+das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion), die AT-2.2-Pflichtrisikoarten
+inkl. ESG sowie AT 3.2 (Aufsichtsorgan-Berichtswesen, `AufsichtsorganBericht`/
+`rm_aufsichtsorgan_berichte`, siehe Punkt 4 unten) sind in den Phase-1-Modellen abgedeckt.
 AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht — siehe unten.
 
 ### Korrekturen nach Quellenabgleich
@@ -49,8 +50,16 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
 
 4. **AT 3.2 Verantwortung des Aufsichtsorgans** — mindestens vierteljährliches Reporting in
    Textform an das Aufsichtsorgan (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen,
-   Compliance-Bericht, Revisionsberichte). Das ist ein eigenes, vom GL-Bericht (`RmReport`)
-   verschiedenes Berichtsziel/-publikum, das aktuell nirgends modelliert ist.
+   Compliance-Bericht, Revisionsberichte). Ein eigenes, vom GL-Bericht (`RmReport`) verschiedenes
+   Berichtsziel/-publikum — **umgesetzt** als `AufsichtsorganBericht` (`src/modules/risikomanagement/
+   aufsichtsorganBerichte.routes.ts`, Route `/risikomanagement/aufsichtsorganberichte`,
+   RBAC-Resource `supervisoryBoardReport`, GL-exklusiv): Entwurf → final → **versendet** — der
+   dritte Status dokumentiert die tatsächliche Übermittlung an das Aufsichtsorgan als eigenen
+   Nachweis, weil das Aufsichtsorgan selbst keinen RegStack-Login hat und ein Kenntnisnahme-Flow
+   wie bei `RmReport` deshalb nicht passt. Migration lokal gegen ein frisches Postgres 16
+   verifiziert (`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test), Frontend
+   unter `/risikomanagement` (`AufsichtsorganBerichtPanel`) angebunden, Musterdaten in
+   `prisma/seed.ts` (ein Bericht im Status `versendet`, zeigt den vollen Zyklus).
 5. **AT 4.2 Tz. 2 verlangt eine mit der Geschäftsstrategie konsistente IKT-Strategie** — direkt
    durch die Geschäftsleitung, mit optionaler Zusammenlegung mit einer DOR-Strategie (DORA
    digitale operationale Resilienz). Das ist dieselbe Sache wie `ItStrategie`/BAIT Kap. 1 — die
