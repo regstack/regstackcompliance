@@ -1,11 +1,15 @@
 # Risikomanagement (MaRisk AT 4) & BAIT/IT-Risikomanagement — MVP-Spezifikation
 
-**Status:** Backend-Scaffolding für beide Module ist umgesetzt — Prisma-Modelle, Migration,
-RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/`
-(siehe Commit-Historie). Migration lokal gegen ein frisches Postgres 16 verifiziert
-(`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test über den generierten
-Client). Offen: Frontend-Anbindung, Seed-Daten, Nachweis-Integration (`EvidenceModule` um
-`RISK_MANAGEMENT`/`IT_RISK` erweitern) und die drei Fragen im letzten Abschnitt.
+**Status:** Beide Module sind vollständig umgesetzt — Prisma-Modelle, Migration, RBAC-Einträge
+und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/` (siehe
+Commit-Historie), das Frontend ist unter `/risikomanagement` und `/it-risiko` angebunden, und
+`prisma/seed.ts` liefert Musterdaten für alle acht Modelle (Risikoinventur, Risikostrategie,
+Risikotragfähigkeit, RmReport, ItStrategie, ItAsset, ItRisiko, ItSicherheitsvorfall). Migration
+lokal gegen ein frisches Postgres 16 verifiziert (`prisma migrate deploy` + `prisma migrate diff`
+ohne Drift + Smoke-Test über den generierten Client). `EvidenceModule` wurde um `RISK_MANAGEMENT`
+und `IT_RISK` erweitert, sodass Nachweise und Feststellungen aus externen Prüfungen jetzt auch
+gegen diese beiden Module gebucht werden können. Offen bleiben nur noch die drei Fragen im
+letzten Abschnitt.
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
