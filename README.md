@@ -121,10 +121,10 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
   Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
   `Risikomanagement_BAIT_MVP_Spezifikation.md`.
-- Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
-  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
-  Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
-  (`docs/backup-disaster-recovery.md`, Abschnitt 7).
+- Backup/Disaster-Recovery: tägliche Zweitsicherung, automatischer Struktur-Restore-Check und die
+  Großvater-Vater-Sohn-Retention-Staffelung (7 Tage / 4 Wochen / 12 Monate) sind umgesetzt (siehe
+  oben); Supabase-eigenes PITR-Tier aktivieren und der erste vollständige anwendungsseitige
+  Restore-Test stehen noch aus (`docs/backup-disaster-recovery.md`, Abschnitt 7).
 - Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
   S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
   funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
