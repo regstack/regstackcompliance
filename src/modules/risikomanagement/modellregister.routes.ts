@@ -21,7 +21,7 @@ router.get(
   })
 );
 
-const modellSchema = z.object({
+export const modellSchema = z.object({
   bezeichnung: z.string().min(1),
   zweck: z.string().min(1),
   istKiBasiert: z.boolean().default(false),
