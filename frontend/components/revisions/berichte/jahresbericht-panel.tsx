@@ -182,11 +182,11 @@ function ReportCard({ r, coverage, canWrite, canAck }: { r: Report; coverage: Co
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-foreground">Beurteilung der Einhaltung des Prüfungsplans</label>
-            <textarea rows={2} value={planAdherence} disabled={r.frozen || !canWrite} onChange={(e) => setPlanAdherence(e.target.value)} className={`w-full ${input}`} />
+            <textarea rows={2} value={planAdherence} disabled={r.frozen || !canWrite} onChange={(e) => setPlanAdherence(e.target.value)} aria-label="Beurteilung der Einhaltung des Prüfungsplans" className={`w-full ${input}`} />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-foreground">Gesamtaussage zur Funktionsfähigkeit der Internen Revision</label>
-            <textarea rows={2} value={gesamtaussage} disabled={r.frozen || !canWrite} onChange={(e) => setGesamtaussage(e.target.value)} className={`w-full ${input}`} />
+            <textarea rows={2} value={gesamtaussage} disabled={r.frozen || !canWrite} onChange={(e) => setGesamtaussage(e.target.value)} aria-label="Gesamtaussage zur Funktionsfähigkeit der Internen Revision" className={`w-full ${input}`} />
           </div>
           {!r.frozen && canWrite && (
             <Button
@@ -255,7 +255,7 @@ export function JahresberichtPanel({
     <div>
       {canWrite && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <select value={year} onChange={(e) => setYear(Number(e.target.value))} className={input}>
+          <select value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Jahr" className={input}>
             {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
           <Button className="px-2.5 py-1 text-xs" disabled={pending} onClick={create}>

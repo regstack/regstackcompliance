@@ -530,6 +530,109 @@ async function main() {
   const risikocontrolling = users[3];
   const buchhaltung = users[4];
 
+  // Externe Prüfung 2025 — bereits von der GL zur Kenntnis genommen, drei Feststellungen in
+  // unterschiedlichen Bearbeitungsständen, damit das Register den vollen Workflow zeigt statt nur
+  // "offen".
+  const externePruefung2025 = await prisma.externePruefung.create({
+    data: {
+      institutionId: institution.id,
+      pruefer: "Wirtschaftsprüfungsgesellschaft Mustermann & Partner",
+      jahr: 2025,
+      berichtsdatum: new Date("2026-02-10"),
+      glKenntnisnahmeByUserId: geschaeftsleitung.id,
+      glKenntnisnahmeAt: new Date("2026-02-17"),
+      createdByUserId: revision.id,
+    },
+  });
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2025.id,
+      titel: "Nachweisführung bei Weiterverlagerungen unvollständig",
+      beschreibung: "Bei 2 von 8 geprüften Weiterverlagerungen fehlte die schriftliche Zustimmung des Instituts.",
+      schweregrad: "mittel",
+      modul: "OUTSOURCING",
+      frist: new Date("2026-05-31"),
+      verantwortlichUserId: compliance.id,
+      status: "geschlossen",
+      verteiltAm: new Date("2026-02-20"),
+      verteiltVon: revision.id,
+      fachbereichErledigtAm: new Date("2026-04-02"),
+      fachbereichErledigtVon: compliance.id,
+      wirksamkeitBestaetigtAm: new Date("2026-04-15"),
+      wirksamkeitBestaetigtVon: revision.id,
+      geschlossenAm: new Date("2026-04-15"),
+      geschlossenVon: revision.id,
+      createdByUserId: revision.id,
+    },
+  });
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2025.id,
+      titel: "Berechtigungskonzept IT nicht turnusmäßig überprüft",
+      beschreibung: "Die letzte Rezertifizierung der IT-Berechtigungen liegt über 18 Monate zurück.",
+      schweregrad: "wesentlich",
+      fachbereich: "IT",
+      frist: new Date("2026-06-30"),
+      verantwortlichUserId: risikocontrolling.id,
+      status: "wirksamkeit_bestaetigt",
+      verteiltAm: new Date("2026-02-20"),
+      verteiltVon: revision.id,
+      fachbereichErledigtAm: new Date("2026-05-05"),
+      fachbereichErledigtVon: risikocontrolling.id,
+      wirksamkeitBestaetigtAm: new Date("2026-05-20"),
+      wirksamkeitBestaetigtVon: revision.id,
+      createdByUserId: revision.id,
+    },
+  });
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2025.id,
+      titel: "Kontrolltests IKS nicht vollständig dokumentiert",
+      beschreibung: "Testdurchführung nachvollziehbar, aber ohne durchgängige Stichprobendokumentation.",
+      schweregrad: "gering",
+      modul: "COMPLIANCE",
+      frist: new Date("2026-06-15"),
+      verantwortlichUserId: compliance.id,
+      status: "fachbereich_erledigt",
+      verteiltAm: new Date("2026-02-20"),
+      verteiltVon: revision.id,
+      fachbereichErledigtAm: new Date("2026-05-30"),
+      fachbereichErledigtVon: compliance.id,
+      createdByUserId: revision.id,
+    },
+  });
+
+  // Externe Prüfung 2026 — frisch erfasst, GL-Kenntnisnahme und Feststellung noch offen: das ist
+  // der aktive Eintrag, den das GL-Dashboard als ausstehende Aufgabe anzeigen soll.
+  const externePruefung2026 = await prisma.externePruefung.create({
+    data: {
+      institutionId: institution.id,
+      pruefer: "Wirtschaftsprüfungsgesellschaft Mustermann & Partner",
+      jahr: 2026,
+      berichtsdatum: new Date("2026-03-20"),
+      createdByUserId: revision.id,
+    },
+  });
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2026.id,
+      titel: "Fristüberwachung bei Vertragsverlängerungen im Auslagerungsregister",
+      beschreibung: "Zwei Verträge wurden ohne dokumentierte Verlängerungsprüfung automatisch verlängert.",
+      schweregrad: "mittel",
+      modul: "OUTSOURCING",
+      frist: new Date("2026-09-30"),
+      verantwortlichUserId: compliance.id,
+      status: "offen",
+      verteiltAm: new Date("2026-03-25"),
+      verteiltVon: revision.id,
+      createdByUserId: revision.id,
+    },
+  });
+
   // --- Accounting / Buchhaltung demo data -------------------------------------------------
   // Three fiscal years so the dashboard's period-over-period analysis has something to show;
   // 2024/2025 are finalized (2024 also signed off by Geschäftsleitung), 2026 is still a draft.
@@ -820,6 +923,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000101",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "P2P-01",
       name: "Vier-Augen-Prinzip bei Zahlungsfreigabe",
       controlType: "MANUAL",
       frequency: "PER_TRANSACTION",
@@ -836,6 +940,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000102",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "P2P-02",
       name: "Automatischer 3-Way-Match",
       controlType: "AUTOMATED",
       frequency: "PER_TRANSACTION",
@@ -852,6 +957,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000103",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "O2C-01",
       name: "Monatlicher Forderungsabgleich",
       controlType: "MANUAL",
       frequency: "MONTHLY",
@@ -868,6 +974,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000104",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "PAY-01",
       name: "Plausibilitätsprüfung Gehaltslauf",
       controlType: "AUTOMATED",
       frequency: "MONTHLY",
@@ -884,6 +991,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000105",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "PAY-02",
       name: "Vier-Augen-Prinzip Personalstammdatenänderung",
       controlType: "MANUAL",
       frequency: "PER_TRANSACTION",
@@ -900,6 +1008,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000106",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "ITGC-01",
       name: "Quartalsweise Rezertifizierung der Zugriffsrechte",
       controlType: "ITGC",
       frequency: "QUARTERLY",
@@ -916,6 +1025,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000107",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "ITGC-02",
       name: "Automatische Deaktivierung bei Austritt",
       controlType: "ITGC",
       frequency: "PER_TRANSACTION",
@@ -932,6 +1042,7 @@ async function main() {
       id: "30000000-0000-0000-0000-000000000108",
       institutionId: institution.id,
       createdByUserId: risikocontrolling.id,
+      code: "ITGC-03",
       name: "Jährliche Passwortrichtlinien-Prüfung",
       controlType: "ITGC",
       frequency: "ANNUALLY",
@@ -1450,9 +1561,100 @@ async function main() {
     },
   });
 
+  // --- DORA ICT-Register demo data (Art. 28-30) --------------------------------------------
+  // Same Anbieter A/C as the Auslagerungsmanagement-Musterdaten oben — DORA erfasst zwar ein
+  // eigenständiges Register, aber in der Praxis überschneiden sich die Anbieter oft mit dem
+  // MaRisk-AT-9-Register, und die Demo soll diese Konsistenz zeigen statt neue Namen zu erfinden.
+  const [anbieterA, anbieterC, anbieterKonzernIt] = await Promise.all([
+    prisma.ictProvider.create({
+      data: {
+        institutionId: institution.id,
+        name: "Anbieter A (Hyperscaler, EU-Region)",
+        legalEntityIdentifier: "529900XJLQ2Z4KRC9V45",
+        country: "Irland",
+        providerType: "DIREKT",
+      },
+    }),
+    prisma.ictProvider.create({
+      data: {
+        institutionId: institution.id,
+        name: "Anbieter C (Zahlungsdienstleister, konzernweit genutzt)",
+        country: "Niederlande",
+        providerType: "DIREKT",
+      },
+    }),
+    prisma.ictProvider.create({
+      data: {
+        institutionId: institution.id,
+        name: "RegStack-Gruppe IT-Services GmbH",
+        country: "Deutschland",
+        providerType: "KONZERNINTERN",
+        parentUndertaking: "Beispiel Finanzgruppe AG",
+      },
+    }),
+  ]);
+
+  await prisma.ictArrangement.create({
+    data: {
+      institutionId: institution.id,
+      providerId: anbieterA.id,
+      functionDescription: "Cloud-Hosting Kernanwendungen (IaaS/PaaS)",
+      supportsCriticalFunction: true,
+      criticalityReason: "Trägt sämtliche Kernbankprozesse; Ausfall unterbricht das gesamte Bankgeschäft.",
+      contractStart: new Date("2023-01-01"),
+      terminationNoticeMonths: 6,
+      dataCategories: "Vertrags-, Kunden- und Zahlungsdaten",
+      hasSubcontracting: true,
+      subcontractingNote: "Rechenzentrumsbetrieb über regionale Tochtergesellschaften des Hyperscalers (EU-Region).",
+      status: "AKTIV",
+    },
+  });
+  await prisma.ictArrangement.create({
+    data: {
+      institutionId: institution.id,
+      providerId: anbieterC.id,
+      functionDescription: "Zahlungsabwicklung (Karten & Lastschrift)",
+      supportsCriticalFunction: true,
+      criticalityReason: "Ausfall unterbricht sämtliche Kundenzahlungen; keine kurzfristige Alternative am Markt.",
+      contractStart: new Date("2022-06-01"),
+      terminationNoticeMonths: 3,
+      dataCategories: "Zahlungsdaten, Kontodaten",
+      hasSubcontracting: false,
+      status: "AKTIV",
+    },
+  });
+  await prisma.ictArrangement.create({
+    data: {
+      institutionId: institution.id,
+      providerId: anbieterKonzernIt.id,
+      functionDescription: "Firmenkundenportal — Betrieb & Second-Level-Support",
+      supportsCriticalFunction: false,
+      contractStart: new Date("2021-04-01"),
+      terminationNoticeMonths: 1,
+      dataCategories: "Firmenkundendaten (keine Zahlungsdaten)",
+      hasSubcontracting: false,
+      status: "AKTIV",
+    },
+  });
+  // Ein beendetes Vertragsverhältnis, damit das Register auch die Historie zeigt statt nur
+  // aktive Einträge.
+  await prisma.ictArrangement.create({
+    data: {
+      institutionId: institution.id,
+      providerId: anbieterKonzernIt.id,
+      functionDescription: "Alt-Rechenzentrum vor Migration zu Anbieter A",
+      supportsCriticalFunction: false,
+      contractStart: new Date("2018-01-01"),
+      contractEnd: new Date("2022-12-31"),
+      dataCategories: "Vertrags- und Kundendaten",
+      hasSubcontracting: false,
+      status: "BEENDET",
+    },
+  });
+
   // eslint-disable-next-line no-console
   console.log(
-    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement, and IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet) demo data.`
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement, IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
   );
 }
 

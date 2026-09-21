@@ -38,6 +38,7 @@ function MaterialitySelect({ row }: { row: UniversumRow }) {
         });
       }}
       className="rounded-md border border-border-strong bg-surface px-2 py-1 text-xs text-foreground disabled:opacity-50"
+      aria-label={`Wesentlichkeit: ${row.bezeichnung}`}
     >
       {MATERIALITY_OPTS.map((o) => (
         <option key={o.v} value={o.v}>{o.l}</option>

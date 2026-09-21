@@ -40,7 +40,8 @@ export function GovernanceSettingsForm({ initial, canWrite }: { initial: Governa
             Maßnahmen zur Vermeidung von Interessenkonflikten (Pflichtfeld)
           </label>
           <textarea rows={2} disabled={!canWrite || pending} value={form.interessenkonflikt_massnahmen ?? ""}
-            onChange={(e) => setForm((f) => ({ ...f, interessenkonflikt_massnahmen: e.target.value }))} className={textarea} />
+            onChange={(e) => setForm((f) => ({ ...f, interessenkonflikt_massnahmen: e.target.value }))}
+            aria-label="Maßnahmen zur Vermeidung von Interessenkonflikten" className={textarea} />
         </div>
       )}
 
@@ -49,7 +50,8 @@ export function GovernanceSettingsForm({ initial, canWrite }: { initial: Governa
           Begründung der Funktionskombination
         </label>
         <textarea rows={3} disabled={!canWrite || pending} value={form.kombination_rationale ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, kombination_rationale: e.target.value }))} className={textarea} />
+          onChange={(e) => setForm((f) => ({ ...f, kombination_rationale: e.target.value }))}
+          aria-label="Begründung der Funktionskombination" className={textarea} />
       </div>
 
       <div>
@@ -57,7 +59,8 @@ export function GovernanceSettingsForm({ initial, canWrite }: { initial: Governa
           Ressourcenausstattung — Selbsteinschätzung
         </label>
         <textarea rows={2} disabled={!canWrite || pending} value={form.ressourcenausstattung ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, ressourcenausstattung: e.target.value }))} className={textarea} />
+          onChange={(e) => setForm((f) => ({ ...f, ressourcenausstattung: e.target.value }))}
+          aria-label="Ressourcenausstattung — Selbsteinschätzung" className={textarea} />
       </div>
 
       {canWrite && (

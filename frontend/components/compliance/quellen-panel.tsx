@@ -51,16 +51,20 @@ function QuelleForm({
       <div className="grid gap-2 sm:grid-cols-2">
         <input placeholder="Bezeichnung" value={form.bezeichnung} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, bezeichnung: e.target.value }))}
+          aria-label="Bezeichnung"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <input placeholder="Bezugsweg (z. B. Newsletter, Website)" value={form.bezugsweg} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, bezugsweg: e.target.value }))}
+          aria-label="Bezugsweg (z. B. Newsletter, Website)"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <select value={form.turnus} disabled={pending} onChange={(e) => setForm((f) => ({ ...f, turnus: e.target.value }))}
+          aria-label="Turnus"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50">
           {TURNUS_OPTS.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
         <select value={form.verantwortlich_person_id ?? ""} disabled={pending}
           onChange={(e) => setForm((f) => ({ ...f, verantwortlich_person_id: e.target.value || null }))}
+          aria-label="Verantwortlich"
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50">
           <option value="">— Verantwortlich —</option>
           {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}

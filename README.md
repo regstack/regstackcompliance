@@ -125,9 +125,13 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   Großvater-Vater-Sohn-Retention-Staffelung (7 Tage / 4 Wochen / 12 Monate) sind umgesetzt (siehe
   oben); Supabase-eigenes PITR-Tier aktivieren und der erste vollständige anwendungsseitige
   Restore-Test stehen noch aus (`docs/backup-disaster-recovery.md`, Abschnitt 7).
-- Objektspeicher-Anbieter für hochgeladene Vertragsdokumente ist noch nicht gewählt — die
-  S3-kompatible Anbindung (Pre-Signed Upload/Download, `src/modules/contracts/objectStorage.ts`)
-  funktioniert mit jedem Anbieter (AWS S3, Hetzner Object Storage, MinIO, …), sobald `S3_BUCKET`
-  und Zugangsdaten gesetzt sind (siehe `.env.example`).
-- Deployment-Pipeline (CD) nach der Hosting-Entscheidung (AWS EU vs. Hetzner) — CI deckt bisher
-  nur Lint/Test/Build ab, keinen Deploy-Schritt.
+- Objektspeicher ist entschieden und produktiv konfiguriert: Supabase Storage (S3-kompatibel,
+  eu-central-1) über dieselbe Pre-Signed-Upload/Download-Anbindung
+  (`src/modules/contracts/objectStorage.ts`) — Bucket `contracts` für Vertragsdokumente, Bucket
+  `ics-files` für IKS-Nachweise/Richtliniendokumente. Beide sind private Buckets ohne eigene
+  Storage-RLS-Policies; der Zugriff läuft ausschließlich über den Backend-Service-Role-Key,
+  dieselbe serverseitige RBAC wie überall sonst im Repo.
+- Deployment-Pipeline: erledigt über Vercels Git-Integration (siehe Abschnitt „Deployment" oben) —
+  kein separater CD-Schritt nötig, `ci.yml` deckt Lint/Typecheck/Test/Build ab. Datenbankmigrationen
+  laufen **nicht** automatisch im Vercel-Build (nur `prisma generate` via `postinstall`); nach jeder
+  schema-ändernden Migration `prisma migrate deploy` einmal manuell gegen die Produktions-DB fahren.

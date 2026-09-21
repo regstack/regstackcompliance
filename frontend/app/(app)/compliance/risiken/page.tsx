@@ -76,6 +76,9 @@ export default async function RisikenPage() {
                     <td className="px-3 py-2.5 text-muted-foreground">{r.massnahme ?? "—"}</td>
                   </tr>
                 ))}
+                {risiken.length === 0 && (
+                  <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Noch keine Risiken erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -113,6 +116,9 @@ export default async function RisikenPage() {
                     </tr>
                   );
                 })}
+                {kontrollen.length === 0 && (
+                  <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Noch keine Kontrollen erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -140,6 +146,9 @@ export default async function RisikenPage() {
                     <td className="px-3 py-2.5"><StatusPill status={row.coverage} /></td>
                   </tr>
                 ))}
+                {matrixRows.length === 0 && (
+                  <tr><td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">Keine Norm-Risiko-Verknüpfungen erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -167,6 +176,9 @@ export default async function RisikenPage() {
                     <td className="px-3 py-2.5 text-muted-foreground">{b.nachweis_text ?? "—"}</td>
                   </tr>
                 ))}
+                {beratung.length === 0 && (
+                  <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">Keine Beratungen oder Schulungen erfasst.</td></tr>
+                )}
               </tbody>
             </table>
           </CardBody>

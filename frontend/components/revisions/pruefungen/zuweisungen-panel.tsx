@@ -95,10 +95,12 @@ export function ZuweisungenPanel({
         {canWrite && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <select value={personId} onChange={(e) => setPersonId(e.target.value)}
+              aria-label="Person"
               className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground">
               {personen.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
             </select>
             <select value={role} onChange={(e) => setRole(e.target.value)}
+              aria-label="Rolle"
               className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground">
               {ASSIGN_ROLES.map((r) => <option key={r.v} value={r.v}>{r.l}</option>)}
             </select>
