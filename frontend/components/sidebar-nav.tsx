@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ChevronDownIcon, GridIcon, ShieldIcon } from "@/components/ui/icons";
-import { MODULE_NAV, MODULE_ORDER, moduleForPathname } from "@/lib/regstack/nav-groups";
+import { MODULE_NAV, MODULE_SECTIONS, moduleForPathname } from "@/lib/regstack/nav-groups";
 import type { InternalRole, ModuleType } from "@/lib/regstack/session";
 
 const ROLE_LABELS: Record<InternalRole, string> = {
@@ -115,22 +115,30 @@ export function SidebarNav({
                 Dashboard
               </Link>
             )}
-            {MODULE_ORDER.map((mod) => {
-              const nav = MODULE_NAV[mod];
-              return (
-                <Link
-                  key={mod}
-                  href={nav.href}
-                  onClick={() => setSwitcherOpen(false)}
-                  className={`navlink flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium ${
-                    activeModule === mod ? "text-copper-300" : "text-muted-foreground"
-                  }`}
-                >
-                  {nav.switcherIcon}
-                  {nav.label}
-                </Link>
-              );
-            })}
+            {MODULE_SECTIONS.map((section, si) => (
+              <div key={section.title}>
+                {si > 0 && <div className="mx-3 my-1 h-px bg-border-subtle" />}
+                <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-graphite-400">
+                  {section.title}
+                </div>
+                {section.modules.map((mod) => {
+                  const nav = MODULE_NAV[mod];
+                  return (
+                    <Link
+                      key={mod}
+                      href={nav.href}
+                      onClick={() => setSwitcherOpen(false)}
+                      className={`navlink flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium ${
+                        activeModule === mod ? "text-copper-300" : "text-muted-foreground"
+                      }`}
+                    >
+                      {nav.switcherIcon}
+                      {nav.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         )}
       </div>

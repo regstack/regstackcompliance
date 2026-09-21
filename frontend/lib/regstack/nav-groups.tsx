@@ -259,15 +259,19 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
   },
 };
 
-export const MODULE_ORDER: NavModuleKey[] = [
-  "outsourcing",
-  "compliance",
-  "internal_audit",
-  "accounting",
-  "iks",
-  "risikomanagement",
-  "it_risiko",
+// Grouping for the module switcher: Buchhaltung (financial accounting) isn't a regulatory
+// module like the rest — it gets its own "Finanzen" section, listed first, while the
+// supervisory/regulatory modules (outsourcing, compliance, audit, IKS, risk, IT-risk) stay
+// together under "Regulatorik & Risiko" in their existing relative order.
+export const MODULE_SECTIONS: { title: string; modules: NavModuleKey[] }[] = [
+  { title: "Finanzen", modules: ["accounting"] },
+  {
+    title: "Regulatorik & Risiko",
+    modules: ["outsourcing", "compliance", "internal_audit", "iks", "risikomanagement", "it_risiko"],
+  },
 ];
+
+export const MODULE_ORDER: NavModuleKey[] = MODULE_SECTIONS.flatMap((section) => section.modules);
 
 export function moduleForPathname(pathname: string): NavModuleKey | null {
   for (const mod of MODULE_ORDER) {
