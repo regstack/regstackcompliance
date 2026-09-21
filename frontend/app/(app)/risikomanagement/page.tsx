@@ -1,4 +1,11 @@
-import { listRisikoinventur, listRisikostrategien, listRisikotragfaehigkeit, listRmReports } from "@/lib/regstack/risikomanagement";
+import {
+  listRisikoinventur,
+  listRisikostrategien,
+  listRisikotragfaehigkeit,
+  listRmReports,
+  listAufsichtsorganBerichte,
+  listModellregister,
+} from "@/lib/regstack/risikomanagement";
 import { getBackendSession, canWriteRiskManagement, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
 import { StatCard } from "@/components/ui/stat-card";
@@ -6,16 +13,20 @@ import { RisikoinventurPanel } from "@/components/risikomanagement/risikoinventu
 import { StrategiePanel } from "@/components/risikomanagement/strategie-panel";
 import { RtfPanel } from "@/components/risikomanagement/rtf-panel";
 import { ReportPanel } from "@/components/risikomanagement/report-panel";
+import { AufsichtsorganBerichtPanel } from "@/components/risikomanagement/aufsichtsorgan-bericht-panel";
+import { ModellregisterPanel } from "@/components/risikomanagement/modellregister-panel";
 
 export default async function RisikomanagementPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
 
-  const [inventur, strategien, rtfSnapshots, reports] = await Promise.all([
+  const [inventur, strategien, rtfSnapshots, reports, aufsichtsorganBerichte, modellregister] = await Promise.all([
     listRisikoinventur(),
     listRisikostrategien(),
     listRisikotragfaehigkeit(),
     listRmReports(),
+    listAufsichtsorganBerichte(),
+    listModellregister(),
   ]);
 
   const canWrite = canWriteRiskManagement(session.role);
@@ -55,6 +66,8 @@ export default async function RisikomanagementPage() {
       <StrategiePanel items={strategien} canWrite={canWrite} canApprove={canApprove} />
       <RtfPanel items={rtfSnapshots} canWrite={canWrite} />
       <ReportPanel reports={reports} canWrite={canWrite} canAcknowledge={canApprove} currentUserId={session.userId} />
+      <AufsichtsorganBerichtPanel berichte={aufsichtsorganBerichte} canWrite={canApprove} />
+      <ModellregisterPanel modelle={modellregister} canWrite={canWrite} />
     </div>
   );
 }

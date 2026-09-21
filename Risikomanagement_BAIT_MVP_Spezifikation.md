@@ -1,11 +1,16 @@
 # Risikomanagement (MaRisk AT 4) & BAIT/IT-Risikomanagement — MVP-Spezifikation
 
-**Status:** Backend-Scaffolding für beide Module ist umgesetzt — Prisma-Modelle, Migration,
-RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/`
-(siehe Commit-Historie). Migration lokal gegen ein frisches Postgres 16 verifiziert
-(`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test über den generierten
-Client). Offen: Frontend-Anbindung, Seed-Daten, Nachweis-Integration (`EvidenceModule` um
-`RISK_MANAGEMENT`/`IT_RISK` erweitern) und die drei Fragen im letzten Abschnitt.
+**Status:** Beide Module sind vollständig umgesetzt — Prisma-Modelle, Migration, RBAC-Einträge
+und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/` (siehe
+Commit-Historie), das Frontend ist unter `/risikomanagement` und `/it-risiko` angebunden, und
+`prisma/seed.ts` liefert Musterdaten für alle Modelle (Risikoinventur, Risikostrategie,
+Risikotragfähigkeit, RmReport, AufsichtsorganBericht, Modellregister, ItStrategie, ItAsset,
+ItRisiko, ItSicherheitsvorfall). Migration
+lokal gegen ein frisches Postgres 16 verifiziert (`prisma migrate deploy` + `prisma migrate diff`
+ohne Drift + Smoke-Test über den generierten Client). `EvidenceModule` wurde um `RISK_MANAGEMENT`
+und `IT_RISK` erweitert, sodass Nachweise und Feststellungen aus externen Prüfungen jetzt auch
+gegen diese beiden Module gebucht werden können. Offen bleiben nur noch die drei Fragen im
+letzten Abschnitt.
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
@@ -17,12 +22,16 @@ Text von Rundschreiben 06/2026 (BA), "BA 54 – MaRisk vom 30.06.2026" (9. MaRis
 — dieselbe Fassung, auf die README.md und die Marketing-Seite bereits Bezug nehmen. Ergebnis:
 im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken, siehe
 "Korrekturen nach Quellenabgleich" unten. Die BAIT-Kapitelbezeichnungen (Rundschreiben 10/2017
-(BA)) sind davon unberührt und weiterhin ungeprüft — dafür liegt uns noch kein Primärtext vor.
+(BA)) wurden am 20.09.2026 zusätzlich per Websuche gegengeprüft (kein direkter Primärtext-Zugriff
+möglich, siehe "Primärquellen-Abgleich BAIT/DORA" unten) — **ein konkreter Fund:** die
+BAIT-Kapitelliste, gegen die unten gemappt wird, ist unvollständig, siehe dort.
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
-das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
-inkl. ESG sind in den Phase-1-Modellen abgedeckt. AT 3.1/3.2 (Aufsichtsorgan-Berichtswesen),
-AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht — siehe unten.
+das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion), die AT-2.2-Pflichtrisikoarten
+inkl. ESG, AT 3.2 (Aufsichtsorgan-Berichtswesen, `AufsichtsorganBericht`/
+`rm_aufsichtsorgan_berichte`, siehe Punkt 4 unten) sowie AT 4.3.4 (Modelle,
+`Modellregister`/`rm_modellregister`, siehe Punkt 7 unten) sind in den Phase-1-Modellen abgedeckt.
+Nur die konditionale AT-4.2-Tz.-3-NPL-Strategie ist es nicht — siehe unten (Punkt 6).
 
 ### Korrekturen nach Quellenabgleich
 
@@ -45,8 +54,16 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
 
 4. **AT 3.2 Verantwortung des Aufsichtsorgans** — mindestens vierteljährliches Reporting in
    Textform an das Aufsichtsorgan (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen,
-   Compliance-Bericht, Revisionsberichte). Das ist ein eigenes, vom GL-Bericht (`RmReport`)
-   verschiedenes Berichtsziel/-publikum, das aktuell nirgends modelliert ist.
+   Compliance-Bericht, Revisionsberichte). Ein eigenes, vom GL-Bericht (`RmReport`) verschiedenes
+   Berichtsziel/-publikum — **umgesetzt** als `AufsichtsorganBericht` (`src/modules/risikomanagement/
+   aufsichtsorganBerichte.routes.ts`, Route `/risikomanagement/aufsichtsorganberichte`,
+   RBAC-Resource `supervisoryBoardReport`, GL-exklusiv): Entwurf → final → **versendet** — der
+   dritte Status dokumentiert die tatsächliche Übermittlung an das Aufsichtsorgan als eigenen
+   Nachweis, weil das Aufsichtsorgan selbst keinen RegStack-Login hat und ein Kenntnisnahme-Flow
+   wie bei `RmReport` deshalb nicht passt. Migration lokal gegen ein frisches Postgres 16
+   verifiziert (`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test), Frontend
+   unter `/risikomanagement` (`AufsichtsorganBerichtPanel`) angebunden, Musterdaten in
+   `prisma/seed.ts` (ein Bericht im Status `versendet`, zeigt den vollen Zyklus).
 5. **AT 4.2 Tz. 2 verlangt eine mit der Geschäftsstrategie konsistente IKT-Strategie** — direkt
    durch die Geschäftsleitung, mit optionaler Zusammenlegung mit einer DOR-Strategie (DORA
    digitale operationale Resilienz). Das ist dieselbe Sache wie `ItStrategie`/BAIT Kap. 1 — die
@@ -56,9 +73,74 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
    hohem NPL-Bestand), daher kein MVP-Kandidat, aber ein sauberer Phase-2-Kandidat, falls relevant.
 7. **AT 4.3.4 Verwendung von Modellen** — komplett neues Kapitel, deckt Modellrisiko-Governance ab
    (Auswahl, Validierung, Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive
-   "technologiegestützter Innovation und künstlicher Intelligenz". Kein Modell dafür existiert
-   bisher; ein schlankes `Modellregister` (Modell, Zweck, letzte Validierung, Erklärbarkeits-
-   Bewertung) wäre der naheliegende Phase-2-Zuschnitt.
+   "technologiegestützter Innovation und künstlicher Intelligenz" — **umgesetzt** als schlankes
+   `Modellregister` (`src/modules/risikomanagement/modellregister.routes.ts`, Route
+   `/risikomanagement/modellregister`, RBAC-Resource `modelGovernanceRecord`,
+   RISIKOCONTROLLING/ADMIN-exklusiv, gleiche Rollenliste wie `riskManagementRecord`): Bezeichnung,
+   Zweck, `istKiBasiert`-Flag für den KI/ML-Fall, Status (`in_entwicklung` → `aktiv` →
+   `ausser_betrieb`), Validierungstermine/-ergebnis, Erklärbarkeits-Bewertung und
+   Überschreibungen-Beschreibung als Freitext — bewusst kein voller Validierungs-Workflow mit
+   eigenem Freigabeprozess, das wäre ein eigenständiges Phase-3-Thema. Migration lokal gegen ein
+   frisches Postgres 16 verifiziert, Frontend unter `/risikomanagement`
+   (`ModellregisterPanel`) angebunden, Musterdaten in `prisma/seed.ts` (ein klassisches
+   Scoring-Modell und ein KI-basiertes Modell in Entwicklung).
+
+### Primärquellen-Abgleich BAIT/DORA (20.09.2026)
+
+**Methode/Einschränkung:** Direkter Zugriff auf die Primärtexte (bafin.de, eur-lex.europa.eu,
+de.wikipedia.org sowie sämtliche in der Suche gefundenen Sekundärquellen wie springlex.eu,
+dbvev.de, cybersecurity-navigator.de) war aus dieser Sandbox nicht möglich — die Egress-Policy der
+Umgebung blockiert ausnahmslos jeden dieser Hosts (`connect_rejected`, "organization policy"),
+bestätigt per direktem `curl`-Test, nicht nur über das Fetch-Tool. Erreichbar war nur die
+Websuche selbst (offenbar ein separater Kanal), die verdichtete Ergebnistexte liefert, aber keinen
+zitierfähigen Tz.-genauen Volltext. Die folgenden Funde sind entsprechend **Websuche-Snippets,
+keine Primärtext-Verifikation** — für eine belastbare Prüfung wie beim MaRisk-Abgleich oben (Tz.
+für Tz. gegen den tatsächlichen Rundschreiben-Text) braucht es Zugriff von außerhalb dieser
+Sandbox.
+
+**BAIT (Rundschreiben 10/2017 (BA)):**
+- Die aktuell gültige Fassung ist vom **16.12.2024** (wirksam ab 17.01.2025), nicht die
+  Ursprungsfassung vom 03.11.2017, auf die die Mapping-Tabellen oben implizit Bezug nehmen. Bei
+  einer künftigen Tz.-genauen Prüfung immer die 2024er-Fassung als Referenz nehmen.
+- Die Kapitelliste, gegen die oben gemappt wird (Kap. 1 IT-Strategie, Kap. 3
+  Informationsrisikomanagement, Kap. 4 Informationssicherheit, Kap. 5
+  Benutzerberechtigungsmanagement, Kap. 6 IT-Projekte, Kap. 7 IT-Betrieb, Kap. 8 Auslagerungen) ist
+  laut mehreren übereinstimmenden Sekundärquellen **unvollständig**: BAIT hat zusätzlich ein
+  **Kap. 2 IT-Governance** (in der Mapping-Tabelle bisher komplett unerwähnt) und, seit der
+  2021er-Novelle, ein **Kap. 9 Kritische Infrastrukturen** (KRITIS-Betreiber). Mit der 2024er-Fassung
+  wurde außerdem ein früheres Kapitel zu Zahlungsdienstleister-Beziehungen aufgehoben (Überschneidung
+  mit DORA). Kap. 4 könnte laut einer Quelle in "Informationssicherheitsmanagement" (Governance:
+  Leitlinie, ISB, Sensibilisierung) und eine operative Teilkomponente zerfallen — ob das eine eigene
+  Kapitelnummer oder nur eine Tz.-Ebene innerhalb Kap. 4 ist, ließ sich aus den Snippets nicht
+  zweifelsfrei klären. **Handlungsempfehlung:** vor einer echten aufsichtsrechtlichen Verwendung der
+  Kapitelverweise (RBAC-Kommentare, UI-Texte) die 2024er-Fassung volltextlich beschaffen und Kap. 2/4/9
+  gezielt gegenprüfen.
+
+**DORA-Registermodul (Durchführungsverordnung (EU) 2024/2956):**
+Den 15 Meldevorlagen liegt ein Sechs-Ebenen-Modell zugrunde: (1) meldepflichtige Einheit +
+Zweigstellen, (2) IKT-Drittanbieter inkl. konzerninterner Anbieter, (3) Vertragsverhältnis
+(1 Datensatz je Vertrag) + Jahreskosten + Exit-Strategie, (4) je Vertrag bezogene IKT-Dienstleistungen
++ Service-Level-Objectives, (5) unterstützte Funktionen (mit CIF-Flag "kritisch oder wichtig") +
+IKT-Assets + Datenklassifizierung, (6) Weiterverlagerungskette bei kritischen/wichtigen
+Vertragsverhältnissen. Gegen `IctProvider`/`IctArrangement` (`prisma/schema.prisma`) geprüft ergaben
+sich drei konkrete strukturelle Lücken (siehe auch README „Nächste Schritte") — **alle drei
+inzwischen additiv geschlossen (20.09.2026):**
+1. ~~Keine Felder für Jahreskosten oder Exit-Strategie je Vertragsverhältnis (Ebene 3).~~ —
+   `IctArrangement.annualCostEur`/`exitStrategyNote`.
+2. ~~Mehrere IKT-Dienstleistungen/SLA je Vertrag wurden nicht strukturiert abgebildet.~~ — neues
+   Modell `IctService` (`ict_services`), additiv neben `functionDescription` als Kurzbeschreibung
+   für den Normalfall.
+3. ~~Die Weiterverlagerungskette (Ebene 6) war nur ein Freitextfeld.~~ — neues Modell
+   `IctSubcontracting` (`ict_subcontracting`), dieselbe Baumstruktur (selbstreferenzierend,
+   `level`, server-seitig berechneter Kaskaden-Entfernen-Endpunkt) wie `Weiterverlagerung` bei
+   AT 9, hier an `IctArrangement` gehängt statt an `OutsourcingActivity`. `hasSubcontracting`/
+   `subcontractingNote` bleiben als schnelle Freitext-Filterung ohne Join erhalten.
+
+Migration lokal gegen ein frisches Postgres 16 verifiziert (`prisma migrate deploy` + `prisma
+migrate diff` ohne Drift), inkl. Smoke-Test der dreistufigen Kaskaden-Entfernung über
+`IctSubcontracting`. Weiterhin offen: eine echte Feld-für-Feld-Prüfung gegen die XBRL-CSV-Taxonomie
+der Annexe I–IV selbst — der obige Abgleich ist strukturell (sechs Ebenen), nicht auf Ebene jedes
+einzelnen Meldefelds.
 
 Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 - IT-Auslagerungen bleiben `OutsourcingActivity` mit `scope = IKT_DORA` — BAIT Kap. 8 (Steuerung

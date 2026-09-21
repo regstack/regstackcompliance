@@ -31,6 +31,8 @@ export const arrangementSchema = z
     contractStart: z.string().datetime().optional(),
     contractEnd: z.string().datetime().optional(),
     terminationNoticeMonths: z.number().int().optional(),
+    annualCostEur: z.number().optional(),
+    exitStrategyNote: z.string().optional(),
     dataCategories: z.string().optional(),
     hasSubcontracting: z.boolean().optional(),
     subcontractingNote: z.string().optional(),
@@ -131,6 +133,8 @@ router.get(
       "Vertragsbeginn",
       "Vertragsende",
       "Kündigungsfrist (Monate)",
+      "Jahreskosten (EUR)",
+      "Exit-Strategie",
       "Weiterverlagerung",
       "Status",
     ];
@@ -147,6 +151,8 @@ router.get(
         a.contractStart?.toISOString().slice(0, 10),
         a.contractEnd?.toISOString().slice(0, 10),
         a.terminationNoticeMonths,
+        a.annualCostEur,
+        a.exitStrategyNote,
         a.hasSubcontracting ? "Ja" : "Nein",
         a.status,
       ]

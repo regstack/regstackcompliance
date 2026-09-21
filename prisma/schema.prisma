@@ -154,6 +154,8 @@ enum EvidenceModule {
   OUTSOURCING
   COMPLIANCE
   INTERNAL_AUDIT
+  RISK_MANAGEMENT
+  IT_RISK
 }
 
 // ---------------------------------------------------------------------------
@@ -324,11 +326,14 @@ model InstitutionProfile {
 
   ictProviders             IctProvider[]
   ictArrangements          IctArrangement[]
+  ictServices              IctService[]
 
   rmRisikoinventur         Risikoinventur[]
   rmStrategien             Risikostrategie[]
   rmRisikotragfaehigkeit   Risikotragfaehigkeit[]
   rmReports                RmReport[]
+  aufsichtsorganBerichte   AufsichtsorganBericht[]
+  rmModellregister         Modellregister[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -1994,6 +1999,11 @@ enum IctArrangementStatus {
   BEENDET
 }
 
+enum IctSubcontractingStatus {
+  AKTIV
+  ENTFERNT
+}
+
 model IctProvider {
   id                     String   @id @default(uuid())
   institutionId          String
@@ -2021,25 +2031,82 @@ model IctArrangement {
   providerId               String
   provider                 IctProvider @relation(fields: [providerId], references: [id])
 
-  functionDescription      String   // erbrachte IKT-Dienstleistung/-Funktion
+  functionDescription      String   // erbrachte IKT-Dienstleistung/-Funktion — Kurzbeschreibung; für
+                                     // mehrere separat abzurechnende IKT-Dienstleistungen je Vertrag
+                                     // siehe IctService unten (Ebene 4 der ITS-Vorlagen)
   supportsCriticalFunction Boolean  @default(false) // Art. 28(3) — kritische oder wichtige Funktion
   criticalityReason        String?  // Pflicht, sobald supportsCriticalFunction = true
 
   contractStart            DateTime?
   contractEnd              DateTime?
   terminationNoticeMonths  Int?
+  annualCostEur            Float?   // Jahreskosten — ITS-Ebene 3 (Vertragsverhältnis)
+  exitStrategyNote         String?  // Exit-Strategie — ITS-Ebene 3, eigenständig von Handlungsoption
+                                     // (die ist OutsourcingActivity-spezifisch, IctArrangement bewusst nicht)
   dataCategories           String?
   hasSubcontracting        Boolean  @default(false)
-  subcontractingNote       String?
+  subcontractingNote       String?  // Kurzfassung; strukturierte Kette siehe IctSubcontracting unten
 
   status                   IctArrangementStatus @default(AKTIV)
 
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
+  services            IctService[]
+  subcontractingChain IctSubcontracting[]
+
   @@map("ict_arrangements")
   @@index([institutionId])
   @@index([providerId])
+}
+
+// ITS-Ebene 4 (Durchführungsverordnung (EU) 2024/2956): je Vertragsverhältnis können mehrere
+// separate IKT-Dienstleistungen mit eigenen Service-Level-Objectives bezogen werden —
+// `functionDescription` auf IctArrangement bleibt die Kurzbeschreibung für den Normalfall (eine
+// Dienstleistung je Vertrag), das hier ist additiv für den Fall mehrerer.
+model IctService {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+  arrangementId String
+  arrangement   IctArrangement @relation(fields: [arrangementId], references: [id])
+
+  serviceDescription    String
+  serviceLevelObjective String?
+
+  createdAt DateTime @default(now())
+
+  @@map("ict_services")
+  @@index([institutionId])
+  @@index([arrangementId])
+}
+
+// ITS-Ebene 6 (Weiterverlagerungskette bei kritischen/wichtigen Vertragsverhältnissen) — dieselbe
+// Baumstruktur wie Weiterverlagerung (AT 9), hier an IctArrangement statt an OutsourcingActivity
+// gehängt, da DORA-Register und AT-9-Auslagerungsmanagement bewusst getrennte Register sind (siehe
+// Kommentar oben). Ersetzt nicht `hasSubcontracting`/`subcontractingNote` (schnelle Filterung ohne
+// Join), sondern ergänzt die strukturierte Kette additiv.
+model IctSubcontracting {
+  id            String   @id @default(uuid())
+  arrangementId String
+  arrangement   IctArrangement @relation(fields: [arrangementId], references: [id])
+
+  parentId String?
+  parent   IctSubcontracting?  @relation("IctSubcontractingChain", fields: [parentId], references: [id])
+  children IctSubcontracting[] @relation("IctSubcontractingChain")
+
+  level       Int
+  provider    String
+  country     String?
+  description String?
+  status      IctSubcontractingStatus @default(AKTIV)
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  @@index([arrangementId])
+  @@index([parentId])
+  @@map("ict_subcontracting")
 }
 
 // ---------------------------------------------------------------------------
@@ -2186,6 +2253,78 @@ model RmReportAcknowledgement {
 
   @@unique([reportId, userId])
   @@map("rm_report_acknowledgements")
+}
+
+enum AufsichtsorganBerichtStatus {
+  entwurf
+  final
+  versendet
+}
+
+// AT 3.2: mindestens vierteljährliches Reporting der Geschäftsleitung an das Aufsichtsorgan
+// (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen, Compliance-Bericht,
+// Revisionsberichte) — ein eigenes Berichtsziel/-publikum, verschieden vom GL-internen RmReport
+// oben. Das Aufsichtsorgan selbst hat keinen RegStack-Login (kein Role-Eintrag dafür), deshalb
+// kein Kenntnisnahme-Mechanismus wie bei RmReport/ComplianceReport — stattdessen ein dritter
+// Status "versendet", der die tatsächliche Übermittlung an das Aufsichtsorgan dokumentiert und so
+// selbst zum Nachweis wird.
+model AufsichtsorganBericht {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  periodFrom  DateTime?
+  periodTo    DateTime?
+  status      AufsichtsorganBerichtStatus @default(entwurf)
+  content     Json @default("{}")
+  finalizedAt DateTime?
+
+  versendetAm         DateTime?
+  versendetVonUserId  String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_aufsichtsorgan_berichte")
+  @@index([institutionId])
+}
+
+enum ModellStatus {
+  in_entwicklung
+  aktiv
+  ausser_betrieb
+}
+
+// AT 4.3.4 Verwendung von Modellen — Modellrisiko-Governance (Auswahl, Validierung,
+// Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive "technologiegestützter
+// Innovation und künstlicher Intelligenz" (daher `istKiBasiert` statt nur klassischer
+// Scoring-/Rating-Modelle). Bewusst ein schlankes Register (Modell, Zweck, letzte Validierung,
+// Erklärbarkeits-Bewertung) statt eines vollen Validierungs-Workflows mit eigenem
+// Freigabe-Prozess — das wäre ein eigenständiges Phase-3-Thema.
+model Modellregister {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  bezeichnung   String
+  zweck         String
+  istKiBasiert  Boolean @default(false)
+  status        ModellStatus @default(in_entwicklung)
+
+  verantwortlichUserId          String?
+  letzteValidierung             DateTime?
+  naechsteValidierung           DateTime?
+  validierungsergebnis          String?
+  erklaerbarkeitBewertung       String?
+  ueberschreibungenBeschreibung String? // Prozess/Umfang von Überschreibungen des Modellergebnisses, Freitext
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_modellregister")
+  @@index([institutionId])
 }
 
 // ---------------------------------------------------------------------------

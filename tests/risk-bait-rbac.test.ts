@@ -36,6 +36,28 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     requirePermission("riskManagementReport.acknowledge", "write")(mockReq("ADMIN"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
+
+  it("only GESCHAEFTSLEITUNG/ADMIN may write a supervisoryBoardReport (AT 3.2), but every module role can read it", () => {
+    expect(() =>
+      requirePermission("supervisoryBoardReport", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+    const write = vi.fn();
+    requirePermission("supervisoryBoardReport", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, write);
+    expect(write).toHaveBeenCalledOnce();
+
+    const read = vi.fn();
+    requirePermission("supervisoryBoardReport", "read")(mockReq("VIEWER"), mockRes, read);
+    expect(read).toHaveBeenCalledOnce();
+  });
+
+  it("allows RISIKOCONTROLLING to write a modelGovernanceRecord (AT 4.3.4), but not COMPLIANCE", () => {
+    const next = vi.fn();
+    requirePermission("modelGovernanceRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("modelGovernanceRecord", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+  });
 });
 
 describe("requirePermission — IT-Risiko/BAIT resources", () => {

@@ -46,14 +46,16 @@ versehentliches Löschen, Abrechnungsproblem, Anbieterausfall).
    - Komprimiert (gzip) und in S3-kompatiblen Objektspeicher hochgeladen (dieselbe Anbindung wie
      `src/modules/contracts/objectStorage.ts`, standardmäßig derselbe Bucket unter dem Präfix
      `db-backups/`, optional per `S3_BACKUP_BUCKET` ein eigener, stärker abgeschotteter Bucket).
-   - **Aufbewahrung:** aktuell ein einfaches Zähl-Limit (`BACKUP_RETENTION_COUNT`, Standard 35 —
-     entspricht der täglichen Stufe unten), älteste Sicherungen werden automatisch gelöscht. Die
-     wöchentliche/monatliche Staffelung unten ist **noch nicht automatisiert** — das ist eine
-     bewusste Lücke, kein Versehen (siehe Abschnitt 7).
-   - **Zielwerte, noch nicht alle erreicht:**
-     - 7 tägliche Backups (✅ durch Zähl-Retention grob abgedeckt)
-     - 4 wöchentliche Backups **[Noch einzurichten]**
-     - 12 monatliche Backups **[Noch einzurichten]**
+   - **Aufbewahrung (Großvater-Vater-Sohn-Staffelung, umgesetzt):** jede Sicherung der letzten
+     `BACKUP_RETENTION_DAILY_DAYS` Tage (Standard 7) bleibt vollständig erhalten; danach wird pro
+     ISO-Kalenderwoche nur noch die jeweils neueste Sicherung für `BACKUP_RETENTION_WEEKLY_WEEKS`
+     Wochen (Standard 4) aufgehoben; danach pro Kalendermonat nur noch die jeweils neueste für
+     `BACKUP_RETENTION_MONTHLY_MONTHS` Monate (Standard 12); alles Ältere wird gelöscht. Siehe
+     `selectStaleKeysTiered` in `src/modules/backup/backupDatabase.ts`.
+   - **Zielwerte:**
+     - 7 tägliche Backups ✅
+     - 4 wöchentliche Backups ✅
+     - 12 monatliche Backups ✅
    - Diese Aufbewahrung betrifft ausschließlich die *technischen Backups* zur Wiederherstellung im
      Störungsfall. Sie ersetzt nicht die fachliche Aufbewahrungspflicht für Audit-Trail- und
      Nachweisdaten selbst (MaRisk-, handels- und steuerrechtliche Fristen, siehe
@@ -134,8 +136,6 @@ Anwendungsverhalten):
   `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`) — ohne sie läuft der Workflow ins Leere.
   `PRODUCTION_DATABASE_URL_DIRECT` muss Supabases direkte (nicht gepoolte) Verbindung sein, siehe
   Kommentar in `src/scripts/backup-database.ts`.
-- Wöchentliche/monatliche Retention-Staffelung automatisieren — aktuell nur ein tägliches
-  Zähl-Limit (Abschnitt 2).
 - Ersten vollständigen (manuellen, anwendungsseitigen) Restore-Test terminieren und Ergebnis
   dokumentieren, bevor das System für echte Kundendaten produktiv geht — der automatisierte
   strukturelle Check läuft zwar schon täglich, ersetzt aber nicht den ersten Praxistest mit einem

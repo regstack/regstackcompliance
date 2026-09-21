@@ -103,17 +103,28 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
   Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
   der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
-  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen. Ein
+  Strukturvergleich (20.09.2026, nur Sekundärquellen — BaFin/EUR-Lex waren aus der Sandbox nicht
+  erreichbar, siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` Abschnitt „Primärquellen-Abgleich
+  BAIT/DORA (20.09.2026)") deckte drei strukturelle Lücken gegen das Sechs-Ebenen-Modell der 15
+  Meldevorlagen auf (Meldepflichtige Einheit, Anbieter, Vertragsverhältnis, IKT-Dienstleistung,
+  Funktion/Asset, Weiterverlagerungskette) — **inzwischen additiv geschlossen**: `IctArrangement`
+  hat jetzt `annualCostEur`/`exitStrategyNote` je Vertrag, `IctService` bildet mehrere
+  IKT-Dienstleistungen/SLA je Vertrag ab, und `IctSubcontracting` bildet die
+  Weiterverlagerungskette strukturiert ab (dieselbe Baumstruktur wie `Weiterverlagerung` bei AT 9).
+  `hasSubcontracting`/`subcontractingNote` bleiben als schnelle Freitext-Filterung erhalten. Was
+  weiterhin fehlt: eine echte Feld-für-Feld-Prüfung gegen die XBRL-CSV-Taxonomie der Annexe I–IV
+  selbst (nur über die sechs Ebenen strukturell abgeglichen, nicht über jedes einzelne Datenfeld).
 - Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
   (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
   `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
   auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
   Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
   `Risikomanagement_BAIT_MVP_Spezifikation.md`.
-- Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
-  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
-  Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
-  (`docs/backup-disaster-recovery.md`, Abschnitt 7).
+- Backup/Disaster-Recovery: tägliche Zweitsicherung, automatischer Struktur-Restore-Check und die
+  Großvater-Vater-Sohn-Retention-Staffelung (7 Tage / 4 Wochen / 12 Monate) sind umgesetzt (siehe
+  oben); Supabase-eigenes PITR-Tier aktivieren und der erste vollständige anwendungsseitige
+  Restore-Test stehen noch aus (`docs/backup-disaster-recovery.md`, Abschnitt 7).
 - Objektspeicher ist entschieden und produktiv konfiguriert: Supabase Storage (S3-kompatibel,
   eu-central-1) über dieselbe Pre-Signed-Upload/Download-Anbindung
   (`src/modules/contracts/objectStorage.ts`) — Bucket `contracts` für Vertragsdokumente, Bucket

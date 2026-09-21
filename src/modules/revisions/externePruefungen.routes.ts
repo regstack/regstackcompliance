@@ -134,7 +134,16 @@ router.get(
         where: {
           institutionId: req.user!.institutionId,
           ...(assignedToMe ? { verantwortlichUserId: req.user!.userId } : {}),
-          ...(modul ? { modul: modul as "OUTSOURCING" | "COMPLIANCE" | "INTERNAL_AUDIT" } : {}),
+          ...(modul
+            ? {
+                modul: modul as
+                  | "OUTSOURCING"
+                  | "COMPLIANCE"
+                  | "INTERNAL_AUDIT"
+                  | "RISK_MANAGEMENT"
+                  | "IT_RISK",
+              }
+            : {}),
         },
         include: { externePruefung: { select: { pruefer: true, jahr: true } } },
         orderBy: { createdAt: "desc" },
@@ -148,7 +157,10 @@ const feststellungSchema = z.object({
   beschreibung: z.string().optional(),
   schweregrad: z.enum(["gering", "mittel", "wesentlich"]).optional(),
   frist: z.string().datetime().nullable().optional(),
-  modul: z.enum(["OUTSOURCING", "COMPLIANCE", "INTERNAL_AUDIT"]).nullable().optional(),
+  modul: z
+    .enum(["OUTSOURCING", "COMPLIANCE", "INTERNAL_AUDIT", "RISK_MANAGEMENT", "IT_RISK"])
+    .nullable()
+    .optional(),
   fachbereich: z.string().optional(),
   verantwortlichUserId: z.string().nullable().optional(),
 });
