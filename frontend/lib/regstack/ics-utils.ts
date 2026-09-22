@@ -45,6 +45,7 @@ export type BusinessProcess = {
 
 export type Control = {
   id: string;
+  code: string | null;
   name: string;
   controlType: keyof typeof CONTROL_TYPE_LABELS;
   description: string | null;

@@ -48,7 +48,10 @@ export default async function ProzessDetailPage({ params }: { params: Promise<{ 
               <Card className="px-5 py-4">
                 <CardBody className="flex flex-wrap items-center justify-between gap-2 p-0">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {c.code && <span className="text-muted-foreground">{c.code} · </span>}
+                      {c.name}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {CONTROL_TYPE_LABELS[c.controlType]} · {CONTROL_FREQUENCY_LABELS[c.frequency]}
                     </p>

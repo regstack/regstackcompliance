@@ -54,6 +54,7 @@ router.get(
 );
 
 const controlSchema = z.object({
+  code: z.string().min(1).optional(),
   name: z.string().min(1),
   controlType: z.enum(["ITGC", "AUTOMATED", "MANUAL"]),
   description: z.string().optional(),

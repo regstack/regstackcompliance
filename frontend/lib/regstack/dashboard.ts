@@ -4,6 +4,8 @@ import { openClauseCount, type ContractRecord } from "@/lib/regstack/outsourcing
 import type { Database } from "@/lib/database.types";
 import { listBalanceSheets, listIncomeStatements, buildBilanzSectionTotals, buildGuvSectionTotals, buildBiggestMovers } from "@/lib/regstack/accounting";
 import { listBusinessProcesses, listControls, listControlTests, controlsDueForTesting } from "@/lib/regstack/ics";
+import { listRisikostrategien } from "@/lib/regstack/risikomanagement";
+import { listItRisiken, listItSicherheitsvorfaelle } from "@/lib/regstack/it-risiko";
 
 export type ModuleType = Database["public"]["Enums"]["module_type"];
 
@@ -261,6 +263,33 @@ export async function getIcsAtAGlance(): Promise<IcsAtAGlance> {
   if (!session) return { processCount: 0, controlCount: 0, dueForTesting: 0 };
   const [processes, controls, tests] = await Promise.all([listBusinessProcesses(), listControls(), listControlTests()]);
   return { processCount: processes.length, controlCount: controls.length, dueForTesting: controlsDueForTesting(controls, tests) };
+}
+
+export type RiskAndItAtAGlance = {
+  risikostrategieVerabschiedet: boolean;
+  offeneItRisiken: number;
+  offeneVorfaelle: number;
+  kritischeOffeneVorfaelle: number;
+};
+
+export async function getRiskAndItAtAGlance(): Promise<RiskAndItAtAGlance> {
+  const session = await getBackendSession();
+  if (!session) {
+    return { risikostrategieVerabschiedet: false, offeneItRisiken: 0, offeneVorfaelle: 0, kritischeOffeneVorfaelle: 0 };
+  }
+  const [strategien, itRisiken, vorfaelle] = await Promise.all([
+    listRisikostrategien(),
+    listItRisiken(),
+    listItSicherheitsvorfaelle(),
+  ]);
+  const currentYear = new Date().getFullYear();
+  const risikostrategieVerabschiedet = strategien.some(
+    (s) => s.art === "risikostrategie" && s.status === "verabschiedet" && s.jahr === currentYear
+  );
+  const offeneItRisiken = itRisiken.filter((r) => r.status === "offen" || r.status === "in_bearbeitung").length;
+  const offeneVorfaelle = vorfaelle.filter((v) => v.status !== "geschlossen").length;
+  const kritischeOffeneVorfaelle = vorfaelle.filter((v) => v.status !== "geschlossen" && v.schweregrad === "kritisch").length;
+  return { risikostrategieVerabschiedet, offeneItRisiken, offeneVorfaelle, kritischeOffeneVorfaelle };
 }
 
 export type MonitoringEscalation = {

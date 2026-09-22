@@ -6,6 +6,7 @@ import {
   getModuleOverview,
   getAccountingAnalysis,
   getIcsAtAGlance,
+  getRiskAndItAtAGlance,
   getMonitoringEscalations,
   getPendingDependencyApprovals,
   getPendingExternePruefungen,
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [reports, auditPlans, disputes, overview, accounting, ics, monitoringEscalations, dependencyApprovals, pendingExternePruefungen] =
+  const [reports, auditPlans, disputes, overview, accounting, ics, riskIt, monitoringEscalations, dependencyApprovals, pendingExternePruefungen] =
     await Promise.all([
       getLatestReports(),
       getPendingAuditPlans(),
@@ -59,6 +60,7 @@ export default async function DashboardPage() {
       getModuleOverview(),
       getAccountingAnalysis(),
       getIcsAtAGlance(),
+      getRiskAndItAtAGlance(),
       getMonitoringEscalations(),
       getPendingDependencyApprovals(),
       getPendingExternePruefungen(),
@@ -103,6 +105,23 @@ export default async function DashboardPage() {
           value={ics.dueForTesting}
           hint="ohne abgeschlossenen Test"
           tone={ics.dueForTesting > 0 ? "warn" : "good"}
+        />
+        <StatCard
+          label="Risikostrategie"
+          value={riskIt.risikostrategieVerabschiedet ? "Verabschiedet" : "Entwurf"}
+          hint={`${new Date().getFullYear()}`}
+          tone={riskIt.risikostrategieVerabschiedet ? "good" : "warn"}
+        />
+        <StatCard
+          label="IT-Risiken offen"
+          value={riskIt.offeneItRisiken}
+          tone={riskIt.offeneItRisiken > 0 ? "warn" : "good"}
+        />
+        <StatCard
+          label="Sicherheitsvorfälle"
+          value={riskIt.offeneVorfaelle}
+          hint={riskIt.kritischeOffeneVorfaelle > 0 ? `${riskIt.kritischeOffeneVorfaelle} kritisch` : "keine offen"}
+          tone={riskIt.kritischeOffeneVorfaelle > 0 ? "crit" : riskIt.offeneVorfaelle > 0 ? "warn" : "good"}
         />
       </div>
 
