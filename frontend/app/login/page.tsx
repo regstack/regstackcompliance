@@ -46,6 +46,17 @@ function LoginForm() {
       return;
     }
 
+    // A failed exchange used to be swallowed silently: the user would land in the app with the
+    // old Supabase-only session (sidebar/nav look fine) but every backend-wired page — dashboard,
+    // outsourcing, compliance, etc. — would render its "nicht mit dem RegStack-Backend verknüpft"
+    // empty state with no indication of why. Surface it here instead, where it's actionable.
+    if (backendLogin.status === "failed") {
+      setError(
+        "Anmeldung bei RegStack gelungen, aber die Verknüpfung mit dem Backend ist fehlgeschlagen. Bitte erneut versuchen oder einen Administrator kontaktieren."
+      );
+      return;
+    }
+
     proceedToApp();
   }
 
