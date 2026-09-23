@@ -45,11 +45,7 @@ export type Resource =
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
   | "itRisk.accept" // Geschäftsleitung akzeptiert verbleibendes Restrisiko, BAIT Kap. 3
-  | "itSecurityIncident" // Sicherheitsvorfälle, BAIT Kap. 4
-  | "itAccessRecord" // Berechtigungsvergabe/-rezertifizierung/-entzug, BAIT Kap. 6
-  | "itProjectRecord" // IT-Projekte-Portfolio, BAIT Kap. 7
-  | "itOperationsRecord" // Änderungsmanagement + Betriebsstörungen, BAIT Kap. 8
-  | "itContingencyRecord"; // IT-Notfallpläne und -tests, BAIT Kap. 10
+  | "itSecurityIncident"; // Sicherheitsvorfälle, BAIT Kap. 4
 
 export type Action = "read" | "write" | "delete";
 
@@ -219,24 +215,6 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"], // verbleibendes hohes Restrisiko braucht GL-Akzeptanz, BAIT Kap. 3
   },
   itSecurityIncident: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itAccessRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    // Kein eigener ISB-Login (siehe Risikomanagement_BAIT_MVP_Spezifikation.md) — dieselbe
-    // vorläufige Rollenzuordnung wie die übrigen BAIT-Ressourcen.
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itProjectRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itOperationsRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itContingencyRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
   },

@@ -75,24 +75,3 @@ describe("requirePermission — IT-Risiko/BAIT resources", () => {
     );
   });
 });
-
-describe("requirePermission — IT-Risiko/BAIT Phase-2 resources (Kap. 6, 7, 8, 10)", () => {
-  it.each([
-    ["itAccessRecord", "Identitäts- und Rechtemanagement, Kap. 6"],
-    ["itProjectRecord", "IT-Projekte und Anwendungsentwicklung, Kap. 7"],
-    ["itOperationsRecord", "IT-Betrieb (Änderungen/Störungen), Kap. 8"],
-    ["itContingencyRecord", "IT-Notfallmanagement, Kap. 10"],
-  ] as const)("%s (%s) is readable by every module role, but only writable by RISIKOCONTROLLING/ADMIN", (resource, _label) => {
-    const next = vi.fn();
-    requirePermission(resource, "read")(mockReq("VIEWER"), mockRes, next);
-    expect(next).toHaveBeenCalledOnce();
-    expect(() => requirePermission(resource, "read")(mockReq(undefined), mockRes, vi.fn())).toThrow(ForbiddenError);
-
-    const writeNext = vi.fn();
-    requirePermission(resource, "write")(mockReq("RISIKOCONTROLLING"), mockRes, writeNext);
-    expect(writeNext).toHaveBeenCalledOnce();
-    expect(() => requirePermission(resource, "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, vi.fn())).toThrow(
-      ForbiddenError
-    );
-  });
-});
