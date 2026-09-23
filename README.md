@@ -104,12 +104,17 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
   der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
   aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
-- Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
-  (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
-  `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
-  auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
-  Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
-  `Risikomanagement_BAIT_MVP_Spezifikation.md`.
+- Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: Backend ist da
+  (`src/modules/risikomanagement/`, `src/modules/itRisiko/`) — Risikoinventur,
+  Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte auf der einen Seite; auf der
+  BAIT-Seite IT-Strategie (Kap. 1), Schutzbedarfsfeststellung/IT-Risikoregister (Kap. 3),
+  Sicherheitsvorfälle (Kap. 4/5), Berechtigungsmanagement mit Rezertifizierung (Kap. 6),
+  IT-Projekte-Register inkl. IDV-Feldern (Kap. 7), Änderungsmanagement und Betriebsstörungen
+  (Kap. 8) sowie IT-Notfallpläne mit Testnachweisen (Kap. 10). Kap. 9 (Auslagerungssteuerung)
+  bekommt bewusst kein eigenes Modell — das ist `OutsourcingActivity`; Kap. 12 (Kritische
+  Infrastrukturen) ist KRITIS-spezifisch und nicht umgesetzt. UI-Anbindung für die BAIT-Module
+  steht noch aus (bisher nur Backend/Routen/Tests/Seed-Daten). Details und offene Fragen (u. a.
+  kein eigener ISB-Login) siehe `Risikomanagement_BAIT_MVP_Spezifikation.md`.
 - Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
   umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
   Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus

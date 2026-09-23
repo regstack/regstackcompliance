@@ -23,14 +23,16 @@ export default async function ItRisikoLayout({ children }: { children: React.Rea
       <div className="mb-6">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">IT-Risiko / BAIT</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          IT-Strategie, Schutzbedarfsfeststellung, Informationsrisiken und Sicherheitsvorfälle nach BAIT.
+          IT-Strategie, Schutzbedarfsfeststellung, Informationsrisiken, Sicherheitsvorfälle,
+          Berechtigungsmanagement, IT-Projekte, IT-Betrieb und IT-Notfallmanagement nach BAIT.
         </p>
       </div>
       {readOnly && (
         <div className="mb-6">
           <Banner tone="warn" title="Nur-Lese-Zugang">
             Ihre Rolle im IT-Risiko-Modul erlaubt Einsicht, aber keine Änderungen an IT-Strategie,
-            Assets, Risiken oder Sicherheitsvorfällen.
+            Assets, Risiken, Sicherheitsvorfällen, Berechtigungen, Projekten, Änderungen,
+            Betriebsstörungen oder Notfallplänen.
           </Banner>
         </div>
       )}

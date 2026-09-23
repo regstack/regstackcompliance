@@ -134,8 +134,10 @@ export function canWriteRiskManagement(role: BackendRole): boolean {
 }
 
 // Mirrors src/middleware/rbac.ts's MATRIX.itGovernanceRecord.write (itRiskRecord.write and
-// itSecurityIncident.write use the same role list). itStrategy.approve and itRisk.accept are
-// Geschäftsleitung-only and covered by isGeschaeftsleitung above.
+// itSecurityIncident.write use the same role list, as do the Phase-2 BAIT resources —
+// itAccessRecord/itProjectRecord/itOperationsRecord/itContingencyRecord, Kap. 6/7/8/10).
+// itStrategy.approve and itRisk.accept are Geschäftsleitung-only and covered by
+// isGeschaeftsleitung above.
 const IT_RISK_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
 
 export function canWriteItRisk(role: BackendRole): boolean {

@@ -10,3 +10,10 @@ export const IT_ASSET_KATEGORIE_LABELS: Record<ItAssetKategorie, string> = {
   rechenzentrum: "Rechenzentrum",
   sonstige: "Sonstige",
 };
+
+export type ItEntwicklungsart = "eigenentwicklung" | "fremdentwicklung";
+
+export const IT_ENTWICKLUNGSART_LABELS: Record<ItEntwicklungsart, string> = {
+  eigenentwicklung: "Eigenentwicklung",
+  fremdentwicklung: "Fremdentwicklung",
+};
