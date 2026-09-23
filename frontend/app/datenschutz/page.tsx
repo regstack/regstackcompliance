@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, LegalSection, Placeholder } from "@/components/marketing/legal-page";
+import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung — RegStack",
@@ -8,9 +8,10 @@ export const metadata: Metadata = {
 // DSGVO-Datenschutzerklärung. Beschreibt die tatsächliche Datenverarbeitung dieser Codebase
 // (Supabase Auth für Login/Session, Backend-JWT + Audit-Trail für Anwendungsdaten, kein
 // Analytics/Tracking im Repo gefunden). Hosting-Region (eu-central-1/Frankfurt) und
-// DPO-Bestellung sind vom Inhaber bestätigt. Einziger verbleibender [Platzhalter]: der konkrete
-// Objektspeicher-Anbieter für hochgeladene Vertragsdokumente — noch nicht entschieden, nicht
-// erfunden.
+// DPO-Bestellung sind vom Inhaber bestätigt. Objektspeicher für Vertragsdokumente: Supabase
+// Storage (S3-kompatibel), im selben Projekt wie Auth — Bucket "contracts" angelegt, S3-Endpoint/
+// Region/Bucket in Vercel gesetzt; die S3-Zugriffsschlüssel selbst lassen sich nur über das
+// Supabase-Dashboard erzeugen, nicht per API.
 export default function DatenschutzPage() {
   return (
     <LegalPage title="Datenschutzerklärung" updated="19. September 2026">
@@ -48,16 +49,23 @@ export default function DatenschutzPage() {
 
       <LegalSection heading="3. Hosting und Serverstandort">
         <p>
-          Die Anwendung und die zugehörige Datenbank werden in einem
-          Rechenzentrum in Frankfurt am Main betrieben (Supabase-Projektregion
-          eu-central-1; das Backend ist in derselben Region gehostet).
-          Personenbezogene Daten werden nach unserem Kenntnisstand nicht in
-          Drittländer außerhalb der EU/des EWR übertragen. Beim Aufruf der
+          Frontend und Backend der Anwendung werden bei Vercel Inc. gehostet;
+          Datenbank und Objektspeicher liegen bei Supabase. Die
+          Datenverarbeitung selbst findet in einem Rechenzentrum in Frankfurt
+          am Main statt (Supabase-Projektregion eu-central-1; das Vercel-
+          Deployment ist auf dieselbe Region ausgerichtet). Beim Aufruf der
           Website verarbeitet der Hosting-Provider technisch bedingt
           Server-Logfiles (u. a. IP-Adresse, Datum/Uhrzeit des Zugriffs,
           aufgerufene Seite, User-Agent) zur Sicherstellung eines
           störungsfreien Betriebs (Art. 6 Abs. 1 lit. f DSGVO, berechtigtes
           Interesse an Betriebssicherheit).
+        </p>
+        <p>
+          Vercel Inc. ist ein US-amerikanisches Unternehmen. Auch wenn die
+          Datenverarbeitung selbst in der EU (Frankfurt am Main) stattfindet,
+          ist Vercel als Auftragsverarbeiter rechtlich ein Unternehmen mit Sitz
+          in einem Drittland. Die Übermittlung erfolgt auf Grundlage der
+          EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).
         </p>
       </LegalSection>
 
@@ -105,14 +113,9 @@ export default function DatenschutzPage() {
       <LegalSection heading="7. Empfänger und Auftragsverarbeiter">
         <p>Im Rahmen des Betriebs setzen wir folgende Auftragsverarbeiter ein:</p>
         <ul className="ml-4 list-disc space-y-1">
-          <li>Supabase, Inc. — Authentifizierung/Session-Verwaltung (Region eu-central-1, Frankfurt am Main)</li>
-          <li>Hosting-/Infrastrukturanbieter für Anwendung und Datenbank — Region eu-central-1, Frankfurt am Main</li>
-          <li>
-            <Placeholder>
-              Objektspeicher-Anbieter für hochgeladene Vertragsdokumente,
-              z. B. Hetzner
-            </Placeholder>
-          </li>
+          <li>Supabase, Inc. — Authentifizierung/Session-Verwaltung und Datenbank (Region eu-central-1, Frankfurt am Main)</li>
+          <li>Supabase, Inc. — Objektspeicher für hochgeladene Vertragsdokumente (S3-kompatibler Speicher, Region eu-central-1, Frankfurt am Main)</li>
+          <li>Vercel Inc. — Hosting von Frontend und Backend (Deployment-Region eu-central-1/Frankfurt am Main; Vercel selbst mit Sitz in den USA, Übermittlung auf Grundlage der EU-Standardvertragsklauseln)</li>
         </ul>
         <p>
           Mit allen Auftragsverarbeitern bestehen Verträge zur
