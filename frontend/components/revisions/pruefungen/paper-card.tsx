@@ -10,6 +10,9 @@ import {
 } from "@/lib/regstack/revisions-universum";
 import { Pill } from "@/components/revisions/pruefungen/pill";
 import { updatePaper, deletePaper, type PaperInput } from "@/app/(app)/interne-revision/pruefungen/actions";
+import { NachweisFileTable } from "@/components/nachweise/nachweis-file-table";
+import { NachweisUploadForm } from "@/components/nachweise/nachweis-upload-form";
+import type { Nachweis } from "@/lib/regstack/nachweise";
 
 export type PaperRow = {
   id: string;
@@ -36,12 +39,13 @@ const REVIEW_TONE: Record<string, "open" | "warning" | "success" | "danger"> = {
 };
 
 export function PaperCard({
-  paper, pruefungId, personen, nachweise, canWrite,
+  paper, pruefungId, personen, nachweise, uploaderNames, canWrite,
 }: {
   paper: PaperRow;
   pruefungId: string;
   personen: { id: string; full_name: string }[];
-  nachweise: { id: string; dateiname: string; hash: string | null; uploaded_at: string; uploader: { full_name: string } | null }[];
+  nachweise: Nachweis[];
+  uploaderNames: Record<string, string>;
   canWrite: boolean;
 }) {
   const [form, setForm] = useState<PaperInput>({
@@ -54,6 +58,7 @@ export function PaperCard({
   const [dirty, setDirty] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [addingNachweis, setAddingNachweis] = useState(false);
 
   const disabled = !canWrite || pending;
   const input = "rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs normal-case text-foreground disabled:opacity-50";
@@ -174,29 +179,31 @@ export function PaperCard({
         </div>
       )}
 
-      <h4 className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nachweisdateien</h4>
-      {nachweise.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Keine Datei hinterlegt.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border-subtle text-left uppercase tracking-wide text-muted-foreground">
-                <th className="py-1 pr-3 font-medium">Datei</th><th className="py-1 pr-3 font-medium">Hochgeladen</th><th className="py-1 font-medium">Prüfsumme</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nachweise.map((d) => (
-                <tr key={d.id} className="border-b border-border-subtle last:border-0">
-                  <td className="py-1 pr-3 text-foreground">{d.dateiname}</td>
-                  <td className="py-1 pr-3 font-mono text-muted-foreground">{d.uploaded_at?.slice(0, 10)} · {d.uploader?.full_name ?? "—"}</td>
-                  <td className="py-1 font-mono text-muted-foreground">{d.hash ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="mt-3 flex items-center justify-between">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nachweisdateien</h4>
+        {canWrite && !addingNachweis && (
+          <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setAddingNachweis(true)}>+ Datei</Button>
+        )}
+      </div>
+      {addingNachweis && (
+        <div className="mt-1.5">
+          <NachweisUploadForm
+            module="INTERNAL_AUDIT"
+            entityType="arbeitspapier"
+            entityId={paper.id}
+            revalidateTargetPath={`/interne-revision/pruefungen/${pruefungId}`}
+            onDone={() => setAddingNachweis(false)}
+          />
         </div>
       )}
+      <NachweisFileTable
+        items={nachweise}
+        module="INTERNAL_AUDIT"
+        canWrite={canWrite}
+        revalidateTargetPath={`/interne-revision/pruefungen/${pruefungId}`}
+        uploaderNames={uploaderNames}
+        compact
+      />
 
       <div className="mt-3 rounded-md border border-border-subtle bg-graphite-900/60 p-3">
         <strong className="text-xs font-semibold text-foreground">Review und Freigabe</strong>

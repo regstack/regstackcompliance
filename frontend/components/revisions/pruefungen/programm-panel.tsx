@@ -8,14 +8,16 @@ import { paperIssues } from "@/lib/regstack/revisions-universum";
 import { SchrittCard, type SchrittRow } from "@/components/revisions/pruefungen/schritt-card";
 import type { PaperRow } from "@/components/revisions/pruefungen/paper-card";
 import { addSchritt } from "@/app/(app)/interne-revision/pruefungen/actions";
+import type { Nachweis } from "@/lib/regstack/nachweise";
 
 export function ProgrammPanel({
-  pruefungId, schritte, papersBySchritt, nachweiseByPaper, personen, canWrite,
+  pruefungId, schritte, papersBySchritt, nachweiseByPaper, uploaderNames, personen, canWrite,
 }: {
   pruefungId: string;
   schritte: SchrittRow[];
   papersBySchritt: Record<string, PaperRow[]>;
-  nachweiseByPaper: Record<string, { id: string; dateiname: string; hash: string | null; uploaded_at: string; uploader: { full_name: string } | null }[]>;
+  nachweiseByPaper: Record<string, Nachweis[]>;
+  uploaderNames: Record<string, string>;
   personen: { id: string; full_name: string }[];
   canWrite: boolean;
 }) {
@@ -59,6 +61,7 @@ export function ProgrammPanel({
               pruefungId={pruefungId}
               papers={papersBySchritt[s.id] ?? []}
               nachweiseByPaper={nachweiseByPaper}
+              uploaderNames={uploaderNames}
               personen={personen}
               canWrite={canWrite}
             />

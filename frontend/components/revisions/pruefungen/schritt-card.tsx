@@ -7,6 +7,7 @@ import { PRUEFUNGSHANDLUNG, SCHRITT_BEURTEILUNG_OPTS } from "@/lib/regstack/revi
 import { Pill } from "@/components/revisions/pruefungen/pill";
 import { PaperCard, type PaperRow } from "@/components/revisions/pruefungen/paper-card";
 import { updateSchritt, deleteSchritt, addPaper, type SchrittInput } from "@/app/(app)/interne-revision/pruefungen/actions";
+import type { Nachweis } from "@/lib/regstack/nachweise";
 
 export type SchrittRow = {
   id: string;
@@ -23,12 +24,13 @@ export type SchrittRow = {
 const BEURTEILUNG_TONE: Record<string, "open" | "warning" | "success"> = { ok: "success", feststellung: "warning", "": "open", nicht_pruefbar: "open" };
 
 export function SchrittCard({
-  schritt, pruefungId, papers, nachweiseByPaper, personen, canWrite,
+  schritt, pruefungId, papers, nachweiseByPaper, uploaderNames, personen, canWrite,
 }: {
   schritt: SchrittRow;
   pruefungId: string;
   papers: PaperRow[];
-  nachweiseByPaper: Record<string, { id: string; dateiname: string; hash: string | null; uploaded_at: string; uploader: { full_name: string } | null }[]>;
+  nachweiseByPaper: Record<string, Nachweis[]>;
+  uploaderNames: Record<string, string>;
   personen: { id: string; full_name: string }[];
   canWrite: boolean;
 }) {
@@ -117,7 +119,7 @@ export function SchrittCard({
         <strong className="text-xs font-semibold text-foreground">Arbeitspapiere zu diesem Schritt</strong>
         {papers.length === 0 && <p className="mt-1 text-xs text-muted-foreground">Noch kein Arbeitspapier erfasst.</p>}
         {papers.map((p) => (
-          <PaperCard key={p.id} paper={p} pruefungId={pruefungId} personen={personen} nachweise={nachweiseByPaper[p.id] ?? []} canWrite={canWrite} />
+          <PaperCard key={p.id} paper={p} pruefungId={pruefungId} personen={personen} nachweise={nachweiseByPaper[p.id] ?? []} uploaderNames={uploaderNames} canWrite={canWrite} />
         ))}
         {canWrite && <Button className="mt-3 px-2.5 py-1 text-xs" disabled={pending} onClick={addPaperRow}>+ Arbeitspapier</Button>}
       </div>

@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getPruefung, listPruefungZuweisungen, listPruefungsschritte, listArbeitspapiere,
-  listArbeitspapiereForPruefung, listAllPersons, listSperrfristen, listNachweiseFor,
+  listArbeitspapiereForPruefung, listAllPersons, listSperrfristen,
   ratingMeta,
 } from "@/lib/regstack/revisions";
+import { listNachweise, type Nachweis } from "@/lib/regstack/nachweise";
 import { getBackendSession, canWriteRevisions } from "@/lib/regstack/backend-session";
 import { Banner } from "@/components/ui/banner";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -35,12 +36,14 @@ export default async function PruefungDetailPage({ params }: { params: Promise<{
     papersBySchritt[s.id] = papersBySchrittList[i] as unknown as PaperRow[];
   });
   const allPaperIds = papersBySchrittList.flat().map((p) => p.id);
-  // Nachweise sind je Arbeitspapier eine Randnotiz — Datei-Upload ist im Frontend nirgends verdrahtet,
-  // daher bewusst N parallele Reads statt einer neuen Batch-Query in revisions.ts.
-  const nachweiseList = await Promise.all(allPaperIds.map((pid) => listNachweiseFor("arbeitspapier", pid)));
-  const nachweiseByPaper: Record<string, { id: string; dateiname: string; hash: string | null; uploaded_at: string; uploader: { full_name: string } | null }[]> = {};
+  // N parallel reads (one per Arbeitspapier) rather than a new batch query in nachweise.ts —
+  // matches the existing per-Schritt Promise.all pattern above.
+  const nachweiseList = await Promise.all(
+    allPaperIds.map((pid) => listNachweise({ module: "INTERNAL_AUDIT", entityType: "arbeitspapier", entityId: pid }))
+  );
+  const nachweiseByPaper: Record<string, Nachweis[]> = {};
   allPaperIds.forEach((pid, i) => {
-    nachweiseByPaper[pid] = nachweiseList[i] as unknown as typeof nachweiseByPaper[string];
+    nachweiseByPaper[pid] = nachweiseList[i];
   });
 
   const canWrite = session ? canWriteRevisions(session.role) : false;
@@ -120,6 +123,7 @@ export default async function PruefungDetailPage({ params }: { params: Promise<{
                 schritte={schritte}
                 papersBySchritt={papersBySchritt}
                 nachweiseByPaper={nachweiseByPaper}
+                uploaderNames={Object.fromEntries(personen.map((p) => [p.id, p.full_name]))}
                 personen={personen}
                 canWrite={canWrite}
               />

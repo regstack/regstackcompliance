@@ -143,3 +143,11 @@ const IT_RISK_WRITE_ROLES: BackendRole[] = ["RISIKOCONTROLLING", "ADMIN"];
 export function canWriteItRisk(role: BackendRole): boolean {
   return IT_RISK_WRITE_ROLES.includes(role);
 }
+
+// Mirrors src/middleware/rbac.ts's MATRIX.nachweis.write — the union of every module's own write
+// role that files evidence via the Nachweis model today.
+const NACHWEIS_WRITE_ROLES: BackendRole[] = ["COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"];
+
+export function canWriteNachweis(role: BackendRole): boolean {
+  return NACHWEIS_WRITE_ROLES.includes(role);
+}

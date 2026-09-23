@@ -154,6 +154,8 @@ enum EvidenceModule {
   OUTSOURCING
   COMPLIANCE
   INTERNAL_AUDIT
+  RISK_MANAGEMENT
+  IT_RISK
 }
 
 // ---------------------------------------------------------------------------
@@ -1068,8 +1070,10 @@ model Nachweis {
   entityType         String
   entityId           String?
   dateiname          String
-  fileRef            String?
-  hash               String?
+  fileRef            String? // Objektspeicher-Key (S3-kompatibel) — siehe modules/nachweise/objectStorage.ts
+  fileSize           Int?
+  fileMime           String?
+  hash               String? // SHA-256, clientseitig vor dem Upload berechnet
   aufbewahrungsfrist String?
 
   previousVersionId String?

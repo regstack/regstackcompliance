@@ -50,7 +50,9 @@ export type Resource =
   | "itAccessRecord" // Berechtigungsvergabe/-rezertifizierung/-entzug, BAIT Kap. 6
   | "itProjectRecord" // IT-Projekte-Portfolio, BAIT Kap. 7
   | "itOperationsRecord" // Änderungsmanagement + Betriebsstörungen, BAIT Kap. 8
-  | "itContingencyRecord"; // IT-Notfallpläne und -tests, BAIT Kap. 10
+  | "itContingencyRecord" // IT-Notfallpläne und -tests, BAIT Kap. 10
+  | "nachweis"; // Generisches Nachweis-/Belegregister, modulübergreifend (Outsourcing, Compliance,
+  // Interne Revision, Risikomanagement, IT-Risiko)
 
 export type Action = "read" | "write" | "delete";
 
@@ -244,6 +246,14 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   itContingencyRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  // Write-Rollen sind die Vereinigung der Schreibrollen aller Module, die heute Nachweise ablegen
+  // (Outsourcing: AUSLAGERUNGSBEAUFTRAGTER, Compliance: COMPLIANCE, Interne Revision:
+  // INTERNE_REVISION, Risikomanagement/IT-Risiko: RISIKOCONTROLLING) — kein modulspezifisches
+  // Gating hier, das bleibt Aufgabe des aufrufenden Moduls (Entität muss dort schon lesbar sein).
+  nachweis: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
   },
 };
 

@@ -8,10 +8,25 @@ End-to-End-Smoke-Test über eine laufende Server-Instanz: Login, RBAC-Ablehnung 
 Rolle, vollständiger Lebenszyklus inkl. Audit-Log-Prüfung, Tenant-Isolation gegen ein
 untergeschobenes `institutionId` im Body). Seed-Daten für alle Bausteine sind in `prisma/seed.ts`
 ergänzt. Die drei "Neu gefundenen Lücken" (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4) sind ebenfalls
-umgesetzt, siehe "Phase 2" im Modul-1-Abschnitt unten. Nachweis-Integration
-(`EvidenceModule` um `RISK_MANAGEMENT`/`IT_RISK` erweitert, echte Upload-/Versionierungs-UI für
-das zuvor rein lesende `Nachweis`-Modell) ist ebenfalls umgesetzt — siehe
-`src/modules/nachweise/`.
+umgesetzt, siehe "Phase 2" im Modul-1-Abschnitt unten.
+
+**Nachweis-Integration ist ebenfalls umgesetzt (23.09.2026)** — `EvidenceModule` um
+`RISK_MANAGEMENT`/`IT_RISK` erweitert. Es gab bereits ein reales, ausgereiftes Upload-Muster im
+Produkt (Pre-Signed-S3-URLs, siehe `src/modules/contracts/objectStorage.ts` für
+Vertragsdokumente und `src/modules/ics/objectStorage.ts` für IKS-Richtliniendokumente) — nur das
+generische `Nachweis`-Modell selbst war bislang rein lesend (`GET /nachweise`, ohne RBAC-Gate).
+Dasselbe Muster wurde für `Nachweis` übernommen: `src/modules/nachweise/objectStorage.ts`,
+`POST /nachweise/upload-url` → `POST /nachweise` (erste Fassung) bzw.
+`POST /nachweise/:id/neue-version` (neue Fassung statt stillen Überschreibens, über
+`previousVersionId`), `GET /nachweise/:id/download-url`, neue RBAC-Ressource `nachweis`
+(schließt eine reale Lücke: die GET-Route hatte zuvor gar kein `requirePermission`). Client-seitig
+wird vor jedem Upload ein SHA-256-Hash berechnet (`Nachweis.hash`) — löst ein Versprechen aus der
+Banner-Copy von `/compliance/nachweise` ein, das zuvor nirgends eingelöst war. Verdrahtet an zwei
+realen Stellen: der `/compliance/nachweise`-Übersicht (jetzt mit echtem Upload- und
+Versionierungsformular statt nur Lesetabelle) und der Interne-Revision-Prüfungsdetailseite (Upload
+je Arbeitspapier, wo zuvor ein Code-Kommentar den exakt selben Gap dokumentierte). Die generische
+Komponente (`components/nachweise/`) ist bereit für weitere Verdrahtung in anderen Modulen
+(Outsourcing, Risikomanagement, IT-Risiko), aber das ist bewusst nicht in diesem Schritt passiert.
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
@@ -644,15 +659,19 @@ Beide Module folgen den drei Grundsätzen aus dem README ausnahmslos:
 
 ## Offene Fragen an dich
 
-1. Trifft die Eingrenzung oben ("MaRisk Novelle 9" = aktuelle AT-4-Risikomanagement-Kapitel inkl.
-   ESG) das, was du meinst, oder zielst du auf eine bestimmte Fassung/Novellen-Nummer, die ich noch
-   nicht kenne?
-2. Passt die BAIT-Priorisierung (IT-Strategie + Schutzbedarf + Risiko-Register + Sicherheitsvorfälle
-   zuerst, Berechtigungsmanagement/IT-Projekte/IT-Betrieb später), oder ist für euer Institut z. B.
-   das Berechtigungsmanagement (Kap. 5) dringlicher fürs MVP?
-3. Braucht Kap. 4 BAIT (Informationssicherheit) eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-
-   Login-Rolle, oder reicht `RISIKOCONTROLLING`/`ADMIN` fürs MVP?
+1. ~~Trifft die Eingrenzung oben ("MaRisk Novelle 9" = ...) das, was du meinst?~~ **Geklärt** —
+   gegen den Primärtext (Rundschreiben 06/2026 (BA), Stand 30.06.2026) geprüft, siehe
+   "Korrekturen nach Quellenabgleich" oben.
+2. ~~Passt die BAIT-Priorisierung?~~ **Geklärt (19.09.2026) — ja, Reihenfolge bleibt wie
+   ursprünglich vorgeschlagen.** Die Kapitelnummern selbst wurden später (23.09.2026) gegen den
+   BAIT-Primärtext korrigiert — siehe "BAIT-Kapitelbezeichnungen jetzt gegen die Primärquelle
+   geprüft" oben.
+3. ~~Braucht Kap. 4 BAIT eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Login-Rolle?~~
+   **Geklärt — nein**, `RISIKOCONTROLLING`/`ADMIN` bleiben zuständig.
 
-Sobald das steht, kann ich direkt mit Modul 1 (Risikomanagement) anfangen: Prisma-Migration,
-`src/modules/risikomanagement/`, RBAC-Einträge, Routen, Tests — im selben Zug wie die drei
-bestehenden Module.
+Alle drei ursprünglichen Fragen sind geklärt, alle zwölf BAIT-Kapitel (soweit im MVP-Scope) sind
+umgesetzt, die Editing-UI für bestehende Einträge ist nachgezogen, alle drei in "Neu gefundene
+Lücken" aufgeführten Regelungslücken (AT 3.2 Aufsichtsorgan-Reporting, AT 4.3.4 Modelle, AT 4.2
+Tz. 3 NPL-Strategie) sind umgesetzt, und die Nachweis/`EvidenceModule`-Integration (echte
+Upload-/Versionierungs-UI, siehe oben) ist ebenfalls fertig. Damit ist die in dieser Spezifikation
+ursprünglich skizzierte Ausbaustufe vollständig umgesetzt.
