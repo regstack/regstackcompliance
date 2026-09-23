@@ -55,15 +55,24 @@ export async function loginToBackend(): Promise<BackendLoginResult> {
       method: "POST",
       headers: { Authorization: `Bearer ${exchangeToken}` },
     });
-    if (!res.ok) return { status: "failed" };
+    if (!res.ok) {
+      // Swallowed for the user (see the docstring above), but logged server-side (Vercel
+      // function logs) so a failed exchange is diagnosable without exposing backend internals
+      // to the client — status/body alone are enough to tell "wrong JWT_SECRET" (401) apart from
+      // "no matching backend account" (403) or "BACKEND_URL/routing misconfigured" (404/other).
+      const body = await res.text().catch(() => "<unreadable body>");
+      console.error(`[backend-auth] /auth/exchange failed: ${res.status} ${BASE_URL}/auth/exchange — ${body}`);
+      return { status: "failed" };
+    }
 
     const body = (await res.json()) as { token: string } | { mfaRequired: true; mfaToken: string };
     if ("mfaRequired" in body) return { status: "mfa_required", mfaToken: body.mfaToken };
 
     await setBackendTokenCookie(body.token);
     return { status: "ok" };
-  } catch {
+  } catch (err) {
     // Backend unreachable — same graceful degradation as an auth failure.
+    console.error(`[backend-auth] /auth/exchange threw: ${err instanceof Error ? err.message : String(err)}`);
     return { status: "failed" };
   }
 }
