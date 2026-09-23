@@ -99,6 +99,131 @@ export async function abschliessenItVorfall(id: string) {
   revalidatePath("/it-risiko");
 }
 
+// --- Kap. 6 Identitäts- und Rechtemanagement ------------------------------------------------
+
+export type ItBerechtigungInput = {
+  assetId: string;
+  benutzerBezeichnung: string;
+  istTechnischerBenutzer: boolean;
+  istPrivilegiert: boolean;
+  berechtigungsart: string;
+  needToKnowBegruendung: string;
+};
+
+export async function addItBerechtigung(fields: ItBerechtigungInput) {
+  await apiFetch("/it-risiko/berechtigungen", {
+    method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      benutzerBezeichnung: fields.benutzerBezeichnung,
+      istTechnischerBenutzer: fields.istTechnischerBenutzer,
+      istPrivilegiert: fields.istPrivilegiert,
+      berechtigungsart: fields.berechtigungsart,
+      needToKnowBegruendung: fields.needToKnowBegruendung || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Tz. 6.5 — die zuständige Kontrollinstanz bestätigt, dass die Berechtigung weiterhin benötigt wird.
+export async function rezertifizierenItBerechtigung(id: string) {
+  await apiFetch(`/it-risiko/berechtigungen/${id}/rezertifizieren`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+export async function deaktivierenItBerechtigung(id: string) {
+  await apiFetch(`/it-risiko/berechtigungen/${id}/deaktivieren`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+// Tz. 6.4 — unverzüglicher Entzug, z. B. bei Wegfall der Erforderlichkeit. Endzustand.
+export async function entziehenItBerechtigung(id: string) {
+  await apiFetch(`/it-risiko/berechtigungen/${id}/entziehen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+// --- Kap. 7 IT-Projekte und Anwendungsentwicklung -------------------------------------------
+
+export type ItProjektInput = {
+  bezeichnung: string;
+  ziel: string;
+  vorgehensmodell: string;
+  risikobewertung: string;
+  startAm: string;
+  geplantesEndeAm: string;
+};
+
+export async function addItProjekt(fields: ItProjektInput) {
+  await apiFetch("/it-risiko/projekte", {
+    method: "POST",
+    body: JSON.stringify({
+      bezeichnung: fields.bezeichnung,
+      ziel: fields.ziel || undefined,
+      vorgehensmodell: fields.vorgehensmodell || undefined,
+      risikobewertung: fields.risikobewertung || undefined,
+      startAm: fields.startAm ? new Date(fields.startAm).toISOString() : undefined,
+      geplantesEndeAm: fields.geplantesEndeAm ? new Date(fields.geplantesEndeAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Tz. 7.2 — Lessons Learned sind Pflichtbestandteil des Projektabschlusses.
+export async function abschliessenItProjekt(id: string, lessonsLearned: string) {
+  await apiFetch(`/it-risiko/projekte/${id}/abschliessen`, {
+    method: "POST",
+    body: JSON.stringify({ lessonsLearned }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+export async function abbrechenItProjekt(id: string) {
+  await apiFetch(`/it-risiko/projekte/${id}/abbrechen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+// --- Kap. 8 IT-Betrieb: Änderungsmanagement -------------------------------------------------
+
+export type ItAenderungInput = {
+  assetId: string;
+  bezeichnung: string;
+  art: string;
+  risikobewertung: string;
+  rueckabwicklungsplan: string;
+  geplantAm: string;
+};
+
+export async function addItAenderung(fields: ItAenderungInput) {
+  await apiFetch("/it-risiko/aenderungen", {
+    method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      bezeichnung: fields.bezeichnung,
+      art: fields.art || undefined,
+      risikobewertung: fields.risikobewertung || undefined,
+      rueckabwicklungsplan: fields.rueckabwicklungsplan || undefined,
+      geplantAm: fields.geplantAm ? new Date(fields.geplantAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Tz. 8.5 — Genehmigung vor Produktivsetzung.
+export async function genehmigenItAenderung(id: string) {
+  await apiFetch(`/it-risiko/aenderungen/${id}/genehmigen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+export async function umsetzenItAenderung(id: string) {
+  await apiFetch(`/it-risiko/aenderungen/${id}/umsetzen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+export async function zurueckstellenItAenderung(id: string) {
+  await apiFetch(`/it-risiko/aenderungen/${id}/zurueckstellen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
 // --- Kap. 8 IT-Betrieb: Betriebsstörungen ---------------------------------------------------
 
 export type ItBetriebsstoerungInput = {

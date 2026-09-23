@@ -118,9 +118,11 @@ describe("requirePermission — IT-Risiko/BAIT resources", () => {
   });
 });
 
-describe("requirePermission — IT-Risiko/BAIT Phase-2 resources (Kap. 8, 10)", () => {
+describe("requirePermission — IT-Risiko/BAIT Phase-2 resources (Kap. 6, 7, 8, 10)", () => {
   it.each([
-    ["itOperationsRecord", "IT-Betrieb (Betriebsstörungen), Kap. 8"],
+    ["itAccessRecord", "Berechtigungsmanagement, Kap. 6"],
+    ["itProjectRecord", "IT-Projekte, Kap. 7"],
+    ["itOperationsRecord", "IT-Betrieb (Änderungsmanagement/Betriebsstörungen), Kap. 8"],
     ["itContingencyRecord", "IT-Notfallmanagement, Kap. 10"],
   ] as const)("%s (%s) is readable by every module role, but only writable by RISIKOCONTROLLING/ADMIN", (resource, _label) => {
     const next = vi.fn();

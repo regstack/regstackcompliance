@@ -1646,11 +1646,103 @@ async function main() {
     },
   });
 
-  // --- IT-Risiko/BAIT Phase 2: Kap. 8 (IT-Betrieb, Betriebsstörungen) und Kap. 10
-  // (IT-Notfallmanagement) — Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und
-  // Änderungsmanagement (Kap. 8, Tz. 8.4-8.5) sind bewusst nicht hier, siehe
-  // Risikomanagement_BAIT_MVP_Spezifikation.md, "Koordination mit parallelen Sessions".
-  // ------------------------------------------------------------------------------------------
+  // --- IT-Risiko/BAIT Phase 2: Kap. 6 (Identitäts- und Rechtemanagement), Kap. 7
+  // (IT-Projekte), Kap. 8 (IT-Betrieb), Kap. 10 (IT-Notfallmanagement) ------------------------
+
+  await prisma.itBerechtigung.create({
+    data: {
+      institutionId: institution.id,
+      assetId: kernbankverfahren.id,
+      benutzerBezeichnung: "svc-kernbank-batch",
+      istTechnischerBenutzer: true,
+      istPrivilegiert: true,
+      berechtigungsart: "Technischer Benutzer, Batch-Verarbeitung Kernbankverfahren",
+      needToKnowBegruendung: "Ausschließlich für den nächtlichen Buchungslauf benötigt.",
+      status: "aktiv",
+      genehmigtVonUserId: risikocontrolling.id,
+      letzteRezertifizierung: new Date("2026-01-15"),
+      naechsteRezertifizierung: new Date("2026-07-15"),
+      rezertifiziertVonUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itBerechtigung.create({
+    data: {
+      institutionId: institution.id,
+      assetId: firmenkundenportal.id,
+      benutzerBezeichnung: "Compliance-Team (Leserechte Auswertungen)",
+      benutzerUserId: compliance.id,
+      berechtigungsart: "Lesezugriff Reporting-Modul",
+      needToKnowBegruendung: "Für die AT-9-Auslagerungsprüfung der Portal-Nutzung.",
+      status: "aktiv",
+      genehmigtVonUserId: risikocontrolling.id,
+      naechsteRezertifizierung: new Date("2026-06-30"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.itProjekt.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "Cloud-Migration Kernbankverfahren",
+      ziel: "Umzug des Kernbankverfahrens in die freigegebene Cloud-Infrastruktur gemäß IT-Strategie 2026.",
+      vorgehensmodell: "Wasserfall mit Meilenstein-Gates",
+      risikobewertung: "Hoch — zeitkritischer Prozess, Migrationsfenster eng getaktet.",
+      ressourcenausstattung: "2 interne IT-Architekten, externer Migrationsdienstleister",
+      verantwortlichUserId: risikocontrolling.id,
+      status: "laufend",
+      startAm: new Date("2026-02-01"),
+      geplantesEndeAm: new Date("2026-11-30"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itProjekt.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "Einführung Multi-Faktor-Authentifizierung Firmenkundenportal",
+      ziel: "Starke Authentifizierung für Fernzugriffe gemäß Berechtigungskonzept.",
+      vorgehensmodell: "Scrum",
+      verantwortlichUserId: risikocontrolling.id,
+      status: "abgeschlossen",
+      startAm: new Date("2025-09-01"),
+      geplantesEndeAm: new Date("2025-12-15"),
+      tatsaechlichesEndeAm: new Date("2025-12-20"),
+      lessonsLearned: "Frühzeitige Einbindung des Informationssicherheitsbeauftragten hätte den Rollout um zwei Wochen beschleunigt.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  await prisma.itAenderung.create({
+    data: {
+      institutionId: institution.id,
+      assetId: kernbankverfahren.id,
+      bezeichnung: "Sicherheitspatch Kernbankverfahren Q1/2026",
+      art: "Sicherheitsrelevante Nachbesserung (Patch)",
+      risikobewertung: "Gering — Hersteller-Patch, in Testumgebung erfolgreich geprüft.",
+      testErgebnis: "Regressionstest bestanden, keine Auffälligkeiten.",
+      rueckabwicklungsplan: "Snapshot vor Einspielung, Rollback binnen 30 Minuten möglich.",
+      status: "umgesetzt",
+      geplantAm: new Date("2026-02-10"),
+      genehmigtVonUserId: risikocontrolling.id,
+      genehmigtAm: new Date("2026-02-08"),
+      umgesetztAm: new Date("2026-02-10"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itAenderung.create({
+    data: {
+      institutionId: institution.id,
+      assetId: netzwerkRz.id,
+      bezeichnung: "Austausch Kernrouter Rechenzentrum",
+      art: "Austausch von Hardwarekomponenten",
+      risikobewertung: "Mittel — kurzes Wartungsfenster außerhalb der Geschäftszeiten erforderlich.",
+      status: "genehmigt",
+      geplantAm: new Date("2026-04-05"),
+      genehmigtVonUserId: risikocontrolling.id,
+      genehmigtAm: new Date("2026-03-20"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
 
   await prisma.itBetriebsstoerung.create({
     data: {
@@ -1795,7 +1887,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement (incl. Kapitalplanung, Stresstests, Aufsichtsorgan-Reporting, NPL-Kennzahlen, Modellregister), IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet, inkl. Kap. 8/10 Betriebsstörungen/Notfallmanagement), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement (incl. Kapitalplanung, Stresstests, Aufsichtsorgan-Reporting, NPL-Kennzahlen, Modellregister), IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet, inkl. Kap. 6/7/8/10 Berechtigungen/Projekte/Änderungen/Betriebsstörungen/Notfallmanagement), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
   );
 }
 

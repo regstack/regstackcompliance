@@ -91,6 +91,12 @@ const STATUS_TONE: Record<string, Tone> = {
   ausser_betrieb: "danger",
   rekalibrierung_erforderlich: "warning",
   ausser_betrieb_genommen: "danger",
+  // IT-Risiko/BAIT Phase 2: Berechtigungen (Kap. 6), Änderungen/Störungen (Kap. 8)
+  deaktiviert: "warning",
+  entzogen: "danger",
+  abgebrochen: "danger",
+  umgesetzt: "success",
+  zurueckgestellt: "warning",
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {

@@ -347,6 +347,9 @@ model InstitutionProfile {
   itAssets               ItAsset[]
   itRisiken              ItRisiko[]
   itSicherheitsvorfaelle ItSicherheitsvorfall[]
+  itBerechtigungen       ItBerechtigung[]
+  itProjekte             ItProjekt[]
+  itAenderungen          ItAenderung[]
   itBetriebsstoerungen   ItBetriebsstoerung[]
   itNotfallplaene        ItNotfallplan[]
   itNotfalltests         ItNotfalltest[]
@@ -2495,15 +2498,162 @@ model ItAsset {
   letzteUeberpruefung   DateTime?
   naechsteUeberpruefung DateTime?
 
+  // Kap. 7.13/7.14 — Individuelle Datenverarbeitung (IDV): dasselbe Anwendungsregister
+  // (kategorie = anwendung) wird um die dort verlangten Zusatzfelder ergänzt statt ein
+  // zweites Register zu führen, siehe Verzahnungs-Hinweis in
+  // Risikomanagement_BAIT_MVP_Spezifikation.md.
+  istIdv                        Boolean            @default(false)
+  zweck                         String?
+  version                       String?
+  fremdOderEigenentwicklung     ItEntwicklungsart?
+  technischVerantwortlichUserId String?
+  technologie                   String?
+
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  itRisiken       ItRisiko[]
-  itNotfallplaene ItNotfallplan[]
+  itRisiken        ItRisiko[]
+  itBerechtigungen ItBerechtigung[]
+  itAenderungen    ItAenderung[]
+  itNotfallplaene  ItNotfallplan[]
 
   @@index([institutionId])
   @@map("bait_it_assets")
+}
+
+enum ItEntwicklungsart {
+  eigenentwicklung
+  fremdentwicklung
+}
+
+// ---------------------------------------------------------------------------
+// BAIT Kap. 6 — Identitäts- und Rechtemanagement (Berechtigungsvergabe,
+// -rezertifizierung und -entzug, Tz. 6.2–6.7).
+// ---------------------------------------------------------------------------
+
+enum ItBerechtigungStatus {
+  aktiv
+  deaktiviert
+  entzogen
+}
+
+model ItBerechtigung {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  assetId String?
+  asset   ItAsset? @relation(fields: [assetId], references: [id])
+
+  benutzerBezeichnung    String // Name bei personalisierten, Kennung bei technischen Benutzern
+  benutzerUserId         String? // gesetzt, wenn personalisiert einem App-User zuordenbar (Tz. 6.3)
+  istTechnischerBenutzer Boolean @default(false)
+  istPrivilegiert        Boolean @default(false) // Tz. 6.7 — besonders kritische Rechte
+
+  berechtigungsart      String // z. B. Rolle/Zugriffsumfang
+  needToKnowBegruendung String?
+  befristetBis          DateTime?
+
+  status             ItBerechtigungStatus @default(aktiv)
+  genehmigtVonUserId String? // fachlich verantwortliche Stelle, Tz. 6.4
+
+  deaktiviertAm        DateTime?
+  deaktiviertVonUserId String?
+
+  letzteRezertifizierung   DateTime?
+  naechsteRezertifizierung DateTime?
+  rezertifiziertVonUserId  String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([institutionId])
+  @@index([assetId])
+  @@map("bait_it_berechtigungen")
+}
+
+// ---------------------------------------------------------------------------
+// BAIT Kap. 7 — IT-Projekte und Anwendungsentwicklung (Portfolio-Steuerung,
+// Tz. 7.3–7.5; IDV-Zusatzfelder liegen direkt an ItAsset, siehe oben).
+// ---------------------------------------------------------------------------
+
+enum ItProjektStatus {
+  geplant
+  laufend
+  abgeschlossen
+  abgebrochen
+}
+
+model ItProjekt {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  bezeichnung           String
+  ziel                  String?
+  vorgehensmodell       String?
+  risikobewertung       String?
+  ressourcenausstattung String?
+  verantwortlichUserId  String?
+
+  status               ItProjektStatus @default(geplant)
+  startAm              DateTime?
+  geplantesEndeAm      DateTime?
+  tatsaechlichesEndeAm DateTime?
+  lessonsLearned       String? // Tz. 7.2 — Aufarbeitung der gewonnenen Erkenntnisse
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([institutionId])
+  @@map("bait_it_projekte")
+}
+
+// ---------------------------------------------------------------------------
+// BAIT Kap. 8 — IT-Betrieb: Änderungsmanagement (Tz. 8.4–8.5). Bewusst getrennt
+// von ItSicherheitsvorfall (Kap. 4/5) und von ItBetriebsstoerung (Tz. 8.6) —
+// die BAIT grenzt "Informationssicherheitsvorfall", "sicherheitsrelevantes
+// Ereignis", "ungeplante Abweichung vom Regelbetrieb" (Störung) und geplante
+// Änderungen explizit voneinander ab.
+// ---------------------------------------------------------------------------
+
+enum ItAenderungStatus {
+  beantragt
+  genehmigt
+  umgesetzt
+  zurueckgestellt
+}
+
+model ItAenderung {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  assetId String?
+  asset   ItAsset? @relation(fields: [assetId], references: [id])
+
+  bezeichnung          String
+  art                  String? // Funktionserweiterung, Patch, Hardwaretausch, Umzug, ...
+  risikobewertung      String?
+  testErgebnis         String?
+  rueckabwicklungsplan String?
+
+  status             ItAenderungStatus @default(beantragt)
+  geplantAm          DateTime?
+  genehmigtVonUserId String?
+  genehmigtAm        DateTime?
+  umgesetztAm        DateTime?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([institutionId])
+  @@index([assetId])
+  @@map("bait_it_aenderungen")
 }
 
 model ItRisiko {
@@ -2564,14 +2714,9 @@ model ItSicherheitsvorfall {
 
 // ---------------------------------------------------------------------------
 // BAIT Kap. 8 — IT-Betrieb: Störungen (Tz. 8.6). Bewusst getrennt von
-// ItSicherheitsvorfall (Kap. 4/5) — die BAIT grenzt "Informationssicherheits-
-// vorfall", "sicherheitsrelevantes Ereignis" und "ungeplante Abweichung vom
-// Regelbetrieb" (Störung) explizit voneinander ab.
-//
-// Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und Änderungsmanagement
-// (Kap. 8, Tz. 8.4-8.5) sind bewusst NICHT hier — siehe
-// Risikomanagement_BAIT_MVP_Spezifikation.md, Abschnitt "Koordination mit
-// parallelen Sessions": PR #13 deckt diese Bausteine bereits ab.
+// ItSicherheitsvorfall (Kap. 4/5) und von ItAenderung (Tz. 8.4-8.5) — die BAIT
+// grenzt "Informationssicherheitsvorfall", "sicherheitsrelevantes Ereignis"
+// und "ungeplante Abweichung vom Regelbetrieb" (Störung) explizit voneinander ab.
 // ---------------------------------------------------------------------------
 
 enum ItStoerungPrioritaet {

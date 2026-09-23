@@ -69,16 +69,38 @@ Der erste Merge-Versuch dieses Branches (PR #17) hatte zusätzlich unabhängig d
 produktionsweiten Crash ausgelöst (fehlendes `binaryTargets` in `generator client` — seit
 `20260923000000_bait_kap6_7_8_10_workflows`-Vorgänger behoben, siehe PR #20) und wurde deshalb
 zunächst revertiert (PR #19). Bei der erneuten Aufbereitung wurden daher **Berechtigungsmanagement,
-IT-Projekte und Änderungsmanagement aus diesem Branch entfernt** — PR #13 deckt diese Bausteine
-bereits ab und ist weiter fortgeschritten (u. a. Editing-UI, Nachweis-Upload). Bereits produktiv
-angelegte, dadurch verwaiste Tabellen/Spalten (`bait_it_berechtigungen`, `bait_it_projekte`,
-`bait_it_aenderungen`, die IDV-Zusatzfelder auf `bait_it_assets`) wurden wieder entfernt (leer, 0
-Zeilen, verifiziert vor dem Drop), damit PR #13s Migration ohne Tabellennamen-Konflikt läuft.
-**Verbleibend und nicht mit anderen offenen PRs überlappend:** Kap. 8 Betriebsstörungen
-(`ItBetriebsstoerung`) und Kap. 10 IT-Notfallmanagement (`ItNotfallplan`/`ItNotfalltest`) — beides
-inkl. Migration, RBAC (`itOperationsRecord`/`itContingencyRecord`), Routen, Frontend-Panels,
-Seed-Daten, gegen eine echte Postgres-Instanz verifiziert und gegen die Produktions-DB
-(Supabase-Projekt `qtcptpmxijxruzbcxlah`) angewendet.
+IT-Projekte und Änderungsmanagement aus diesem Branch entfernt** — in der Annahme, dass PR #13
+diese Bausteine bereits abdeckt und weiter fortgeschritten ist (u. a. Editing-UI, Nachweis-Upload).
+Bereits produktiv angelegte, dadurch verwaiste Tabellen/Spalten (`bait_it_berechtigungen`,
+`bait_it_projekte`, `bait_it_aenderungen`, die IDV-Zusatzfelder auf `bait_it_assets`) wurden wieder
+entfernt (leer, 0 Zeilen, verifiziert vor dem Drop), damit PR #13s Migration ohne
+Tabellennamen-Konflikt läuft.
+
+**Nachtrag — gegenseitiger Rückzug führte zu einer echten Lücke:** PR #13 ist inzwischen gemerged
+(`2ca05c9`), hat dabei aber **ebenfalls** sein eigenes Berechtigungsmanagement/IT-Projekte/
+Änderungsmanagement fallengelassen — in der spiegelbildlichen Annahme, PR #17 (dieser Branch) decke
+das bereits ab. Ergebnis: Beide Seiten haben sich gegenseitig den Vortritt gelassen, und keine
+Implementierung landete auf `master` (verifiziert: `master`s `schema.prisma` enthält weder
+`model Berechtigung`, `model ItProjekt`, `model ItAenderung` noch `model ItDatensicherungstest`,
+kein anderer offener PR deckt diesen Baustein ab). Dieser Branch **reintroduziert deshalb
+Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8, Tz.
+8.4-8.5)** mit der zu diesem Zeitpunkt bereits gegen den Primärtext verifizierten korrekten
+Kapitelnumerierung — inkl. Schema (`ItBerechtigung`/`ItProjekt`/`ItAenderung` + IDV-Zusatzfelder auf
+`ItAsset`), RBAC (`itAccessRecord`/`itProjectRecord`), Routen, Frontend-Panels, Seed-Daten und einer
+gegen eine echte Postgres-Instanz verifizierten Migration (`prisma migrate deploy` +
+`prisma migrate diff` ohne Drift). PR #13s abweichende Datenmodellierung (Datensicherungstests als
+eigenes `ItDatensicherungstest`-Modell statt als Teil von `ItAenderung`) wurde bewusst nicht
+übernommen, da sie nicht mehr existiert und dieser Branch die einzige verbliebene Implementierung
+dieser drei Kapitel ist.
+
+**Verbleibend und nicht mit anderen offenen PRs überlappend:** Kap. 6 Berechtigungsmanagement
+(`ItBerechtigung`), Kap. 7 IT-Projekte (`ItProjekt`), Kap. 8 Änderungsmanagement (`ItAenderung`) und
+Betriebsstörungen (`ItBetriebsstoerung`), sowie Kap. 10 IT-Notfallmanagement
+(`ItNotfallplan`/`ItNotfalltest`) — alles inkl. Migration, RBAC (`itAccessRecord`/`itProjectRecord`/
+`itOperationsRecord`/`itContingencyRecord`), Routen, Frontend-Panels, Seed-Daten, gegen eine echte
+Postgres-Instanz verifiziert. Kap. 8/10 waren bereits vor diesem Nachtrag gegen die Produktions-DB
+(Supabase-Projekt `qtcptpmxijxruzbcxlah`) angewendet; Kap. 6/7/8-Änderungsmanagement folgen mit
+derselben Vorgehensweise.
 
 Nebenbei entdeckt und ebenfalls auf der Produktions-DB behoben: `RmKapitalplanung`/`RmStresstest`
 (PR #18, oben) waren zwar bereits im gemergten `master` als Code live, ihre Migration war aber nie

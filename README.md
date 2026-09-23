@@ -115,11 +115,14 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` für Details. Auf der BAIT-Seite ebenfalls seit
   2026-09-23 ergänzt (gegen den jetzt vorliegenden Primärtext, Rundschreiben 10/2017 (BA)):
   Betriebsstörungen (Kap. 8) und IT-Notfallmanagement (Kap. 10), Routen unter
-  `/it-risiko/betriebsstoerungen`/`/it-risiko/notfallmanagement`. Berechtigungsmanagement (Kap. 6),
-  IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8) sind bewusst **nicht** Teil davon — PR #13
-  baut das bereits parallel, mit denselben Tabellennamen; siehe
-  `Risikomanagement_BAIT_MVP_Spezifikation.md`, Abschnitt "Koordination mit parallelen Sessions".
-  Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe ebenda.
+  `/it-risiko/betriebsstoerungen`/`/it-risiko/notfallmanagement`. Ebenfalls ergänzt:
+  Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8), Routen
+  unter `/it-risiko/berechtigungen`/`/it-risiko/projekte`/`/it-risiko/aenderungen` — ursprünglich
+  zurückgestellt, weil PR #13 dieselben Bausteine parallel baute, dann aber wieder aufgenommen,
+  nachdem PR #13 seine eigene Fassung ebenfalls zurückgezogen hatte und dadurch keine
+  Implementierung mehr auf `master` existierte; siehe `Risikomanagement_BAIT_MVP_Spezifikation.md`,
+  Abschnitt "Koordination mit parallelen Sessions". Offene Fragen (u. a. kein eigener ISB-Login im
+  MVP) siehe ebenda.
 - Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
   umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
   Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
