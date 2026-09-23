@@ -61,5 +61,8 @@
     "prisma@5.22.0": true,
     "@prisma/client@5.22.0": true,
     "@prisma/engines@5.22.0": true
+  },
+  "overrides": {
+    "@scure/base": "1.2.6"
   }
 }
