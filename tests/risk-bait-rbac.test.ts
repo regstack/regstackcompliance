@@ -66,15 +66,6 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     requirePermission("riskStressTest", "read")(mockReq("VIEWER"), mockRes, readNext);
     expect(readNext).toHaveBeenCalledOnce();
   });
-
-  it("allows RISIKOCONTROLLING to write a riskModelRecord (AT 4.3.4 Modellregister), but not AUSLAGERUNGSBEAUFTRAGTER", () => {
-    const next = vi.fn();
-    requirePermission("riskModelRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
-    expect(next).toHaveBeenCalledOnce();
-    expect(() =>
-      requirePermission("riskModelRecord", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, vi.fn())
-    ).toThrow(ForbiddenError);
-  });
 });
 
 describe("requirePermission — IT-Risiko/BAIT resources", () => {

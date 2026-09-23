@@ -43,7 +43,6 @@ import risikomanagementRtfRoutes from "../modules/risikomanagement/risikotragfae
 import risikomanagementReportsRoutes from "../modules/risikomanagement/reports.routes";
 import risikomanagementKapitalplanungRoutes from "../modules/risikomanagement/kapitalplanung.routes";
 import risikomanagementStresstestsRoutes from "../modules/risikomanagement/stresstests.routes";
-import risikomanagementModelleRoutes from "../modules/risikomanagement/modelle.routes";
 import itRisikoStrategieRoutes from "../modules/itRisiko/strategie.routes";
 import itRisikoAssetsRoutes from "../modules/itRisiko/assets.routes";
 import itRisikoRisikenRoutes from "../modules/itRisiko/risiken.routes";
@@ -100,7 +99,6 @@ router.use("/risikomanagement/risikotragfaehigkeit", risikomanagementRtfRoutes);
 router.use("/risikomanagement/reports", risikomanagementReportsRoutes);
 router.use("/risikomanagement/kapitalplanung", risikomanagementKapitalplanungRoutes);
 router.use("/risikomanagement/stresstests", risikomanagementStresstestsRoutes);
-router.use("/risikomanagement/modelle", risikomanagementModelleRoutes);
 router.use("/it-risiko/strategie", itRisikoStrategieRoutes);
 router.use("/it-risiko/assets", itRisikoAssetsRoutes);
 router.use("/it-risiko/risiken", itRisikoRisikenRoutes);

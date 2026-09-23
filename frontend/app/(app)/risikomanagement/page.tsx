@@ -5,7 +5,6 @@ import {
   listRmReports,
   listRmKapitalplanung,
   listRmStresstests,
-  listRmModelle,
 } from "@/lib/regstack/risikomanagement";
 import { getBackendSession, canWriteRiskManagement, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
@@ -16,20 +15,18 @@ import { RtfPanel } from "@/components/risikomanagement/rtf-panel";
 import { ReportPanel } from "@/components/risikomanagement/report-panel";
 import { KapitalplanungPanel } from "@/components/risikomanagement/kapitalplanung-panel";
 import { StresstestPanel } from "@/components/risikomanagement/stresstest-panel";
-import { ModellPanel } from "@/components/risikomanagement/modell-panel";
 
 export default async function RisikomanagementPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
 
-  const [inventur, strategien, rtfSnapshots, reports, kapitalplanung, stresstests, modelle] = await Promise.all([
+  const [inventur, strategien, rtfSnapshots, reports, kapitalplanung, stresstests] = await Promise.all([
     listRisikoinventur(),
     listRisikostrategien(),
     listRisikotragfaehigkeit(),
     listRmReports(),
     listRmKapitalplanung(),
     listRmStresstests(),
-    listRmModelle(),
   ]);
 
   const canWrite = canWriteRiskManagement(session.role);
@@ -70,7 +67,6 @@ export default async function RisikomanagementPage() {
       <RtfPanel items={rtfSnapshots} canWrite={canWrite} />
       <KapitalplanungPanel items={kapitalplanung} canWrite={canWrite} canApprove={canApprove} />
       <StresstestPanel items={stresstests} canWrite={canWrite} />
-      <ModellPanel items={modelle} canWrite={canWrite} />
       <ReportPanel reports={reports} canWrite={canWrite} canAcknowledge={canApprove} currentUserId={session.userId} />
     </div>
   );

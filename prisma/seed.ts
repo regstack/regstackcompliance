@@ -1367,41 +1367,9 @@ async function main() {
     ].map((data) => prisma.rmStresstest.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
   );
 
-  // AT 4.3.4 Verwendung von Modellen — Modellregister inkl. Validierungszyklus (AT 4.1 Tz. 9),
-  // eines davon mit Charakteristika technologiegestützter Innovation/KI (Erklärbarkeit, Tz. 6).
-  await Promise.all(
-    [
-      {
-        bezeichnung: "RTF-Berechnungsmodell (ökonomische Perspektive)",
-        verwendungszweck: "Quantifizierung des internen Kapitalbedarfs je Risikoart für die Risikotragfähigkeit.",
-        komplexitaet: "komplex" as const,
-        wesentlicheAnnahmen: "Historische Verlustverteilungen, Konfidenzniveau 99,9 %, Haltedauer 1 Jahr.",
-        datenqualitaetspruefung: "Vierteljährlicher Plausibilitätsabgleich gegen Kreditportfolio- und Marktdaten.",
-        validierungUnabhaengig: true,
-        initialvalidierungAm: new Date("2024-01-15"),
-        letzteValidierungAm: new Date("2026-01-15"),
-        naechsteValidierungFaellig: new Date("2029-01-15"),
-        validierungsergebnis: "Modell bildet Risikoprofil angemessen ab; keine Anpassung erforderlich.",
-        verantwortlichUserId: risikocontrolling.id,
-      },
-      {
-        bezeichnung: "KI-gestütztes Bonitäts-Scoring Firmenkunden",
-        verwendungszweck: "Automatisierte Vorab-Einstufung im Kreditvergabeprozess Firmenkunden.",
-        komplexitaet: "komplex" as const,
-        technologiegestuetzteInnovationOderKi: true,
-        wesentlicheAnnahmen: "Trainingsdaten 2019-2025, Feature-Set Bilanzkennzahlen + Zahlungsverhalten.",
-        datenqualitaetspruefung: "Automatisierte Drift-Überwachung der Eingabedaten, monatliches Reporting an Risikocontrolling.",
-        ueberschreibungsregelung: "Manuelle Überschreibung durch Marktfolge nur mit dokumentierter Begründung, Vier-Augen-Prinzip.",
-        erklaerbarkeitsbewertung: "SHAP-basierte Erklärungskomponente pro Einzelentscheidung verfügbar; jährliche Erklärbarkeits-Überprüfung.",
-        validierungUnabhaengig: true,
-        initialvalidierungAm: new Date("2025-06-01"),
-        letzteValidierungAm: new Date("2026-06-01"),
-        naechsteValidierungFaellig: new Date("2027-06-01"), // anlassbezogen jährlich statt der Drei-Jahres-Regel, wegen KI-Charakter
-        validierungsergebnis: "Trennschärfe stabil (Gini 0,58); keine Verzerrung gegenüber Referenzgruppen festgestellt.",
-        verantwortlichUserId: risikocontrolling.id,
-      },
-    ].map((data) => prisma.rmModell.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
-  );
+  // AT 4.3.4 Modellregister seed data intentionally omitted — two other open PRs (#10, #13)
+  // already build that model independently; adding a third here would just guarantee a
+  // table-name conflict on merge.
 
   // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
 

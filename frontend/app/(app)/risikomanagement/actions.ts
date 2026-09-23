@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
 import type { RisikoartKategorie, RmStrategieArt, RtfAnsatz } from "@/lib/regstack/risikomanagement";
-import type { RmStresstestTyp, RmStresstestEbene, RmModellKomplexitaet } from "@/lib/regstack/risikomanagement-labels";
+import type { RmStresstestTyp, RmStresstestEbene } from "@/lib/regstack/risikomanagement-labels";
 
 export type RisikoinventurInput = {
   jahr: number;
@@ -167,38 +167,5 @@ export async function addRmStresstest(fields: RmStresstestInput) {
   revalidatePath("/risikomanagement");
 }
 
-export type RmModellInput = {
-  bezeichnung: string;
-  verwendungszweck: string;
-  komplexitaet: RmModellKomplexitaet;
-  technologiegestuetzteInnovationOderKi: boolean;
-  wesentlicheAnnahmen: string;
-  erklaerbarkeitsbewertung: string;
-};
-
-export async function addRmModell(fields: RmModellInput) {
-  await apiFetch("/risikomanagement/modelle", {
-    method: "POST",
-    body: JSON.stringify({
-      bezeichnung: fields.bezeichnung,
-      verwendungszweck: fields.verwendungszweck,
-      komplexitaet: fields.komplexitaet,
-      technologiegestuetzteInnovationOderKi: fields.technologiegestuetzteInnovationOderKi,
-      wesentlicheAnnahmen: fields.wesentlicheAnnahmen || undefined,
-      erklaerbarkeitsbewertung: fields.erklaerbarkeitsbewertung || undefined,
-    }),
-  });
-  revalidatePath("/risikomanagement");
-}
-
-// AT 4.1 Tz. 9 Folgevalidierung erfassen — jede Ausführung setzt letzteValidierungAm auf jetzt.
-export async function validiereRmModell(id: string, validierungsergebnis: string, naechsteValidierungFaellig: string) {
-  await apiFetch(`/risikomanagement/modelle/${id}/validieren`, {
-    method: "POST",
-    body: JSON.stringify({
-      validierungsergebnis,
-      naechsteValidierungFaellig: naechsteValidierungFaellig ? new Date(naechsteValidierungFaellig).toISOString() : undefined,
-    }),
-  });
-  revalidatePath("/risikomanagement");
-}
+// AT 4.3.4 Modellregister actions intentionally omitted here — two other open PRs (#10, #13)
+// build that model independently; see the matching note in prisma/schema.prisma.

@@ -331,7 +331,6 @@ model InstitutionProfile {
   rmReports                RmReport[]
   rmKapitalplanung         RmKapitalplanung[]
   rmStresstests            RmStresstest[]
-  rmModelle                RmModell[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -2061,12 +2060,14 @@ model IctArrangement {
 
 // ---------------------------------------------------------------------------
 // Risikomanagement (MaRisk AT 4) — Risikoinventur, Strategien, Risikotragfähigkeit,
-// Kapitalplanung (AT 4.1 Tz. 10), Stresstests (AT 4.3.3), Modellregister (AT 4.3.4 / AT 4.1
-// Tz. 9) und Berichtswesen an die Geschäftsleitung. Ursprünglicher MVP-Ausschnitt gemäß
-// Risikomanagement_BAIT_MVP_Spezifikation.md; Stresstests, Kapitalplanung und das Modellregister
-// waren dort bewusst auf Phase 2 verschoben und sind seit 2026-09-23 nachgezogen (siehe Doku dort).
-// Granulare BTR-Detailformulare je Risikoart (Kreditrisiko-Scoring, Zinsschock-Rechner als eigener
-// Rechenkern statt Ergebnis-Erfassung) bleiben weiterhin bewusst Phase 2. "Rm"-Präfix auf
+// Kapitalplanung (AT 4.1 Tz. 10), Stresstests (AT 4.3.3) und Berichtswesen an die
+// Geschäftsleitung. Ursprünglicher MVP-Ausschnitt gemäß Risikomanagement_BAIT_MVP_Spezifikation.md;
+// Stresstests und Kapitalplanung waren dort bewusst auf Phase 2 verschoben und sind seit
+// 2026-09-23 nachgezogen (siehe Doku dort). Das Modellregister (AT 4.3.4 / AT 4.1 Tz. 9) ist
+// bewusst NICHT hier — zwei andere offene PRs (#10, #13) bauen es bereits parallel, siehe Kommentar
+// vor der ehemaligen RmModell-Stelle unten. Granulare BTR-Detailformulare je Risikoart
+// (Kreditrisiko-Scoring, Zinsschock-Rechner als eigener Rechenkern statt Ergebnis-Erfassung)
+// bleiben weiterhin bewusst Phase 2. "Rm"-Präfix auf
 // modulweiten Enums, analog zu "Revision".
 // ---------------------------------------------------------------------------
 
@@ -2105,11 +2106,6 @@ enum RtfAnsatz {
 enum RmReportStatus {
   entwurf
   final
-}
-
-enum RmModellKomplexitaet {
-  einfach
-  komplex
 }
 
 enum RmStresstestTyp {
@@ -2288,40 +2284,11 @@ model RmStresstest {
   @@index([institutionId])
 }
 
-// AT 4.3.4 Verwendung von Modellen — Modellregister (Auswahl/Annahmen, Datenqualität,
-// Überschreibungen, Validierung, Erklärbarkeit). Deckt zugleich den Validierungs-Querverweis aus
-// AT 4.1 Tz. 9 ab (Initialvalidierung vor Einsatz, Folgevalidierung mind. alle drei Jahre, für
-// komplexe Methoden unabhängig von der Modellentwicklung).
-model RmModell {
-  id            String   @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  bezeichnung                            String
-  verwendungszweck                       String // Tz. 1 — z. B. Kreditvergabe, Risikoklassifizierung, RTF-Quantifizierung, Stresstest, Bewertung/Preisbildung
-  komplexitaet                           RmModellKomplexitaet @default(einfach)
-  technologiegestuetzteInnovationOderKi  Boolean @default(false) // Tz. 1/6
-  wesentlicheAnnahmen                    String? // Tz. 2
-  datenqualitaetspruefung                String? // Tz. 3
-  ueberschreibungsregelung               String? // Tz. 4
-  erklaerbarkeitsbewertung               String? // Tz. 6
-
-  externerDienstleister                  Boolean @default(false) // Tz. 9 — zentral validierte Methoden eines Dritten
-  validierungUnabhaengig                 Boolean @default(false) // Tz. 9 — Trennung Modellentwicklung/Validierung
-  initialvalidierungAm                   DateTime?
-  letzteValidierungAm                    DateTime?
-  naechsteValidierungFaellig             DateTime? // Tz. 9 — mind. alle drei Jahre sowie anlassbezogen
-  validierungsergebnis                   String?
-
-  verantwortlichUserId String?
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@map("rm_modelle")
-  @@index([institutionId])
-}
+// AT 4.3.4 Verwendung von Modellen (Modellregister) und der zugehörige Validierungs-Querverweis
+// aus AT 4.1 Tz. 9 werden bewusst NICHT hier modelliert — zwei parallele PRs (siehe #10 "Modell-
+// register" und #13 "RmModell"/"RmModellValidierung") bauen das bereits unabhängig voneinander.
+// Sobald eine davon landet, ist das der Ort für diesen Baustein; ein drittes konkurrierendes
+// Modell hier hätte nur einen Tabellennamen-Konflikt garantiert.
 
 // ---------------------------------------------------------------------------
 // IT-Risikomanagement / BAIT — IT-Strategie, Schutzbedarfsfeststellung,

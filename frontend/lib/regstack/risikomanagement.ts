@@ -3,7 +3,6 @@ import type {
   RisikoartKategorie,
   RmStresstestTyp,
   RmStresstestEbene,
-  RmModellKomplexitaet,
 } from "@/lib/regstack/risikomanagement-labels";
 
 // Client Components must import RISIKOART_LABELS/RisikoartKategorie from
@@ -124,25 +123,5 @@ export async function listRmStresstests() {
   return apiFetch<RmStresstest[]>("/risikomanagement/stresstests");
 }
 
-export type RmModell = {
-  id: string;
-  bezeichnung: string;
-  verwendungszweck: string;
-  komplexitaet: RmModellKomplexitaet;
-  technologiegestuetzteInnovationOderKi: boolean;
-  wesentlicheAnnahmen: string | null;
-  datenqualitaetspruefung: string | null;
-  ueberschreibungsregelung: string | null;
-  erklaerbarkeitsbewertung: string | null;
-  externerDienstleister: boolean;
-  validierungUnabhaengig: boolean;
-  initialvalidierungAm: string | null;
-  letzteValidierungAm: string | null;
-  naechsteValidierungFaellig: string | null;
-  validierungsergebnis: string | null;
-  verantwortlichUserId: string | null;
-};
-
-export async function listRmModelle() {
-  return apiFetch<RmModell[]>("/risikomanagement/modelle");
-}
+// AT 4.3.4 Modellregister types intentionally omitted here — two other open PRs (#10, #13)
+// build that model independently; see the matching note in prisma/schema.prisma.

@@ -48,10 +48,3 @@ export const STRESSTEST_EBENE_LABELS: Record<RmStresstestEbene, string> = {
   portfolio: "Portfolio",
   geschaeftsbereich: "Geschäftsbereich",
 };
-
-export type RmModellKomplexitaet = "einfach" | "komplex";
-
-export const MODELL_KOMPLEXITAET_LABELS: Record<RmModellKomplexitaet, string> = {
-  einfach: "Einfach",
-  komplex: "Komplex",
-};
