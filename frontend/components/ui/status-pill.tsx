@@ -87,12 +87,6 @@ const STATUS_TONE: Record<string, Tone> = {
   unzureichend: "danger",
   eingereicht: "warning",
   genehmigt: "success",
-  // IT-Risiko/BAIT Phase 2: Berechtigungen (Kap. 6), Änderungen/Störungen (Kap. 8)
-  deaktiviert: "warning",
-  entzogen: "danger",
-  abgebrochen: "danger",
-  umgesetzt: "success",
-  zurueckgestellt: "warning",
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {
