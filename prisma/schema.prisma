@@ -2,7 +2,14 @@
 // Datenmodell-Verifikation siehe claude/AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md (Projekt-Docs)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; "rhel-openssl-3.0.x" for Vercel's actual Node 20-24.x serverless
+  // runtime (Amazon Linux 2023, OpenSSL 3.0) -- without this, the query engine binary built
+  // during Vercel's build step doesn't necessarily match the Lambda execution environment, and
+  // Prisma Client fails to load the engine at the first real query. That failure can crash the
+  // whole function invocation (FUNCTION_INVOCATION_FAILED) instead of throwing a catchable error,
+  // which is why this was invisible in every local/CI run and only reproduced in production.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
