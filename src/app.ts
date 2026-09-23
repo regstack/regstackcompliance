@@ -11,6 +11,7 @@ import { HttpError } from "./utils/errors";
 const allowedOrigins = [
   "https://www.regstack.de",
   "https://regstack.de",
+  "https://app.regstack.de",
   /^https:\/\/regstack-[a-z0-9-]+\.vercel\.app$/,
   "http://localhost:3000",
 ];

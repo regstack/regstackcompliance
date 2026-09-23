@@ -92,6 +92,28 @@ Anwendungsverhalten):
    können.
 5. Testinstanz nach Abschluss vollständig löschen.
 
+**Erster anwendungsseitiger Restore-Test — durchgeführt 2026-09-19 (Claude Sonnet 5, gegen eine
+lokale Postgres-16-Instanz mit Seed-Daten als Stellvertreter für die Produktivdatenbank, da diese
+Sandbox keinen Zugriff auf die echte Supabase-Produktivdatenbank hat):**
+
+- `pg_dump` mit denselben Flags wie `src/modules/backup/backupDatabase.ts` (`--clean --if-exists
+  --no-owner --no-acl`) gegen die Seed-Datenbank.
+- Restore in eine frische, isolierte zweite lokale Datenbank; `npx prisma migrate status` bestätigt
+  strukturell vollständig und aktuell.
+- Stichprobe Zeilenanzahl (`users`, `outsourcing_activities`, `audit_log_events`, `ict_providers`,
+  `ict_arrangements`, `externe_pruefungen`) — alle exakt identisch zwischen Quelle und
+  wiederhergestellter Instanz.
+- Backend gegen die wiederhergestellte Instanz gestartet; Login mit einem echten Seed-User
+  (`compliance@beispiel-leasing.de`) erfolgreich; authentifizierter Read (`GET /api/activities`)
+  liefert korrekte Daten zurück.
+- Testinstanz und alle temporären Dateien danach vollständig entfernt.
+- **Einschränkung:** Seed-Datensatzgröße, nicht produktionsgroß — die gemessene Dauer (Sekunden)
+  ist daher keine belastbare Aussage zum RTO-Ziel (Abschnitt 1) gegen die echte Produktivdatenbank.
+  Bestätigt aber den kompletten Mechanismus (Dump-Format, Restore-Prozess, Schema-Kompatibilität,
+  Anwendungsverhalten gegen die wiederhergestellte DB) als funktionsfähig — genau die Lücke, die
+  der tägliche automatisierte `verify-restore`-Job (nur Struktur) nicht abdeckt. Ein Durchlauf
+  gegen einen echten Produktions-Dump mit Dauermessung steht weiterhin aus.
+
 ## 4. Rollen und Verantwortlichkeiten
 
 - **Owner:** aktuell die Inhaberperson selbst (solo — kein dediziertes Ops-Team). Verantwortlich
@@ -136,7 +158,8 @@ Anwendungsverhalten):
   Kommentar in `src/scripts/backup-database.ts`.
 - Wöchentliche/monatliche Retention-Staffelung automatisieren — aktuell nur ein tägliches
   Zähl-Limit (Abschnitt 2).
-- Ersten vollständigen (manuellen, anwendungsseitigen) Restore-Test terminieren und Ergebnis
-  dokumentieren, bevor das System für echte Kundendaten produktiv geht — der automatisierte
-  strukturelle Check läuft zwar schon täglich, ersetzt aber nicht den ersten Praxistest mit einem
-  echten Login/API-Aufruf gegen die wiederhergestellte Instanz.
+- ~~Ersten vollständigen (manuellen, anwendungsseitigen) Restore-Test terminieren und Ergebnis
+  dokumentieren~~ — **erledigt am 2026-09-19, siehe Abschnitt 3.** Mechanismus bestätigt
+  funktionsfähig; ein Durchlauf gegen einen echten Produktions-Dump (statt Seed-Daten) mit
+  Dauermessung für das RTO-Ziel steht weiterhin aus, bevor das System für echte Kundendaten
+  produktiv geht.

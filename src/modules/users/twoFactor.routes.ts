@@ -5,7 +5,13 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../utils/errors";
 import { generateTotpSecret, totpKeyUri, verifyTotpCode } from "../../utils/totp";
 import { rateLimit } from "../../middleware/rateLimit";
+import { withAudit } from "../../middleware/auditTrail";
 import QRCode from "qrcode";
+
+// previousValues/newValues on an AuditLogEvent are stored as plain JSON -- never let totpSecret
+// (or any future secret field) reach that table. Every withAudit call below selects only this
+// shape for both "before" and the update's own return value.
+const AUDIT_SAFE_USER_SELECT = { id: true, totpEnabled: true } as const;
 
 const router = Router();
 
@@ -23,7 +29,7 @@ const codeSchema = z.object({ code: z.string().regex(/^\d{6}$/, "6-stelliger Cod
 
 // Guards brute-forcing the 6-digit code — keyed per user, not per IP, since the caller is already
 // authenticated at this point.
-const codeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyFn: (req) => `2fa:${req.user!.userId}` });
+const codeLimiter = rateLimit({ name: "2fa-code", windowMs: 15 * 60 * 1000, max: 10, keyFn: (req) => req.user!.userId });
 
 router.get(
   "/status",
@@ -46,7 +52,10 @@ router.post(
     if (!user) throw new NotFoundError("Nutzer nicht gefunden");
 
     const secret = generateTotpSecret();
-    await prisma.user.update({ where: { id: user.id }, data: { totpSecret: secret, totpEnabled: false } });
+    await withAudit(
+      { entityType: "User", entityId: user.id, action: "UPDATE", actor: req.user, ipAddress: req.ip, before: { id: user.id, totpEnabled: user.totpEnabled } },
+      (tx) => tx.user.update({ where: { id: user.id }, data: { totpSecret: secret, totpEnabled: false }, select: AUDIT_SAFE_USER_SELECT })
+    );
 
     const otpauthUrl = totpKeyUri(user.email, secret);
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
@@ -68,7 +77,10 @@ router.post(
     const valid = await verifyTotpCode(user.totpSecret, parsed.data.code);
     if (!valid) throw new ValidationError("Code ungültig oder abgelaufen");
 
-    await prisma.user.update({ where: { id: user.id }, data: { totpEnabled: true } });
+    await withAudit(
+      { entityType: "User", entityId: user.id, action: "UPDATE", actor: req.user, ipAddress: req.ip, before: { id: user.id, totpEnabled: user.totpEnabled } },
+      (tx) => tx.user.update({ where: { id: user.id }, data: { totpEnabled: true }, select: AUDIT_SAFE_USER_SELECT })
+    );
     res.json({ totpEnabled: true });
   })
 );
@@ -86,7 +98,10 @@ router.post(
     const valid = await verifyTotpCode(user.totpSecret, parsed.data.code);
     if (!valid) throw new ForbiddenError("Code ungültig");
 
-    await prisma.user.update({ where: { id: user.id }, data: { totpEnabled: false, totpSecret: null } });
+    await withAudit(
+      { entityType: "User", entityId: user.id, action: "UPDATE", actor: req.user, ipAddress: req.ip, before: { id: user.id, totpEnabled: user.totpEnabled } },
+      (tx) => tx.user.update({ where: { id: user.id }, data: { totpEnabled: false, totpSecret: null }, select: AUDIT_SAFE_USER_SELECT })
+    );
     res.json({ totpEnabled: false });
   })
 );

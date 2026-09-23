@@ -13,6 +13,8 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
+    outputs:
+      dump-key: ${{ steps.run-backup.outputs.dump-key }}
     env:
       # Must be Supabase's DIRECT (non-pooled) connection string, or its session-mode pooler — not
       # the transaction-mode pgbouncer URL the app itself may use for regular queries. pg_dump
@@ -33,14 +35,14 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - run: npm run backup:run
-      # dump.sql is the plain-text dump backup:run produced on disk before gzipping it for upload
-      # — handed to verify-restore below so that job doesn't need its own S3 read access.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: db-dump
-          path: dump.sql
-          retention-days: 2
+      - id: run-backup
+        run: npm run backup:run
+      # No artifact upload here on purpose: dump.sql on this runner's disk is the full plaintext
+      # pg_dump output, including bcrypt password hashes and raw (unhashed) TOTP secrets. It never
+      # leaves this job — verify-restore below re-fetches the just-uploaded gzip copy directly from
+      # S3 (already access-controlled by the same S3 credentials that guard the production DB
+      # itself, and encrypted at rest) rather than via a GitHub Actions artifact, which would be
+      # downloadable in plaintext by anyone with repo Actions-read access for the retention window.
 
   verify-restore:
     needs: backup
@@ -61,6 +63,13 @@ jobs:
     env:
       DATABASE_URL: "postgresql://regstack:regstack_restore_check@localhost:5432/regstack?schema=public"
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+      S3_REGION: ${{ vars.S3_REGION }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_BACKUP_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      S3_FORCE_PATH_STYLE: ${{ vars.S3_FORCE_PATH_STYLE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,9 +77,8 @@ jobs:
           node-version: 20
           cache: "npm"
       - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: db-dump
+      - name: Fetch the just-created backup from S3 (never a GitHub Actions artifact — see the backup job)
+        run: npm run backup:fetch -- "${{ needs.backup.outputs.dump-key }}"
       - name: Restore the just-taken dump into a throwaway Postgres
         # ON_ERROR_STOP=1: the dump is --clean --if-exists (idempotent against a fresh DB), so a
         # real error here means the backup itself is broken, not just "object already existed".

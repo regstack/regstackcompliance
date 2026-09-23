@@ -191,8 +191,15 @@ router.post(
     );
 
     // Mirrors the Supabase trigger: confirming an assignment sets the norm's fachbereichUserId.
+    // Its own withAudit call (a second write, not folded into the one above) since it's a
+    // different entity -- the non-negotiable is "no write without a matching audit row", not
+    // "at most one audit row per request".
     if (parsed.data.response === "bestaetigt") {
-      await prisma.norm.update({ where: { id: req.params.normId }, data: { fachbereichUserId: handshake.assignedUserId } });
+      const normBefore = await prisma.norm.findUnique({ where: { id: req.params.normId } });
+      await withAudit(
+        { entityType: "Norm", entityId: req.params.normId, action: "UPDATE", actor: req.user, ipAddress: req.ip, before: normBefore },
+        (tx) => tx.norm.update({ where: { id: req.params.normId }, data: { fachbereichUserId: handshake.assignedUserId } })
+      );
     }
 
     res.json(updated);

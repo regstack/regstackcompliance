@@ -19,7 +19,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
     "reminders:send": "ts-node src/scripts/send-deadline-reminders.ts",
-    "backup:run": "ts-node src/scripts/backup-database.ts"
+    "backup:run": "ts-node src/scripts/backup-database.ts",
+    "backup:fetch": "ts-node src/scripts/fetch-backup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",

@@ -48,4 +48,22 @@ describe("requirePermission — server-side RBAC (non-negotiable, not UI-only)",
     requirePermission("ictRegister", "read")(mockReq("VIEWER"), mockRes, readNext);
     expect(readNext).toHaveBeenCalledOnce();
   });
+
+  // The "user" resource (src/modules/users/userAdmin.routes.ts) existed in the matrix with no
+  // route enforcing it until now -- pinning this down so a future change can't silently widen it.
+  it("restricts user administration to ADMIN only, and read to ADMIN/GESCHAEFTSLEITUNG", () => {
+    const writeNext = vi.fn();
+    requirePermission("user", "write")(mockReq("ADMIN"), mockRes, writeNext);
+    expect(writeNext).toHaveBeenCalledOnce();
+
+    for (const role of ["GESCHAEFTSLEITUNG", "COMPLIANCE", "VIEWER"]) {
+      expect(() => requirePermission("user", "write")(mockReq(role), mockRes, vi.fn())).toThrow(ForbiddenError);
+    }
+
+    const readNext = vi.fn();
+    requirePermission("user", "read")(mockReq("GESCHAEFTSLEITUNG"), mockRes, readNext);
+    expect(readNext).toHaveBeenCalledOnce();
+
+    expect(() => requirePermission("user", "read")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(ForbiddenError);
+  });
 });

@@ -43,6 +43,23 @@ export function SidebarNav({
   const activeModule = moduleForPathname(pathname);
   const onDashboard = !activeModule && pathname.startsWith("/dashboard");
 
+  // usePathname() never includes the hash fragment, so items like Risikomanagement/IT-Risiko
+  // whose sub-sections are anchors on one page (e.g. "/risikomanagement#inventur") rather than
+  // real routes need their own hash tracking, or isActiveItem below would never match them.
+  const [hash, setHash] = useState("");
+  useEffect(() => {
+    const syncHash = () => setHash(window.location.hash);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
+  function isActiveItem(href: string): boolean {
+    const [itemPath, itemHash] = href.split("#");
+    if (itemHash) return pathname === itemPath && hash === `#${itemHash}`;
+    return pathname.startsWith(itemPath);
+  }
+
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
 
@@ -165,7 +182,7 @@ export function SidebarNav({
                   </div>
                 )}
                 {group.items.map((item, ii) => {
-                  const isCurrent = pathname.startsWith(item.href);
+                  const isCurrent = isActiveItem(item.href);
                   return (
                     <Link
                       key={item.href}

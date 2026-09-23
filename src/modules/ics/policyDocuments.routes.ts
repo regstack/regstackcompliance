@@ -6,8 +6,16 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
+import { assertIcsKeyBelongsToInstitution, buildIcsPolicyKey, createIcsUploadUrl } from "./objectStorage";
 
 const router = Router();
+
+const ALLOWED_POLICY_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+const MAX_POLICY_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
 router.get(
   "/",
@@ -51,6 +59,27 @@ router.get(
   })
 );
 
+// Step 1 of the upload flow (same pattern as contracts.routes.ts / controlTests.routes.ts): mint a
+// pre-signed PUT URL with this institution's id embedded in the key server-side.
+const uploadUrlSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  fileMime: z.enum([...ALLOWED_POLICY_MIME_TYPES] as [string, ...string[]]),
+  fileSize: z.number().int().positive().max(MAX_POLICY_FILE_SIZE_BYTES),
+});
+
+router.post(
+  "/upload-url",
+  requirePermission("icsPolicy", "write"),
+  asyncHandler(async (req, res) => {
+    const parsed = uploadUrlSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError(parsed.error.message);
+
+    const objectKey = buildIcsPolicyKey(req.user!.institutionId, parsed.data.fileName);
+    const uploadUrl = await createIcsUploadUrl(objectKey, parsed.data.fileMime);
+    res.json({ uploadUrl, objectKey });
+  })
+);
+
 const policySchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -69,6 +98,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const parsed = policySchema.safeParse(req.body);
     if (!parsed.success) throw new ValidationError(parsed.error.message);
+    if (parsed.data.fileObjectKey) assertIcsKeyBelongsToInstitution(parsed.data.fileObjectKey, req.user!.institutionId);
 
     const { businessProcessIds, controlIds, ...data } = parsed.data;
     const id = randomUUID();
@@ -99,6 +129,7 @@ router.patch(
   asyncHandler(async (req, res) => {
     const parsed = policySchema.partial().safeParse(req.body);
     if (!parsed.success) throw new ValidationError(parsed.error.message);
+    if (parsed.data.fileObjectKey) assertIcsKeyBelongsToInstitution(parsed.data.fileObjectKey, req.user!.institutionId);
 
     const before = await prisma.icsPolicyDocument.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
     if (!before) throw new NotFoundError("Dokument nicht gefunden");

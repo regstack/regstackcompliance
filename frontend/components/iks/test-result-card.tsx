@@ -6,8 +6,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TEST_STATUS_LABELS, TEST_RESULT_LABELS, type ControlTest } from "@/lib/regstack/ics-utils";
-import { updateControlTest, addControlTestEvidence } from "@/app/(app)/iks/actions";
-import { uploadIcsFile } from "@/lib/regstack/storage";
+import { updateControlTest, addControlTestEvidence, getIcsEvidenceUploadUrl } from "@/app/(app)/iks/actions";
 
 const inputCls = "rounded-md border border-border-strong bg-surface px-2 py-1 text-sm text-foreground";
 
@@ -43,8 +42,15 @@ export function TestResultCard({ test, canWrite }: { test: ControlTest; canWrite
     setError(null);
     setUploading(true);
     try {
-      const uploaded = await uploadIcsFile(file, "ics-evidence");
-      await addControlTestEvidence(test.id, uploaded);
+      const { uploadUrl, objectKey } = await getIcsEvidenceUploadUrl(test.id, file.name, file.type, file.size);
+      const putRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      if (!putRes.ok) throw new Error("Hochladen zum Objektspeicher fehlgeschlagen.");
+      await addControlTestEvidence(test.id, {
+        fileObjectKey: objectKey,
+        fileName: file.name,
+        fileSize: file.size,
+        fileMime: file.type,
+      });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
