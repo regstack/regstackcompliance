@@ -7,6 +7,24 @@ RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/` und `src/mod
 Client). Offen: Frontend-Anbindung, Seed-Daten, Nachweis-Integration (`EvidenceModule` um
 `RISK_MANAGEMENT`/`IT_RISK` erweitern) und die drei Fragen im letzten Abschnitt.
 
+**Update 2026-09-23 — Phase-2-Lücken 4.1 Tz. 9/10, 4.3.3 und 4.3.4 nachgezogen:** Auf Basis des
+vollständigen AT-4-Primärtexts (BA 54, Stand 30.06.2026) wurden drei der unten als "bewusst Phase 2"
+markierten Bausteine ergänzt: `RmKapitalplanung` (AT 4.1 Tz. 10), `RmStresstest` (AT 4.3.3, inkl.
+schwerem konjunkturellem Abschwung und inversem Stresstest) und `RmModell` (AT 4.3.4 Modellregister,
+schließt zugleich den Validierungs-Querverweis aus AT 4.1 Tz. 9). Gleiches Muster wie die
+bestehenden Modelle: `institutionId`-Scoping, jeder Write über `withAudit(...)`, RBAC-Einträge
+(`riskCapitalPlanning[.approve]`, `riskStressTest`, `riskModelRecord`) mit derselben Rollenaufteilung
+wie `riskManagementRecord`/`riskStrategy.approve`. Schema-Validierung, `prisma migrate diff` (leer
+gegen den neuen Stand) und `prisma generate` liefen sauber; diese Session hatte **keine** laufende
+Postgres-Instanz zur Verfügung, daher wurde die Migration nicht per `prisma migrate deploy`
+ausgeführt — das steht vor dem nächsten Deploy noch aus (siehe CLAUDE.md: `npx prisma migrate deploy`
+gegen eine echte DB). AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes
+Datenmodell — das ist Funktionstrennung/Prozessdesign (serverseitig ohnehin über RBAC erzwungen),
+kein wiederkehrender Datensatz, analog zur Entscheidung gegen ein eigenes ISB-Login. Granulare
+BTR-Detailformulare je Risikoart (ein eigener Zinsschock-/Kreditrisiko-Rechenkern statt reiner
+Ergebnis-Erfassung) und die AT-3.2-Aufsichtsorgan-Berichterstattung (siehe Lücke 4 unten) bleiben
+offen.
+
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
 ein Ordner je Modul unter `src/modules/`, Prisma-Modelle mit `institutionId`-Scoping, RBAC-Eintrag
@@ -56,9 +74,11 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
    hohem NPL-Bestand), daher kein MVP-Kandidat, aber ein sauberer Phase-2-Kandidat, falls relevant.
 7. **AT 4.3.4 Verwendung von Modellen** — komplett neues Kapitel, deckt Modellrisiko-Governance ab
    (Auswahl, Validierung, Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive
-   "technologiegestützter Innovation und künstlicher Intelligenz". Kein Modell dafür existiert
-   bisher; ein schlankes `Modellregister` (Modell, Zweck, letzte Validierung, Erklärbarkeits-
-   Bewertung) wäre der naheliegende Phase-2-Zuschnitt.
+   "technologiegestützter Innovation und künstlicher Intelligenz". **Umgesetzt seit 2026-09-23** als
+   `RmModell` (Modellregister: Zweck, Komplexität, Annahmen, Datenqualität, Überschreibungsregelung,
+   Erklärbarkeitsbewertung, Validierungszyklus inkl. Unabhängigkeits-Flag für komplexe Modelle) —
+   schließt zugleich den Validierungs-Querverweis aus AT 4.1 Tz. 9 (Initial-/Folgevalidierung,
+   mind. alle drei Jahre).
 
 Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 - IT-Auslagerungen bleiben `OutsourcingActivity` mit `scope = IKT_DORA` — BAIT Kap. 8 (Steuerung
@@ -81,10 +101,15 @@ Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 | Risikostrategie | Geschäfts-/Risikostrategie + Teilstrategien, Verabschiedungs-Workflow durch die GL |
 | Risikotragfähigkeit | Periodischer RTF-Snapshot (normativ/ökonomisch), Limits je Risikoart, Auslastung |
 | RM-Reporting | Quartalsbericht an die GL, Entwurf→final wie bei Compliance/Revision |
+| Kapitalplanung (seit 2026-09-23) | Jährlicher mehrjähriger Kapitalbedarfs-/Kapitaldeckungsplan, GL-Verabschiedung — AT 4.1 Tz. 10 |
+| Stresstests (seit 2026-09-23) | Je-Test-Datensatz: Typ (Sensitivität/Szenario/schwerer Abschwung/invers/Resilienz), Ebene, Ergebnis, RTF-Bezug — AT 4.3.3 |
+| Modellregister (seit 2026-09-23) | Modell, Zweck, Annahmen, Datenqualität, Überschreibungen, Erklärbarkeit, Validierungszyklus — AT 4.3.4 / AT 4.1 Tz. 9 |
 
-**Bewusst auf Phase 2 verschoben:** granulare BTR-Formulare je Risikoart (Kreditrisiko-Scoring,
-Zinsschock-Rechner etc.), Stresstest-Workflow, Limitüberschreitungs-Eskalationskette. Diese sind
-fachlich groß genug für eigene Sub-Specs und sollten nicht die MVP-Lieferung blockieren.
+**Weiterhin bewusst auf Phase 2 verschoben:** granulare BTR-Formulare je Risikoart (ein eigener
+Kreditrisiko-Scoring-/Zinsschock-Rechenkern statt reiner Ergebnis-Erfassung im Stresstest-Datensatz)
+und eine Limitüberschreitungs-Eskalationskette. Diese sind fachlich groß genug für eigene Sub-Specs
+und sollten nicht die MVP-Lieferung blockieren. AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst
+kein eigenes Datenmodell — Funktionstrennung ist Prozessdesign/RBAC, kein wiederkehrender Datensatz.
 
 ### Vorgeschlagene Enums
 
@@ -238,11 +263,18 @@ model RmReportAcknowledgement {
 | "riskStrategy.approve"    // Verabschiedung Geschäfts-/Risikostrategie — GL-exklusiv
 | "riskManagementReport"
 | "riskManagementReport.acknowledge"
+| "riskCapitalPlanning"           // seit 2026-09-23 — Kapitalplanung, AT 4.1 Tz. 10
+| "riskCapitalPlanning.approve"   // Verabschiedung — GL-exklusiv, wie riskStrategy.approve
+| "riskStressTest"                // seit 2026-09-23 — Stresstests, AT 4.3.3
+| "riskModelRecord"               // seit 2026-09-23 — Modellregister, AT 4.3.4 / AT 4.1 Tz. 9
 ```
 
 Vorschlag Matrix: `riskManagementRecord` write = `RISIKOCONTROLLING, ADMIN`, read = alle Rollen
 (inkl. `VIEWER`) — deckungsgleich mit dem Muster der bestehenden Module. `riskStrategy.approve`
-write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9.
+write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9. Die drei neuen
+Resources folgen exakt demselben Muster: `riskCapitalPlanning`/`riskStressTest`/`riskModelRecord`
+write = `RISIKOCONTROLLING, ADMIN`, read = alle Rollen; `riskCapitalPlanning.approve` write =
+`GESCHAEFTSLEITUNG, ADMIN`.
 
 ### Routen (Vorschlag)
 
@@ -252,6 +284,11 @@ write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9.
 /risikomanagement/strategien/:id/approve
 /risikomanagement/risikotragfaehigkeit
 /risikomanagement/reports
+/risikomanagement/kapitalplanung              (seit 2026-09-23)
+/risikomanagement/kapitalplanung/:id/verabschieden
+/risikomanagement/stresstests                 (seit 2026-09-23)
+/risikomanagement/modelle                     (seit 2026-09-23)
+/risikomanagement/modelle/:id/validieren
 ```
 
 ---

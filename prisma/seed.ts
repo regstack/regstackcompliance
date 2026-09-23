@@ -1,7 +1,7 @@
 // Seed data intentionally mirrors the fictional example items in regstack_cockpit.html (Anbieter
 // A-E, "Beispiel Leasing AG") — same story, same numbers, so a demo told from the prototype and a
 // demo told from this API agree with each other.
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, RisikoartKategorie } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -1305,6 +1305,103 @@ async function main() {
       createdByUserId: risikocontrolling.id,
     },
   });
+
+  // AT 4.1 Tz. 10 — Kapitalplanungsprozess, mehrjähriger Horizont, im Einklang mit der
+  // Geschäftsstrategie 2026 (siehe oben), noch unverabschiedet für die Freigabe-Demo im Cockpit.
+  await prisma.rmKapitalplanung.create({
+    data: {
+      institutionId: institution.id,
+      jahr: 2026,
+      planungshorizontJahre: 3,
+      kapitalbedarfPlanung: { "2026": 112_000_000, "2027": 118_500_000, "2028": 124_000_000 },
+      verfuegbaresKapitalPlanung: { "2026": 128_500_000, "2027": 130_000_000, "2028": 133_000_000 },
+      adverseSzenarienBeruecksichtigt: true,
+      konsistenzGeschaeftsplanung: "Abgeglichen mit Geschäftsstrategie 2026 (Wachstum Firmenkundenleasing); keine Abweichungen.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  // AT 4.3.3 Stresstests — gesamtbankweiter schwerer konjunktureller Abschwung (Tz. 3), ein
+  // risikoartenspezifisches Sensitivitätsszenario und ein inverser Stresstest (Tz. 4).
+  await Promise.all(
+    [
+      {
+        jahr: 2026,
+        typ: "schwerer_konjunktureller_abschwung" as const,
+        ebene: "gesamtinstitut" as const,
+        betroffeneRisikoarten: ["ADRESSENAUSFALLRISIKO", "MARKTPREISRISIKO_ANLAGEBUCH", "LIQUIDITAETSRISIKO", "KONZENTRATIONSRISIKO"] as RisikoartKategorie[],
+        szenariobeschreibung: "Gesamtbankweites Abschwungszenario: BIP -3 %, Immobilienpreise -15 %, Zinsanstieg +150 BP.",
+        risikofaktoren: "Ausfallraten Firmenkunden, Sicherheitenwerte Gewerbeimmobilien, Refinanzierungskosten.",
+        wechselwirkungenBeruecksichtigt: true,
+        ergebnis: "Auslastung Risikodeckungspotenzial steigt auf 91 %; Konzentrationsrisiko Bauwirtschaft überschreitet Limit.",
+        rtfBeruecksichtigt: true,
+        handlungsbedarf: "Limitanpassung Branchenkonzentration Bauwirtschaft (siehe RM-Quartalsbericht Q1/2026).",
+        durchgefuehrtAm: new Date("2026-02-10"),
+        angemessenheitGeprueftAm: new Date("2026-02-15"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+      {
+        jahr: 2026,
+        typ: "sensitivitaetsanalyse" as const,
+        ebene: "risikoart" as const,
+        betroffeneRisikoarten: ["MARKTPREISRISIKO_ANLAGEBUCH"] as RisikoartKategorie[],
+        szenariobeschreibung: "Paralleler Zinsschock +200 BP im Bankbuch.",
+        risikofaktoren: "Barwertänderung zinstragender Positionen im Anlagebuch.",
+        ergebnis: "Barwertverlust innerhalb der aufsichtlich zulässigen Schwelle (< 20 % der Eigenmittel).",
+        rtfBeruecksichtigt: true,
+        durchgefuehrtAm: new Date("2026-03-01"),
+        angemessenheitGeprueftAm: new Date("2026-03-01"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+      {
+        jahr: 2026,
+        typ: "inverser_stresstest" as const,
+        ebene: "gesamtinstitut" as const,
+        betroffeneRisikoarten: [] as RisikoartKategorie[],
+        szenariobeschreibung: "Qualitative Analyse: welche Ereigniskombination gefährdet die Überlebensfähigkeit des Geschäftsmodells?",
+        ergebnis: "Kombinierter Ausfall der zwei größten Refinanzierungspartner zusammen mit einem schweren Bauwirtschaftseinbruch identifiziert als tragfähigkeitsgefährdend.",
+        handlungsbedarf: "Diversifizierung der Refinanzierungsstruktur als Maßnahme in Risikostrategie 2027 zu prüfen.",
+        durchgefuehrtAm: new Date("2026-04-01"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+    ].map((data) => prisma.rmStresstest.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
+  );
+
+  // AT 4.3.4 Verwendung von Modellen — Modellregister inkl. Validierungszyklus (AT 4.1 Tz. 9),
+  // eines davon mit Charakteristika technologiegestützter Innovation/KI (Erklärbarkeit, Tz. 6).
+  await Promise.all(
+    [
+      {
+        bezeichnung: "RTF-Berechnungsmodell (ökonomische Perspektive)",
+        verwendungszweck: "Quantifizierung des internen Kapitalbedarfs je Risikoart für die Risikotragfähigkeit.",
+        komplexitaet: "komplex" as const,
+        wesentlicheAnnahmen: "Historische Verlustverteilungen, Konfidenzniveau 99,9 %, Haltedauer 1 Jahr.",
+        datenqualitaetspruefung: "Vierteljährlicher Plausibilitätsabgleich gegen Kreditportfolio- und Marktdaten.",
+        validierungUnabhaengig: true,
+        initialvalidierungAm: new Date("2024-01-15"),
+        letzteValidierungAm: new Date("2026-01-15"),
+        naechsteValidierungFaellig: new Date("2029-01-15"),
+        validierungsergebnis: "Modell bildet Risikoprofil angemessen ab; keine Anpassung erforderlich.",
+        verantwortlichUserId: risikocontrolling.id,
+      },
+      {
+        bezeichnung: "KI-gestütztes Bonitäts-Scoring Firmenkunden",
+        verwendungszweck: "Automatisierte Vorab-Einstufung im Kreditvergabeprozess Firmenkunden.",
+        komplexitaet: "komplex" as const,
+        technologiegestuetzteInnovationOderKi: true,
+        wesentlicheAnnahmen: "Trainingsdaten 2019-2025, Feature-Set Bilanzkennzahlen + Zahlungsverhalten.",
+        datenqualitaetspruefung: "Automatisierte Drift-Überwachung der Eingabedaten, monatliches Reporting an Risikocontrolling.",
+        ueberschreibungsregelung: "Manuelle Überschreibung durch Marktfolge nur mit dokumentierter Begründung, Vier-Augen-Prinzip.",
+        erklaerbarkeitsbewertung: "SHAP-basierte Erklärungskomponente pro Einzelentscheidung verfügbar; jährliche Erklärbarkeits-Überprüfung.",
+        validierungUnabhaengig: true,
+        initialvalidierungAm: new Date("2025-06-01"),
+        letzteValidierungAm: new Date("2026-06-01"),
+        naechsteValidierungFaellig: new Date("2027-06-01"), // anlassbezogen jährlich statt der Drei-Jahres-Regel, wegen KI-Charakter
+        validierungsergebnis: "Trennschärfe stabil (Gini 0,58); keine Verzerrung gegenüber Referenzgruppen festgestellt.",
+        verantwortlichUserId: risikocontrolling.id,
+      },
+    ].map((data) => prisma.rmModell.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
+  );
 
   // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
 

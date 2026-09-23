@@ -36,6 +36,45 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     requirePermission("riskManagementReport.acknowledge", "write")(mockReq("ADMIN"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
+
+  it("allows RISIKOCONTROLLING to write riskCapitalPlanning (AT 4.1 Tz. 10), but not INTERNE_REVISION", () => {
+    const next = vi.fn();
+    requirePermission("riskCapitalPlanning", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() =>
+      requirePermission("riskCapitalPlanning", "write")(mockReq("INTERNE_REVISION"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+  });
+
+  it("only GESCHAEFTSLEITUNG/ADMIN may verabschieden a Kapitalplanung", () => {
+    expect(() =>
+      requirePermission("riskCapitalPlanning.approve", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+    const next = vi.fn();
+    requirePermission("riskCapitalPlanning.approve", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("allows RISIKOCONTROLLING to write a riskStressTest (AT 4.3.3), but not COMPLIANCE; every module role can read", () => {
+    const next = vi.fn();
+    requirePermission("riskStressTest", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("riskStressTest", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+    const readNext = vi.fn();
+    requirePermission("riskStressTest", "read")(mockReq("VIEWER"), mockRes, readNext);
+    expect(readNext).toHaveBeenCalledOnce();
+  });
+
+  it("allows RISIKOCONTROLLING to write a riskModelRecord (AT 4.3.4 Modellregister), but not AUSLAGERUNGSBEAUFTRAGTER", () => {
+    const next = vi.fn();
+    requirePermission("riskModelRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() =>
+      requirePermission("riskModelRecord", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+  });
 });
 
 describe("requirePermission — IT-Risiko/BAIT resources", () => {
