@@ -87,6 +87,9 @@ const STATUS_TONE: Record<string, Tone> = {
   unzureichend: "danger",
   eingereicht: "warning",
   genehmigt: "success",
+  // Risikomanagement: Kapitalplanung-Status, Modellregister-Komplexität
+  einfach: "success",
+  komplex: "warning",
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {

@@ -18,7 +18,9 @@ wie `riskManagementRecord`/`riskStrategy.approve`. Schema-Validierung, `prisma m
 gegen den neuen Stand) und `prisma generate` liefen sauber; diese Session hatte **keine** laufende
 Postgres-Instanz zur Verfügung, daher wurde die Migration nicht per `prisma migrate deploy`
 ausgeführt — das steht vor dem nächsten Deploy noch aus (siehe CLAUDE.md: `npx prisma migrate deploy`
-gegen eine echte DB). AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes
+gegen eine echte DB). Frontend-Panels für alle drei liegen ebenfalls vor (`/risikomanagement`,
+`components/risikomanagement/{kapitalplanung,stresstest,modell}-panel.tsx`), `next build` läuft
+sauber durch. AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes
 Datenmodell — das ist Funktionstrennung/Prozessdesign (serverseitig ohnehin über RBAC erzwungen),
 kein wiederkehrender Datensatz, analog zur Entscheidung gegen ein eigenes ISB-Login. Granulare
 BTR-Detailformulare je Risikoart (ein eigener Zinsschock-/Kreditrisiko-Rechenkern statt reiner
