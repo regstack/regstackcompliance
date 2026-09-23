@@ -225,9 +225,19 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         items: [{ href: "/risikomanagement#rtf", label: "RTF & Limitauslastung" }],
       },
       {
-        title: "Berichte · AT 4.4.1",
+        title: "Berichte · AT 4.4.1 / AT 3.2",
         icon: <FileBarChartIcon {...iconProps} />,
-        items: [{ href: "/risikomanagement#bericht", label: "Bericht an die Geschäftsleitung" }],
+        items: [{ href: "/risikomanagement#bericht", label: "Berichtswesen (GL & Aufsichtsorgan)" }],
+      },
+      {
+        title: "NPL-Strategie · AT 4.2 Tz. 3",
+        icon: <FlagIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#npl", label: "NPL-Kennzahlen" }],
+      },
+      {
+        title: "Modellrisiko · AT 4.3.4",
+        icon: <CpuIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement#modelle", label: "Modellregister" }],
       },
     ],
   },

@@ -360,42 +360,6 @@ export async function listBeratung() {
   return rows.map((b) => ({ id: b.id, datum: iso10(b.datum)!, thema: b.thema, adressat: b.adressat, format: b.format, nachweis_text: b.nachweisText }));
 }
 
-/* =====================================================================
- * Nachweis-Ablage
- * ===================================================================*/
-
-type BackendNachweis = {
-  id: string;
-  entityType: string;
-  entityId: string | null;
-  dateiname: string;
-  fileRef: string | null;
-  hash: string | null;
-  aufbewahrungsfrist: string | null;
-  previousVersionId: string | null;
-  uploadedByUserId: string | null;
-  uploadedAt: string;
-};
-
-export async function listNachweise() {
-  const [nachweise, names] = await Promise.all([
-    apiFetch<BackendNachweis[]>("/nachweise?module=COMPLIANCE"),
-    getUserNameMap(),
-  ]);
-  return nachweise.map((n) => ({
-    id: n.id,
-    entity_type: n.entityType,
-    entity_id: n.entityId,
-    dateiname: n.dateiname,
-    file_ref: n.fileRef,
-    hash: n.hash,
-    aufbewahrungsfrist: n.aufbewahrungsfrist,
-    previous_version_id: n.previousVersionId,
-    uploaded_by: n.uploadedByUserId,
-    uploaded_at: n.uploadedAt,
-    uploader: personRef(names, n.uploadedByUserId),
-  }));
-}
 
 /* =====================================================================
  * Governance (Tz. 3-4)

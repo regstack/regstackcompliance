@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
-import { addRisikostrategie, verabschiedeRisikostrategie } from "@/app/(app)/risikomanagement/actions";
+import { addRisikostrategie, verabschiedeRisikostrategie, updateRisikostrategie } from "@/app/(app)/risikomanagement/actions";
 import type { Risikostrategie, RmStrategieArt } from "@/lib/regstack/risikomanagement";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
 
@@ -58,6 +58,41 @@ function StrategieForm({ onDone, onCancel }: { onDone: () => void; onCancel: () 
   );
 }
 
+// Nur solange status=entwurf möglich — das `inhalt`-JSON hat noch keinen eigenen Editor und
+// bleibt hier bewusst ausgeklammert, analog zu updateItStrategie/updateRisikostrategie.
+function NaechsteUeberpruefungEditForm({ strategie, onDone, onCancel }: { strategie: Risikostrategie; onDone: () => void; onCancel: () => void }) {
+  const [naechsteUeberpruefung, setNaechsteUeberpruefung] = useState(strategie.naechsteUeberpruefung?.slice(0, 10) ?? "");
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function submit() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await updateRisikostrategie(strategie.id, naechsteUeberpruefung);
+        onDone();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
+      }
+    });
+  }
+
+  return (
+    <div className="mt-2 rounded-md border border-border-strong bg-graphite-950 p-2.5">
+      <label className="flex flex-col gap-1 text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+        Nächste Überprüfung
+        <input type="date" value={naechsteUeberpruefung} disabled={pending} onChange={(e) => setNaechsteUeberpruefung(e.target.value)}
+          className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs normal-case text-foreground disabled:opacity-50" />
+      </label>
+      {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
+      <div className="mt-2 flex gap-2">
+        <Button className="px-2.5 py-1 text-xs" disabled={pending} onClick={submit}>{pending ? "Speichert…" : "Speichern"}</Button>
+        <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={pending} onClick={onCancel}>Abbrechen</Button>
+      </div>
+    </div>
+  );
+}
+
 function VerabschiedenButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +128,7 @@ export function StrategiePanel({
   canApprove: boolean;
 }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <Card id="strategien">
@@ -119,7 +155,17 @@ export function StrategiePanel({
                 <div className="mt-2 flex items-center gap-2">
                   <StatusPill status={overdue ? "beendet" : s.status} label={overdue ? "Review fällig" : s.status} />
                 </div>
-                {s.status === "entwurf" && canApprove && <div className="mt-2"><VerabschiedenButton id={s.id} /></div>}
+                {s.status === "entwurf" && (canWrite || canApprove) && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {canWrite && editingId !== s.id && (
+                      <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={() => setEditingId(s.id)}>Bearbeiten</Button>
+                    )}
+                    {canApprove && <VerabschiedenButton id={s.id} />}
+                  </div>
+                )}
+                {editingId === s.id && (
+                  <NaechsteUeberpruefungEditForm strategie={s} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} />
+                )}
               </div>
             );
           })}

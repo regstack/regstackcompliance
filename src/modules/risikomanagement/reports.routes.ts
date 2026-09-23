@@ -22,8 +22,11 @@ router.get(
   })
 );
 
+const EMPFAENGER = ["geschaeftsleitung", "aufsichtsorgan"] as const;
+
 const reportSchema = z.object({
   reportType: z.string().min(1),
+  empfaenger: z.enum(EMPFAENGER).default("geschaeftsleitung"),
   periodFrom: z.string().datetime().nullable().optional(),
   periodTo: z.string().datetime().nullable().optional(),
   content: z.record(z.any()).default({}),
@@ -46,6 +49,7 @@ router.post(
             institutionId: req.user!.institutionId,
             createdByUserId: req.user!.userId,
             reportType: parsed.data.reportType,
+            empfaenger: parsed.data.empfaenger,
             content: parsed.data.content,
             periodFrom: parsed.data.periodFrom ? new Date(parsed.data.periodFrom) : undefined,
             periodTo: parsed.data.periodTo ? new Date(parsed.data.periodTo) : undefined,
@@ -53,6 +57,41 @@ router.post(
         })
     );
     res.status(201).json(created);
+  })
+);
+
+const updateSchema = z.object({
+  reportType: z.string().min(1).optional(),
+  empfaenger: z.enum(EMPFAENGER).optional(),
+  periodFrom: z.string().datetime().nullable().optional(),
+  periodTo: z.string().datetime().nullable().optional(),
+});
+
+router.put(
+  "/:id",
+  requirePermission("riskManagementReport", "write"),
+  asyncHandler(async (req, res) => {
+    const parsed = updateSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError(parsed.error.message);
+
+    const before = await prisma.rmReport.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
+    if (!before) throw new NotFoundError("Bericht nicht gefunden");
+    if (before.status !== "entwurf") throw new ValidationError("Nur Entwürfe können bearbeitet werden.");
+
+    const { periodFrom, periodTo, ...rest } = parsed.data;
+    const updated = await withAudit(
+      { entityType: "RmReport", entityId: before.id, action: "UPDATE", actor: req.user, ipAddress: req.ip, before },
+      (tx) =>
+        tx.rmReport.update({
+          where: { id: before.id },
+          data: {
+            ...rest,
+            periodFrom: periodFrom ? new Date(periodFrom) : undefined,
+            periodTo: periodTo ? new Date(periodTo) : undefined,
+          },
+        })
+    );
+    res.json(updated);
   })
 );
 

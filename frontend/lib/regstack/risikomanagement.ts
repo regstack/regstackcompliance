@@ -57,16 +57,66 @@ export type Risikotragfaehigkeit = {
 };
 
 export type RmReportStatus = "entwurf" | "final";
+export type RmReportEmpfaenger = "geschaeftsleitung" | "aufsichtsorgan";
+
+export type RmReportContent = {
+  kapitalausstattung?: string;
+  risikolage?: string;
+  massnahmen?: string;
+  // Aufsichtsorgan-Bericht (AT 3.2) — eigenes Berichtsziel, andere Feldstruktur.
+  geschaeftslage?: string;
+  risikosituation?: string;
+  strategienUndAnpassungen?: string;
+  complianceBericht?: string;
+  revisionsberichte?: string;
+};
 
 export type RmReport = {
   id: string;
   reportType: string;
+  empfaenger: RmReportEmpfaenger;
   periodFrom: string | null;
   periodTo: string | null;
   status: RmReportStatus;
-  content: { kapitalausstattung?: string; risikolage?: string; massnahmen?: string };
+  content: RmReportContent;
   finalizedAt: string | null;
   acknowledgements: { id: string; userId: string; acknowledgedAt: string }[];
+};
+
+export type RmNplKennzahl = {
+  id: string;
+  periode: string;
+  nplQuote: number | null;
+  nplBestand: number | null;
+  zielQuote: number | null;
+  abbaupfadEingehalten: boolean | null;
+  massnahmen: string | null;
+};
+
+export type RmModellErklaerbarkeit = "hoch" | "mittel" | "gering";
+export type RmModellStatus = "aktiv" | "ausser_betrieb";
+export type RmModellValidierungErgebnis = "bestaetigt" | "rekalibrierung_erforderlich" | "ausser_betrieb_genommen";
+
+export type RmModellValidierung = {
+  id: string;
+  durchgefuehrtAm: string;
+  durchgefuehrtVonUserId: string | null;
+  ergebnis: RmModellValidierungErgebnis;
+  kommentar: string | null;
+};
+
+export type RmModell = {
+  id: string;
+  bezeichnung: string;
+  zweck: string | null;
+  enthaeltKiMlKomponente: boolean;
+  erklaerbarkeit: RmModellErklaerbarkeit | null;
+  ueberschreibungenVorhanden: boolean;
+  ueberschreibungenBegruendung: string | null;
+  verantwortlichUserId: string | null;
+  status: RmModellStatus;
+  naechsteValidierung: string | null;
+  validierungen: RmModellValidierung[];
 };
 
 export async function listRisikoinventur() {
@@ -83,6 +133,14 @@ export async function listRisikotragfaehigkeit() {
 
 export async function listRmReports() {
   return apiFetch<RmReport[]>("/risikomanagement/reports");
+}
+
+export async function listRmNplKennzahlen() {
+  return apiFetch<RmNplKennzahl[]>("/risikomanagement/npl");
+}
+
+export async function listRmModelle() {
+  return apiFetch<RmModell[]>("/risikomanagement/modelle");
 }
 
 export type RmKapitalplanung = {
@@ -122,6 +180,3 @@ export type RmStresstest = {
 export async function listRmStresstests() {
   return apiFetch<RmStresstest[]>("/risikomanagement/stresstests");
 }
-
-// AT 4.3.4 Modellregister types intentionally omitted here — two other open PRs (#10, #13)
-// build that model independently; see the matching note in prisma/schema.prisma.

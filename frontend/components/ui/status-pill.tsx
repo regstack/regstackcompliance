@@ -87,6 +87,10 @@ const STATUS_TONE: Record<string, Tone> = {
   unzureichend: "danger",
   eingereicht: "warning",
   genehmigt: "success",
+  // Risikomanagement: Modellregister (AT 4.3.4) — "aktiv"/"bestaetigt"/"wesentlich" reuse tones above
+  ausser_betrieb: "danger",
+  rekalibrierung_erforderlich: "warning",
+  ausser_betrieb_genommen: "danger",
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {

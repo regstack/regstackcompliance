@@ -161,6 +161,8 @@ enum EvidenceModule {
   OUTSOURCING
   COMPLIANCE
   INTERNAL_AUDIT
+  RISK_MANAGEMENT
+  IT_RISK
 }
 
 // ---------------------------------------------------------------------------
@@ -332,12 +334,14 @@ model InstitutionProfile {
   ictProviders             IctProvider[]
   ictArrangements          IctArrangement[]
 
-  rmRisikoinventur         Risikoinventur[]
-  rmStrategien             Risikostrategie[]
-  rmRisikotragfaehigkeit   Risikotragfaehigkeit[]
-  rmReports                RmReport[]
-  rmKapitalplanung         RmKapitalplanung[]
-  rmStresstests            RmStresstest[]
+  rmRisikoinventur       Risikoinventur[]
+  rmStrategien           Risikostrategie[]
+  rmRisikotragfaehigkeit Risikotragfaehigkeit[]
+  rmReports              RmReport[]
+  rmNplKennzahlen        RmNplKennzahl[]
+  rmModelle              RmModell[]
+  rmKapitalplanung       RmKapitalplanung[]
+  rmStresstests          RmStresstest[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -1069,8 +1073,10 @@ model Nachweis {
   entityType         String
   entityId           String?
   dateiname          String
-  fileRef            String?
-  hash               String?
+  fileRef            String? // Objektspeicher-Key (S3-kompatibel) — siehe modules/nachweise/objectStorage.ts
+  fileSize           Int?
+  fileMime           String?
+  hash               String? // SHA-256, clientseitig vor dem Upload berechnet
   aufbewahrungsfrist String?
 
   previousVersionId String?
@@ -2200,12 +2206,23 @@ model Risikotragfaehigkeit {
   @@index([institutionId])
 }
 
+// "empfaenger" unterscheidet den GL-Bericht (Standardfall, AT 4.3.2 Tz. 3) vom quartalsweisen
+// Aufsichtsorgan-Reporting (AT 3.2 — eigenständiges Berichtsziel/-publikum: Geschäftslage,
+// Risikosituation, Strategien inkl. Anpassungen, Compliance-Bericht, Revisionsberichte). Bewusst
+// dasselbe Modell statt einer eigenen Tabelle — nur Empfänger und Zweck unterscheiden sich, Form
+// und Lifecycle (Entwurf → final → Kenntnisnahme) sind identisch.
+enum RmReportEmpfaenger {
+  geschaeftsleitung
+  aufsichtsorgan
+}
+
 model RmReport {
   id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   reportType  String // "quartalsbericht" | "jahresbericht" | "anlassbericht"
+  empfaenger  RmReportEmpfaenger @default(geschaeftsleitung)
   periodFrom  DateTime?
   periodTo    DateTime?
   status      RmReportStatus @default(entwurf)
@@ -2298,6 +2315,99 @@ model RmStresstest {
 // Modell hier hätte nur einen Tabellennamen-Konflikt garantiert.
 
 // ---------------------------------------------------------------------------
+// AT 4.2 Tz. 3: NPL-Strategie — konditional, nur für Institute mit hohem Bestand notleidender
+// Risikopositionen relevant (siehe Risikomanagement_BAIT_MVP_Spezifikation.md, "Neu gefundene
+// Lücken" Nr. 6). Bleibt in Instituten ohne relevanten NPL-Bestand einfach leer — kein Zwang,
+// hier Einträge zu pflegen. Periodischer KPI-Snapshot statt eines laufend überschriebenen
+// Datensatzes, analog zu Risikotragfaehigkeit.
+// ---------------------------------------------------------------------------
+
+model RmNplKennzahl {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  periode              String // z. B. "2026-Q3"
+  nplQuote             Float? // NPL-Quote in %
+  nplBestand           Float? // absoluter Bestand notleidender Risikopositionen
+  zielQuote            Float? // Zielquote laut NPL-Strategie/Abbaupfad
+  abbaupfadEingehalten Boolean?
+  massnahmen           String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_npl_kennzahlen")
+  @@index([institutionId])
+}
+
+// ---------------------------------------------------------------------------
+// AT 4.3.4 Verwendung von Modellen — Modellrisiko-Governance (Auswahl, Validierung,
+// Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive "technologiegestützter
+// Innovation und künstlicher Intelligenz" (siehe Spezifikation, "Neu gefundene Lücken" Nr. 7).
+// Validierungshistorie ist append-only, analog zu BerechtigungsRezertifizierung.
+// ---------------------------------------------------------------------------
+
+enum RmModellErklaerbarkeit {
+  hoch
+  mittel
+  gering
+}
+
+enum RmModellStatus {
+  aktiv
+  ausser_betrieb
+}
+
+enum RmModellValidierungErgebnis {
+  bestaetigt
+  rekalibrierung_erforderlich
+  ausser_betrieb_genommen
+}
+
+model RmModell {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  bezeichnung                  String
+  zweck                        String?
+  enthaeltKiMlKomponente       Boolean @default(false)
+  erklaerbarkeit               RmModellErklaerbarkeit?
+  ueberschreibungenVorhanden   Boolean @default(false)
+  ueberschreibungenBegruendung String?
+  verantwortlichUserId         String?
+  status                       RmModellStatus @default(aktiv)
+  naechsteValidierung          DateTime?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  validierungen RmModellValidierung[]
+
+  @@map("rm_modelle")
+  @@index([institutionId])
+}
+
+// Append-only Historie je Modell — keine Update-/Delete-Routen, analog zu
+// BerechtigungsRezertifizierung/ItDatensicherungstest.
+model RmModellValidierung {
+  id       String   @id @default(uuid())
+  modellId String
+  modell   RmModell @relation(fields: [modellId], references: [id])
+
+  durchgefuehrtAm        DateTime
+  durchgefuehrtVonUserId String?
+  ergebnis               RmModellValidierungErgebnis
+  kommentar              String?
+
+  createdAt DateTime @default(now())
+
+  @@map("rm_modell_validierungen")
+  @@index([modellId])
+}
 // IT-Risikomanagement / BAIT — IT-Strategie, Schutzbedarfsfeststellung,
 // Informationsrisiko-Register, Sicherheitsvorfälle. MVP-Ausschnitt gemäß
 // Risikomanagement_BAIT_MVP_Spezifikation.md; Benutzerberechtigungsmanagement,

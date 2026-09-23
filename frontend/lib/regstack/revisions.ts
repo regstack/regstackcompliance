@@ -299,27 +299,6 @@ export async function listArbeitspapiereForPruefung(pruefungId: string) {
   }));
 }
 
-export async function listNachweiseFor(entityType: string, entityId: string) {
-  const [rows, names] = await Promise.all([
-    apiFetch<
-      { id: string; entityType: string; entityId: string | null; dateiname: string; fileRef: string | null; hash: string | null; aufbewahrungsfrist: string | null; uploadedByUserId: string | null; uploadedAt: string }[]
-    >(`/nachweise?module=INTERNAL_AUDIT&entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`),
-    getUserNameMap(),
-  ]);
-  return rows.map((n) => ({
-    id: n.id,
-    entity_type: n.entityType,
-    entity_id: n.entityId,
-    dateiname: n.dateiname,
-    file_ref: n.fileRef,
-    hash: n.hash,
-    aufbewahrungsfrist: n.aufbewahrungsfrist,
-    uploaded_by: n.uploadedByUserId,
-    uploaded_at: n.uploadedAt,
-    uploader: personRef(names, n.uploadedByUserId),
-  }));
-}
-
 /* =====================================================================
  * Feststellungen (M5): Nachverfolgung, Eskalation, Fristenhistorie
  * ===================================================================*/

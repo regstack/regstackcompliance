@@ -1,36 +1,46 @@
 # Risikomanagement (MaRisk AT 4) & BAIT/IT-Risikomanagement — MVP-Spezifikation
 
-**Status:** Backend-Scaffolding für beide Module ist umgesetzt — Prisma-Modelle, Migration,
-RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/` und `src/modules/itRisiko/`
-(siehe Commit-Historie). Migration lokal gegen ein frisches Postgres 16 verifiziert
-(`prisma migrate deploy` + `prisma migrate diff` ohne Drift + Smoke-Test über den generierten
-Client). Offen: Frontend-Anbindung, Seed-Daten, Nachweis-Integration (`EvidenceModule` um
-`RISK_MANAGEMENT`/`IT_RISK` erweitern) und die drei Fragen im letzten Abschnitt.
+**Status:** Phase 1 UND Phase 2 sind umgesetzt, inklusive Frontend-Anbindung für alle Bausteine.
+Prisma-Modelle, Migrationen, RBAC-Einträge und Routen liegen in `src/modules/risikomanagement/`
+und `src/modules/itRisiko/` (siehe Commit-Historie). Migrationen jeweils lokal gegen ein frisches
+Postgres 16 verifiziert (`prisma migrate deploy` + `prisma migrate diff` ohne Drift +
+End-to-End-Smoke-Test über eine laufende Server-Instanz: Login, RBAC-Ablehnung einer falschen
+Rolle, vollständiger Lebenszyklus inkl. Audit-Log-Prüfung, Tenant-Isolation gegen ein
+untergeschobenes `institutionId` im Body). Seed-Daten für alle Bausteine sind in `prisma/seed.ts`
+ergänzt. Die drei "Neu gefundenen Lücken" (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4) sind ebenfalls
+umgesetzt, siehe "Phase 2" im Modul-1-Abschnitt unten.
 
-**Update 2026-09-23 — Phase-2-Lücken 4.1 Tz. 10 und 4.3.3 nachgezogen (4.3.4 bewusst NICHT):** Auf
-Basis des vollständigen AT-4-Primärtexts (BA 54, Stand 30.06.2026) wurden zwei der unten als
-"bewusst Phase 2" markierten Bausteine ergänzt: `RmKapitalplanung` (AT 4.1 Tz. 10) und
-`RmStresstest` (AT 4.3.3, inkl. schwerem konjunkturellem Abschwung und inversem Stresstest).
-Gleiches Muster wie die bestehenden Modelle: `institutionId`-Scoping, jeder Write über
-`withAudit(...)`, RBAC-Einträge (`riskCapitalPlanning[.approve]`, `riskStressTest`) mit derselben
-Rollenaufteilung wie `riskManagementRecord`/`riskStrategy.approve`. Frontend-Panels für beide liegen
-ebenfalls vor (`/risikomanagement`, `components/risikomanagement/{kapitalplanung,stresstest}-panel.tsx`).
-**AT 4.3.4 (Modellregister) wurde bewusst NICHT gebaut** — bei der Deploy-Prüfung stellte sich
-heraus, dass zwei andere offene PRs (#10 "Modellregister", #13 "RmModell"/"RmModellValidierung")
-dasselbe bereits unabhängig voneinander implementiert hatten, teils mit demselben Modellnamen
-(`RmModell`). Eine dritte konkurrierende Implementierung hier hätte nur einen
-Tabellennamen-Konflikt beim Merge garantiert; eine erste Fassung wurde daher wieder entfernt
-(siehe Commit-Historie dieses Branches) und der Baustein bleibt bewusst dem PR überlassen, der
-zuerst landet. Schema-Validierung und `prisma migrate diff` (leer gegen den neuen Stand) liefen
-für die verbliebenen zwei Bausteine sauber; diese Session hatte **keine** laufende Postgres-Instanz
-zur Verfügung, daher wurde die Migration nicht per `prisma migrate deploy` ausgeführt — das steht
-vor dem nächsten Deploy noch aus (siehe CLAUDE.md: `npx prisma migrate deploy` gegen eine echte DB).
-`next build` läuft sauber durch. AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes
-Datenmodell — das ist Funktionstrennung/Prozessdesign (serverseitig ohnehin über RBAC erzwungen),
-kein wiederkehrender Datensatz, analog zur Entscheidung gegen ein eigenes ISB-Login. Granulare
-BTR-Detailformulare je Risikoart (ein eigener Zinsschock-/Kreditrisiko-Rechenkern statt reiner
-Ergebnis-Erfassung) und die AT-3.2-Aufsichtsorgan-Berichterstattung (siehe Lücke 4 unten) bleiben
-offen.
+**Update 2026-09-23 — AT 4.1 Tz. 10 und AT 4.3.3 zusätzlich nachgezogen:** Auf Basis des
+vollständigen AT-4-Primärtexts (BA 54, Stand 30.06.2026) kamen zwei weitere, unabhängig
+entwickelte Bausteine hinzu: `RmKapitalplanung` (AT 4.1 Tz. 10) und `RmStresstest` (AT 4.3.3,
+inkl. schwerem konjunkturellem Abschwung und inversem Stresstest). Gleiches Muster wie die
+bestehenden Modelle: `institutionId`-Scoping, jeder Write über `withAudit(...)`, RBAC-Einträge
+(`riskCapitalPlanning[.approve]`, `riskStressTest`) mit derselben Rollenaufteilung wie
+`riskManagementRecord`/`riskStrategy.approve`. Frontend-Panels für beide liegen ebenfalls vor
+(`/risikomanagement`, `components/risikomanagement/{kapitalplanung,stresstest}-panel.tsx`).
+AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes Datenmodell — das ist
+Funktionstrennung/Prozessdesign (serverseitig ohnehin über RBAC erzwungen), kein wiederkehrender
+Datensatz, analog zur Entscheidung gegen ein eigenes ISB-Login. Granulare BTR-Detailformulare je
+Risikoart (ein eigener Zinsschock-/Kreditrisiko-Rechenkern statt reiner Ergebnis-Erfassung)
+bleiben offen.
+
+**Nachweis-Integration ist ebenfalls umgesetzt (23.09.2026)** — `EvidenceModule` um
+`RISK_MANAGEMENT`/`IT_RISK` erweitert. Es gab bereits ein reales, ausgereiftes Upload-Muster im
+Produkt (Pre-Signed-S3-URLs, siehe `src/modules/contracts/objectStorage.ts` für
+Vertragsdokumente und `src/modules/ics/objectStorage.ts` für IKS-Richtliniendokumente) — nur das
+generische `Nachweis`-Modell selbst war bislang rein lesend (`GET /nachweise`, ohne RBAC-Gate).
+Dasselbe Muster wurde für `Nachweis` übernommen: `src/modules/nachweise/objectStorage.ts`,
+`POST /nachweise/upload-url` → `POST /nachweise` (erste Fassung) bzw.
+`POST /nachweise/:id/neue-version` (neue Fassung statt stillen Überschreibens, über
+`previousVersionId`), `GET /nachweise/:id/download-url`, neue RBAC-Ressource `nachweis`
+(schließt eine reale Lücke: die GET-Route hatte zuvor gar kein `requirePermission`). Client-seitig
+wird vor jedem Upload ein SHA-256-Hash berechnet (`Nachweis.hash`) — löst ein Versprechen aus der
+Banner-Copy von `/compliance/nachweise` ein, das zuvor nirgends eingelöst war. Verdrahtet an zwei
+realen Stellen: der `/compliance/nachweise`-Übersicht (jetzt mit echtem Upload- und
+Versionierungsformular statt nur Lesetabelle) und der Interne-Revision-Prüfungsdetailseite (Upload
+je Arbeitspapier, wo zuvor ein Code-Kommentar den exakt selben Gap dokumentierte). Die generische
+Komponente (`components/nachweise/`) ist bereit für weitere Verdrahtung in anderen Modulen
+(Outsourcing, Risikomanagement, IT-Risiko), aber das ist bewusst nicht in diesem Schritt passiert.
 
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
@@ -46,8 +56,9 @@ im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken,
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
 das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
-inkl. ESG sind in den Phase-1-Modellen abgedeckt. AT 3.1/3.2 (Aufsichtsorgan-Berichtswesen),
-AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht — siehe unten.
+inkl. ESG sind in den Phase-1-Modellen abgedeckt. AT 3.2 (Aufsichtsorgan-Berichtswesen), AT 4.3.4
+(Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie waren es zunächst nicht — **alle drei
+sind seit 23.09.2026 ebenfalls umgesetzt**, siehe "Phase 2" im Modul-1-Abschnitt unten.
 
 ### Korrekturen nach Quellenabgleich
 
@@ -66,24 +77,26 @@ AT 4.3.4 (Modelle) und die konditionale AT-4.2-Tz.-3-NPL-Strategie sind es nicht
    sinnvoll (verbreitete Institutspraxis, eigene Registerzeile), sollte aber nicht als "die MaRisk
    verlangt eine 5. Risikoart" zitiert werden.
 
-### Neu gefundene Lücken (nicht im aktuellen Modell)
+### Neu gefundene Lücken — Stand 19.09.2026, Nr. 4/6/7 umgesetzt am 23.09.2026
 
 4. **AT 3.2 Verantwortung des Aufsichtsorgans** — mindestens vierteljährliches Reporting in
    Textform an das Aufsichtsorgan (Geschäftslage, Risikosituation, Strategien inkl. Anpassungen,
-   Compliance-Bericht, Revisionsberichte). Das ist ein eigenes, vom GL-Bericht (`RmReport`)
-   verschiedenes Berichtsziel/-publikum, das aktuell nirgends modelliert ist.
+   Compliance-Bericht, Revisionsberichte). War ein eigenes, vom GL-Bericht (`RmReport`)
+   verschiedenes Berichtsziel/-publikum, das zunächst nirgends modelliert war. **Umgesetzt:**
+   `RmReport.empfaenger`, siehe "Phase 2" unten.
 5. **AT 4.2 Tz. 2 verlangt eine mit der Geschäftsstrategie konsistente IKT-Strategie** — direkt
    durch die Geschäftsleitung, mit optionaler Zusammenlegung mit einer DOR-Strategie (DORA
    digitale operationale Resilienz). Das ist dieselbe Sache wie `ItStrategie`/BAIT Kap. 1 — die
-   Mapping-Tabelle unten sollte "AT 4.2 Tz. 2" als Zweitquelle neben "BAIT Kap. 1" führen.
+   Mapping-Tabelle unten führt "AT 4.2 Tz. 2" als Zweitquelle neben "BAIT Kap. 1" (reine
+   Dokumentationskorrektur, kein Modell-Gap).
 6. **AT 4.2 Tz. 3: NPL-Strategie** für Institute mit hohem Bestand notleidender Risikopositionen,
    inkl. vierteljährlichem KPI-Tracking des Abbaufortschritts — konditional (nur relevant bei
-   hohem NPL-Bestand), daher kein MVP-Kandidat, aber ein sauberer Phase-2-Kandidat, falls relevant.
+   hohem NPL-Bestand). **Umgesetzt:** `RmNplKennzahl` — bleibt in Instituten ohne relevanten
+   NPL-Bestand einfach leer, kein Pflegezwang.
 7. **AT 4.3.4 Verwendung von Modellen** — komplett neues Kapitel, deckt Modellrisiko-Governance ab
    (Auswahl, Validierung, Rekalibrierung, Überschreibungen, Erklärbarkeit), explizit inklusive
-   "technologiegestützter Innovation und künstlicher Intelligenz". **Wird bereits parallel gebaut**
-   von PR #10 (`Modellregister`) und PR #13 (`RmModell`/`RmModellValidierung`) — nicht hier
-   duplizieren, siehe Update 2026-09-23 oben.
+   "technologiegestützter Innovation und künstlicher Intelligenz". **Umgesetzt:** `RmModell` +
+   `RmModellValidierung`.
 
 Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 - IT-Auslagerungen bleiben `OutsourcingActivity` mit `scope = IKT_DORA` — BAIT Kap. 8 (Steuerung
@@ -293,6 +306,107 @@ vorgeschlagen — siehe Update 2026-09-23 oben.
 /risikomanagement/kapitalplanung/:id/verabschieden
 /risikomanagement/stresstests                 (seit 2026-09-23)
 ```
+
+### Phase 2: AT 3.2 / AT 4.2 Tz. 3 / AT 4.3.4 — umgesetzt (23.09.2026)
+
+Schließt die drei "Neu gefundenen Lücken" oben (Nr. 4, 6, 7).
+
+**AT 3.2 Aufsichtsorgan-Reporting**: kein neues Modell — `RmReport` bekommt stattdessen ein Feld
+`empfaenger` (`geschaeftsleitung` | `aufsichtsorgan`), da Form und Lifecycle
+(Entwurf → final → Kenntnisnahme) identisch zum GL-Bericht sind, nur Empfänger und Zweck
+unterscheiden sich. `RmReport` hat seither auch eine (entwurfs-beschränkte) PUT-Route.
+
+**AT 4.2 Tz. 3 NPL-Strategie** (konditional, nur bei hohem NPL-Bestand relevant):
+
+```prisma
+model RmNplKennzahl {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  periode              String // z. B. "2026-Q3"
+  nplQuote             Float?
+  nplBestand           Float?
+  zielQuote            Float?
+  abbaupfadEingehalten Boolean?
+  massnahmen           String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_npl_kennzahlen")
+  @@index([institutionId])
+}
+```
+
+Periodischer KPI-Snapshot, analog zu `Risikotragfaehigkeit`. RBAC: reuse `riskManagementRecord`
+(dieselbe Ressource wie Risikoinventur/RTF). Bleibt in Instituten ohne relevanten NPL-Bestand
+einfach leer, kein Pflegezwang. Route: `src/modules/risikomanagement/npl.routes.ts`.
+
+**AT 4.3.4 Modellregister** — Modellrisiko-Governance (Auswahl, Validierung, Rekalibrierung,
+Überschreibungen, Erklärbarkeit, explizit inklusive künstlicher Intelligenz):
+
+```prisma
+enum RmModellErklaerbarkeit { hoch mittel gering }
+enum RmModellStatus { aktiv ausser_betrieb }
+enum RmModellValidierungErgebnis { bestaetigt rekalibrierung_erforderlich ausser_betrieb_genommen }
+
+model RmModell {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  bezeichnung                  String
+  zweck                        String?
+  enthaeltKiMlKomponente       Boolean @default(false)
+  erklaerbarkeit               RmModellErklaerbarkeit?
+  ueberschreibungenVorhanden   Boolean @default(false)
+  ueberschreibungenBegruendung String?
+  verantwortlichUserId         String?
+  status                       RmModellStatus @default(aktiv)
+  naechsteValidierung          DateTime?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  validierungen RmModellValidierung[]
+
+  @@map("rm_modelle")
+  @@index([institutionId])
+}
+
+// Append-only Historie, analog zu BerechtigungsRezertifizierung.
+model RmModellValidierung {
+  id       String   @id @default(uuid())
+  modellId String
+  modell   RmModell @relation(fields: [modellId], references: [id])
+
+  durchgefuehrtAm        DateTime
+  durchgefuehrtVonUserId String?
+  ergebnis               RmModellValidierungErgebnis
+  kommentar              String?
+
+  createdAt DateTime @default(now())
+
+  @@map("rm_modell_validierungen")
+  @@index([modellId])
+}
+```
+
+Validierungsergebnis "ausser_betrieb_genommen" setzt das Modell im selben Aufruf außer Betrieb
+(zwei `withAudit`-Aufrufe, eine Audit-Zeile je Entität). Neue RBAC-Ressource
+`modelGovernanceRecord` (read: alle Rollen, write: RISIKOCONTROLLING/ADMIN). Route:
+`src/modules/risikomanagement/modelle.routes.ts`.
+
+Frontend für alle drei: `/risikomanagement#bericht` (jetzt mit Empfänger-Auswahl),
+`/risikomanagement#npl`, `/risikomanagement#modelle`.
+
+Editing-UI für bestehende Einträge ohne eigene Lifecycle-Aktion (Risikoinventur,
+Geschäfts-/Risikostrategien — nur `naechsteUeberpruefung`, das `inhalt`-JSON hat noch keinen
+eigenen Editor) ist ebenfalls umgesetzt, nach demselben Muster wie überall sonst im Produkt:
+Bearbeiten-Button pro Zeile, PUT-Route re-nutzt bestehende Lifecycle-Guards unverändert.
 
 ---
 
@@ -510,15 +624,19 @@ Beide Module folgen den drei Grundsätzen aus dem README ausnahmslos:
 
 ## Offene Fragen an dich
 
-1. Trifft die Eingrenzung oben ("MaRisk Novelle 9" = aktuelle AT-4-Risikomanagement-Kapitel inkl.
-   ESG) das, was du meinst, oder zielst du auf eine bestimmte Fassung/Novellen-Nummer, die ich noch
-   nicht kenne?
-2. Passt die BAIT-Priorisierung (IT-Strategie + Schutzbedarf + Risiko-Register + Sicherheitsvorfälle
-   zuerst, Berechtigungsmanagement/IT-Projekte/IT-Betrieb später), oder ist für euer Institut z. B.
-   das Berechtigungsmanagement (Kap. 5) dringlicher fürs MVP?
-3. Braucht Kap. 4 BAIT (Informationssicherheit) eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-
-   Login-Rolle, oder reicht `RISIKOCONTROLLING`/`ADMIN` fürs MVP?
+1. ~~Trifft die Eingrenzung oben ("MaRisk Novelle 9" = ...) das, was du meinst?~~ **Geklärt** —
+   gegen den Primärtext (Rundschreiben 06/2026 (BA), Stand 30.06.2026) geprüft, siehe
+   "Korrekturen nach Quellenabgleich" oben.
+2. ~~Passt die BAIT-Priorisierung?~~ **Geklärt (19.09.2026) — ja, Reihenfolge bleibt wie
+   ursprünglich vorgeschlagen.** Die Kapitelnummern selbst wurden später (23.09.2026) gegen den
+   BAIT-Primärtext korrigiert — siehe "BAIT-Kapitelbezeichnungen jetzt gegen die Primärquelle
+   geprüft" oben.
+3. ~~Braucht Kap. 4 BAIT eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Login-Rolle?~~
+   **Geklärt — nein**, `RISIKOCONTROLLING`/`ADMIN` bleiben zuständig.
 
-Sobald das steht, kann ich direkt mit Modul 1 (Risikomanagement) anfangen: Prisma-Migration,
-`src/modules/risikomanagement/`, RBAC-Einträge, Routen, Tests — im selben Zug wie die drei
-bestehenden Module.
+Alle drei ursprünglichen Fragen sind geklärt, alle zwölf BAIT-Kapitel (soweit im MVP-Scope) sind
+umgesetzt, die Editing-UI für bestehende Einträge ist nachgezogen, alle drei in "Neu gefundene
+Lücken" aufgeführten Regelungslücken (AT 3.2 Aufsichtsorgan-Reporting, AT 4.3.4 Modelle, AT 4.2
+Tz. 3 NPL-Strategie) sind umgesetzt, und die Nachweis/`EvidenceModule`-Integration (echte
+Upload-/Versionierungs-UI, siehe oben) ist ebenfalls fertig. Damit ist die in dieser Spezifikation
+ursprünglich skizzierte Ausbaustufe vollständig umgesetzt.

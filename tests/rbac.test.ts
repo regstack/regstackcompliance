@@ -66,4 +66,23 @@ describe("requirePermission — server-side RBAC (non-negotiable, not UI-only)",
 
     expect(() => requirePermission("user", "read")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(ForbiddenError);
   });
+
+  // "nachweis" (src/modules/nachweise/nachweise.routes.ts) was read-only with NO requirePermission
+  // check at all until the upload flow was added — pinning down the fix: read stays broad (matches
+  // the rest of this matrix), write is now the union of every module's own write role that files
+  // evidence there today (Outsourcing, Compliance, Interne Revision, Risikomanagement/IT-Risiko).
+  it("gates nachweis reads/writes now that upload exists (previously ungated)", () => {
+    const readNext = vi.fn();
+    requirePermission("nachweis", "read")(mockReq("VIEWER"), mockRes, readNext);
+    expect(readNext).toHaveBeenCalledOnce();
+
+    const writeNext = vi.fn();
+    requirePermission("nachweis", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, writeNext);
+    expect(writeNext).toHaveBeenCalledOnce();
+
+    expect(() => requirePermission("nachweis", "write")(mockReq("VIEWER"), mockRes, vi.fn())).toThrow(ForbiddenError);
+    expect(() => requirePermission("nachweis", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+  });
 });

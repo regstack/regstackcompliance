@@ -1294,6 +1294,7 @@ async function main() {
     data: {
       institutionId: institution.id,
       reportType: "quartalsbericht",
+      empfaenger: "geschaeftsleitung",
       periodFrom: new Date("2026-01-01"),
       periodTo: new Date("2026-03-31"),
       status: "entwurf",
@@ -1367,9 +1368,84 @@ async function main() {
     ].map((data) => prisma.rmStresstest.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
   );
 
-  // AT 4.3.4 Modellregister seed data intentionally omitted — two other open PRs (#10, #13)
-  // already build that model independently; adding a third here would just guarantee a
-  // table-name conflict on merge.
+  // --- Aufsichtsorgan-Reporting (AT 3.2) demo data ----------------------------------------------
+  // Eigenständiges Berichtsziel/-publikum ggü. dem GL-Quartalsbericht oben, gleiches Modell
+  // (RmReport), unterschieden über "empfaenger" — siehe Spezifikation, "Neu gefundene Lücken" Nr. 4.
+  await prisma.rmReport.create({
+    data: {
+      institutionId: institution.id,
+      reportType: "quartalsbericht",
+      empfaenger: "aufsichtsorgan",
+      periodFrom: new Date("2025-10-01"),
+      periodTo: new Date("2025-12-31"),
+      status: "final",
+      finalizedAt: new Date("2026-01-25"),
+      content: {
+        geschaeftslage: "Bestandsentwicklung im Neugeschäft leicht rückläufig, Ertragslage stabil.",
+        risikosituation: "Alle Risikoarten innerhalb der Limits, siehe RTF-Bericht Q4/2025.",
+        strategienUndAnpassungen: "Geschäftsstrategie 2026 verabschiedet, keine Anpassung der Risikostrategie im Berichtszeitraum.",
+        complianceBericht: "Jahresbericht Compliance 2025 vorgelegt, keine wesentlichen Feststellungen.",
+        revisionsberichte: "Prüfungsbericht Kreditvergabeprozess 2025 vorgelegt, zwei Feststellungen in Umsetzung.",
+      },
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  // --- NPL-Strategie / Kennzahlen (AT 4.2 Tz. 3) demo data --------------------------------------
+  // Konditional — nur relevant bei hohem Bestand notleidender Risikopositionen. Beispiel Leasing AG
+  // hat keinen wesentlichen NPL-Bestand; ein einzelner Beleg-Datensatz zeigt trotzdem, wie das
+  // Register aussieht, ohne einen laufenden Pflegeaufwand zu unterstellen.
+  await prisma.rmNplKennzahl.create({
+    data: {
+      institutionId: institution.id,
+      periode: "2026-Q1",
+      nplQuote: 0.8,
+      nplBestand: 1_240_000,
+      zielQuote: 1.5,
+      abbaupfadEingehalten: true,
+      massnahmen: "Kein aktiver Abbaupfad erforderlich, NPL-Quote deutlich unter Zielwert.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  // --- Modellregister (AT 4.3.4) demo data ------------------------------------------------------
+  const scoringModell = await prisma.rmModell.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "Kreditscoring-Modell Firmenkunden",
+      zweck: "Bonitätsbeurteilung im Rahmen der Kreditvergabe an Firmenkunden.",
+      enthaeltKiMlKomponente: true,
+      erklaerbarkeit: "mittel",
+      ueberschreibungenVorhanden: true,
+      ueberschreibungenBegruendung: "Manuelles Overrule durch Kreditrisikocontrolling bei Sondersicherheiten, dokumentiert je Einzelfall.",
+      verantwortlichUserId: risikocontrolling.id,
+      naechsteValidierung: new Date("2027-01-15"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.rmModellValidierung.create({
+    data: {
+      modellId: scoringModell.id,
+      durchgefuehrtAm: new Date("2026-01-15"),
+      durchgefuehrtVonUserId: risikocontrolling.id,
+      ergebnis: "bestaetigt",
+      kommentar: "Trennschärfe und Kalibrierung unverändert im Zielkorridor.",
+    },
+  });
+
+  await prisma.rmModell.create({
+    data: {
+      institutionId: institution.id,
+      bezeichnung: "Restwert-Prognosemodell Leasingobjekte",
+      zweck: "Prognose der Restwerte von Leasingobjekten zum Vertragsende.",
+      enthaeltKiMlKomponente: false,
+      erklaerbarkeit: "hoch",
+      ueberschreibungenVorhanden: false,
+      verantwortlichUserId: risikocontrolling.id,
+      naechsteValidierung: new Date("2026-11-01"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
 
   // --- IT-Risikomanagement / BAIT demo data -----------------------------------------------------
 
@@ -1663,7 +1739,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement, IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement (incl. Kapitalplanung, Stresstests, Aufsichtsorgan-Reporting, NPL-Kennzahlen, Modellregister), IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
   );
 }
 

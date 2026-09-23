@@ -36,20 +36,22 @@ export type Resource =
   | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
   | "externalAuditRecord.acknowledge" // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
   | "ictRegister" // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
-  | "riskManagementRecord" // Risikoinventur, Risikotragfähigkeit
+  | "riskManagementRecord" // Risikoinventur, Risikotragfähigkeit, NPL-Kennzahlen (AT 4.2 Tz. 3)
   | "riskStrategy" // Geschäfts-/Risikostrategie, Entwurf-Phase (CRUD)
   | "riskStrategy.approve" // Verabschiedung durch die Geschäftsleitung, AT 4.2
-  | "riskManagementReport"
+  | "riskManagementReport" // inkl. Aufsichtsorgan-Reporting (AT 3.2), unterschieden über "empfaenger"
   | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
   | "riskCapitalPlanning" // AT 4.1 Tz. 10 — Kapitalplanungsprozess, Entwurf-Phase (CRUD)
   | "riskCapitalPlanning.approve" // Verabschiedung durch die Geschäftsleitung, analog riskStrategy.approve
   | "riskStressTest" // AT 4.3.3 — Stresstests (Sensitivität/Szenario/inverser Stresstest/Gesamtbank)
-  // AT 4.3.4 Modellregister intentionally has no resource here — PR #10/#13 build it independently.
+  | "modelGovernanceRecord" // Modellregister und -validierungen, AT 4.3.4
   | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
   | "itRisk.accept" // Geschäftsleitung akzeptiert verbleibendes Restrisiko, BAIT Kap. 3
-  | "itSecurityIncident"; // Sicherheitsvorfälle, BAIT Kap. 4
+  | "itSecurityIncident" // Sicherheitsvorfälle, BAIT Kap. 4
+  | "nachweis"; // Generisches Nachweis-/Belegregister, modulübergreifend (Outsourcing, Compliance,
+  // Interne Revision, Risikomanagement, IT-Risiko)
 
 export type Action = "read" | "write" | "delete";
 
@@ -199,6 +201,10 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
   },
+  modelGovernanceRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
   "riskManagementReport.acknowledge": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
@@ -232,6 +238,14 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   itSecurityIncident: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  // Write-Rollen sind die Vereinigung der Schreibrollen aller Module, die heute Nachweise ablegen
+  // (Outsourcing: AUSLAGERUNGSBEAUFTRAGTER, Compliance: COMPLIANCE, Interne Revision:
+  // INTERNE_REVISION, Risikomanagement/IT-Risiko: RISIKOCONTROLLING) — kein modulspezifisches
+  // Gating hier, das bleibt Aufgabe des aufrufenden Moduls (Entität muss dort schon lesbar sein).
+  nachweis: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"],
   },
 };
 
