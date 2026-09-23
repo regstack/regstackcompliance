@@ -1,4 +1,11 @@
-import { listRisikoinventur, listRisikostrategien, listRisikotragfaehigkeit, listRmReports } from "@/lib/regstack/risikomanagement";
+import {
+  listRisikoinventur,
+  listRisikostrategien,
+  listRisikotragfaehigkeit,
+  listRmReports,
+  listRmNplKennzahlen,
+  listRmModelle,
+} from "@/lib/regstack/risikomanagement";
 import { getBackendSession, canWriteRiskManagement, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
 import { StatCard } from "@/components/ui/stat-card";
@@ -6,16 +13,20 @@ import { RisikoinventurPanel } from "@/components/risikomanagement/risikoinventu
 import { StrategiePanel } from "@/components/risikomanagement/strategie-panel";
 import { RtfPanel } from "@/components/risikomanagement/rtf-panel";
 import { ReportPanel } from "@/components/risikomanagement/report-panel";
+import { NplPanel } from "@/components/risikomanagement/npl-panel";
+import { ModellPanel } from "@/components/risikomanagement/modell-panel";
 
 export default async function RisikomanagementPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
 
-  const [inventur, strategien, rtfSnapshots, reports] = await Promise.all([
+  const [inventur, strategien, rtfSnapshots, reports, nplKennzahlen, modelle] = await Promise.all([
     listRisikoinventur(),
     listRisikostrategien(),
     listRisikotragfaehigkeit(),
     listRmReports(),
+    listRmNplKennzahlen(),
+    listRmModelle(),
   ]);
 
   const canWrite = canWriteRiskManagement(session.role);
@@ -26,6 +37,10 @@ export default async function RisikomanagementPage() {
   const limitWerte = latestRtf ? Object.values(latestRtf.limits).map((l) => l.auslastungProzent ?? 0) : [];
   const kritischeLimits = limitWerte.filter((v) => v >= 90).length;
   const overdueStrategien = strategien.filter((s) => isOverdue(s.naechsteUeberpruefung ? s.naechsteUeberpruefung.slice(0, 10) : null)).length;
+  const aufsichtsorganBerichte = reports.filter((r) => r.empfaenger === "aufsichtsorgan").length;
+  const modelleFaelligeValidierung = modelle.filter(
+    (m) => m.status === "aktiv" && isOverdue(m.naechsteValidierung ? m.naechsteValidierung.slice(0, 10) : null)
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -49,12 +64,25 @@ export default async function RisikomanagementPage() {
           hint={overdueStrategien ? "Strategie(n) mit abgelaufener Überprüfungsfrist" : "alle Strategien im Plan"}
           tone={overdueStrategien ? "warn" : "good"}
         />
+        <StatCard
+          label="Aufsichtsorgan-Berichte"
+          value={aufsichtsorganBerichte}
+          hint="AT 3.2, mindestens vierteljährlich"
+        />
+        <StatCard
+          label="Modelle: Validierung fällig"
+          value={modelleFaelligeValidierung}
+          hint={`von ${modelle.filter((m) => m.status === "aktiv").length} aktiven Modellen`}
+          tone={modelleFaelligeValidierung ? "warn" : "good"}
+        />
       </div>
 
       <RisikoinventurPanel items={inventur} canWrite={canWrite} />
       <StrategiePanel items={strategien} canWrite={canWrite} canApprove={canApprove} />
       <RtfPanel items={rtfSnapshots} canWrite={canWrite} />
       <ReportPanel reports={reports} canWrite={canWrite} canAcknowledge={canApprove} currentUserId={session.userId} />
+      <NplPanel items={nplKennzahlen} canWrite={canWrite} />
+      <ModellPanel items={modelle} canWrite={canWrite} />
     </div>
   );
 }

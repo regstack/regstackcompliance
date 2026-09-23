@@ -28,6 +28,18 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     expect(next).toHaveBeenCalledOnce();
   });
 
+  it("modelGovernanceRecord (Modellregister, AT 4.3.4) is readable by every module role, but only writable by RISIKOCONTROLLING/ADMIN", () => {
+    const next = vi.fn();
+    requirePermission("modelGovernanceRecord", "read")(mockReq("INTERNE_REVISION"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("modelGovernanceRecord", "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+    const writeNext = vi.fn();
+    requirePermission("modelGovernanceRecord", "write")(mockReq("RISIKOCONTROLLING"), mockRes, writeNext);
+    expect(writeNext).toHaveBeenCalledOnce();
+  });
+
   it("only GESCHAEFTSLEITUNG/ADMIN may acknowledge a riskManagementReport", () => {
     expect(() =>
       requirePermission("riskManagementReport.acknowledge", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())

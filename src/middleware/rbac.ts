@@ -36,11 +36,12 @@ export type Resource =
   | "externalAuditRecord" // ExternePruefung + Feststellungen: von Interner Revision angelegt/verteilt
   | "externalAuditRecord.acknowledge" // Geschäftsleitung-Kenntnisnahme des externen Prüfungsberichts
   | "ictRegister" // DORA Art. 28-30 — ICT-Drittanbieter und Vertragsverhältnisse
-  | "riskManagementRecord" // Risikoinventur, Risikotragfähigkeit
+  | "riskManagementRecord" // Risikoinventur, Risikotragfähigkeit, NPL-Kennzahlen (AT 4.2 Tz. 3)
   | "riskStrategy" // Geschäfts-/Risikostrategie, Entwurf-Phase (CRUD)
   | "riskStrategy.approve" // Verabschiedung durch die Geschäftsleitung, AT 4.2
-  | "riskManagementReport"
+  | "riskManagementReport" // inkl. Aufsichtsorgan-Reporting (AT 3.2), unterschieden über "empfaenger"
   | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "modelGovernanceRecord" // Modellregister und -validierungen, AT 4.3.4
   | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
@@ -196,6 +197,10 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"], // AT 4.2 — Strategien sind an die Geschäftsleitung gebunden
   },
   riskManagementReport: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  modelGovernanceRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
   },
