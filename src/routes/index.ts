@@ -49,6 +49,8 @@ import itRisikoStrategieRoutes from "../modules/itRisiko/strategie.routes";
 import itRisikoAssetsRoutes from "../modules/itRisiko/assets.routes";
 import itRisikoRisikenRoutes from "../modules/itRisiko/risiken.routes";
 import itRisikoVorfaelleRoutes from "../modules/itRisiko/vorfaelle.routes";
+import itRisikoBetriebsstoerungenRoutes from "../modules/itRisiko/betriebsstoerungen.routes";
+import itRisikoNotfallmanagementRoutes from "../modules/itRisiko/notfallmanagement.routes";
 import { requireAuth } from "../middleware/auth";
 
 export const router = Router();
@@ -107,3 +109,5 @@ router.use("/it-risiko/strategie", itRisikoStrategieRoutes);
 router.use("/it-risiko/assets", itRisikoAssetsRoutes);
 router.use("/it-risiko/risiken", itRisikoRisikenRoutes);
 router.use("/it-risiko/vorfaelle", itRisikoVorfaelleRoutes);
+router.use("/it-risiko/betriebsstoerungen", itRisikoBetriebsstoerungenRoutes);
+router.use("/it-risiko/notfallmanagement", itRisikoNotfallmanagementRoutes);

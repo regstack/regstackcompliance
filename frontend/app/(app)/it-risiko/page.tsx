@@ -1,10 +1,19 @@
-import { listItStrategien, listItAssets, listItRisiken, listItSicherheitsvorfaelle } from "@/lib/regstack/it-risiko";
+import {
+  listItStrategien,
+  listItAssets,
+  listItRisiken,
+  listItSicherheitsvorfaelle,
+  listItBetriebsstoerungen,
+  listItNotfallplaene,
+} from "@/lib/regstack/it-risiko";
 import { getBackendSession, canWriteItRisk, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { StatCard } from "@/components/ui/stat-card";
 import { ItStrategiePanel } from "@/components/it-risiko/strategie-panel";
 import { AssetPanel } from "@/components/it-risiko/asset-panel";
 import { RisikoPanel } from "@/components/it-risiko/risiko-panel";
 import { VorfallPanel } from "@/components/it-risiko/vorfall-panel";
+import { BetriebsstoerungPanel } from "@/components/it-risiko/betriebsstoerung-panel";
+import { NotfallplanPanel } from "@/components/it-risiko/notfallplan-panel";
 
 // Plain helper, not the page component itself — keeps the impure Date.now() call out of the
 // component body (react-hooks/purity), same reasoning as compliance-utils.ts's isOverdue().
@@ -16,11 +25,13 @@ export default async function ItRisikoPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
 
-  const [strategien, assets, risiken, vorfaelle] = await Promise.all([
+  const [strategien, assets, risiken, vorfaelle, betriebsstoerungen, notfallplaene] = await Promise.all([
     listItStrategien(),
     listItAssets(),
     listItRisiken(),
     listItSicherheitsvorfaelle(),
+    listItBetriebsstoerungen(),
+    listItNotfallplaene(),
   ]);
 
   const canWrite = canWriteItRisk(session.role);
@@ -35,6 +46,9 @@ export default async function ItRisikoPage() {
   const hoheRestrisiken = risiken.filter((r) => r.restrisiko === "hoch" && r.status !== "akzeptiert_von_gl" && r.status !== "geschlossen").length;
   const vorfaelle30Tage = vorfaelle.filter((v) => isWithinLast30Days(v.datum));
   const meldepflichtig30Tage = vorfaelle30Tage.filter((v) => v.meldepflichtBaFin).length;
+
+  const offeneStoerungen = betriebsstoerungen.filter((s) => s.status !== "geschlossen").length;
+  const notfallplaeneOhneTest = notfallplaene.filter((p) => p.status === "freigegeben" && !p.letzterTestAm).length;
 
   return (
     <div className="space-y-6">
@@ -58,12 +72,26 @@ export default async function ItRisikoPage() {
           hint={meldepflichtig30Tage ? `davon ${meldepflichtig30Tage} BaFin-meldepflichtig` : "keine Meldepflicht ausgelöst"}
           tone={meldepflichtig30Tage ? "crit" : vorfaelle30Tage.length ? "warn" : "good"}
         />
+        <StatCard
+          label="Offene Betriebsstörungen"
+          value={offeneStoerungen}
+          hint={`von ${betriebsstoerungen.length} erfassten Störungen`}
+          tone={offeneStoerungen ? "warn" : "good"}
+        />
+        <StatCard
+          label="Notfallpläne ohne Test"
+          value={notfallplaeneOhneTest}
+          hint={`von ${notfallplaene.length} Notfallplänen`}
+          tone={notfallplaeneOhneTest ? "warn" : "good"}
+        />
       </div>
 
       <ItStrategiePanel items={strategien} canWrite={canWrite} canApprove={canApprove} />
       <AssetPanel items={assets} canWrite={canWrite} />
       <RisikoPanel items={risiken} assets={assets} canWrite={canWrite} canAccept={canApprove} />
       <VorfallPanel items={vorfaelle} canWrite={canWrite} />
+      <BetriebsstoerungPanel items={betriebsstoerungen} canWrite={canWrite} />
+      <NotfallplanPanel items={notfallplaene} assets={assets} canWrite={canWrite} />
     </div>
   );
 }

@@ -86,3 +86,67 @@ export async function listItRisiken() {
 export async function listItSicherheitsvorfaelle() {
   return apiFetch<ItSicherheitsvorfall[]>("/it-risiko/vorfaelle");
 }
+
+// --- Kap. 8 IT-Betrieb: Betriebsstörungen ----------------------------------------------------
+// Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8, Tz.
+// 8.4-8.5) sind bewusst nicht hier — siehe Risikomanagement_BAIT_MVP_Spezifikation.md,
+// "Koordination mit parallelen Sessions": PR #13 deckt diese Bausteine bereits ab.
+
+export type ItStoerungPrioritaet = "niedrig" | "mittel" | "hoch" | "kritisch";
+export type ItStoerungStatus = "offen" | "in_bearbeitung" | "geschlossen";
+
+export type ItBetriebsstoerung = {
+  id: string;
+  datum: string;
+  beschreibung: string;
+  betroffeneSysteme: string | null;
+  ursache: string | null;
+  prioritaet: ItStoerungPrioritaet;
+  status: ItStoerungStatus;
+  massnahme: string | null;
+  eskalationAnUserId: string | null;
+  geschaeftsleitungInformiert: boolean;
+  abschlussAm: string | null;
+  abschlussVonUserId: string | null;
+};
+
+export async function listItBetriebsstoerungen() {
+  return apiFetch<ItBetriebsstoerung[]>("/it-risiko/betriebsstoerungen");
+}
+
+// --- Kap. 10 IT-Notfallmanagement ------------------------------------------------------------
+
+export type ItNotfallplanStatus = "entwurf" | "freigegeben";
+
+export type ItNotfallplan = {
+  id: string;
+  assetId: string | null;
+  asset: { id: string; bezeichnung: string } | null;
+  bezeichnung: string;
+  rto: string | null;
+  rpo: string | null;
+  konfigurationNotbetrieb: string | null;
+  abhaengigkeiten: string | null;
+  status: ItNotfallplanStatus;
+  freigegebenVonUserId: string | null;
+  freigegebenAm: string | null;
+  letzterTestAm: string | null;
+};
+
+export type ItNotfalltest = {
+  id: string;
+  notfallplanId: string;
+  datum: string;
+  umfang: string | null;
+  ergebnis: string | null;
+  abgeleiteteMassnahmen: string | null;
+  durchgefuehrtVonUserId: string | null;
+};
+
+export async function listItNotfallplaene() {
+  return apiFetch<ItNotfallplan[]>("/it-risiko/notfallmanagement/plaene");
+}
+
+export async function listItNotfalltests(planId: string) {
+  return apiFetch<ItNotfalltest[]>(`/it-risiko/notfallmanagement/plaene/${planId}/tests`);
+}
