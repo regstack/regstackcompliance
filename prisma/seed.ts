@@ -1570,6 +1570,62 @@ async function main() {
     },
   });
 
+  // --- IT-Risiko/BAIT Phase 2: Kap. 8 (IT-Betrieb, Betriebsstörungen) und Kap. 10
+  // (IT-Notfallmanagement) — Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und
+  // Änderungsmanagement (Kap. 8, Tz. 8.4-8.5) sind bewusst nicht hier, siehe
+  // Risikomanagement_BAIT_MVP_Spezifikation.md, "Koordination mit parallelen Sessions".
+  // ------------------------------------------------------------------------------------------
+
+  await prisma.itBetriebsstoerung.create({
+    data: {
+      institutionId: institution.id,
+      datum: new Date("2026-03-02"),
+      beschreibung: "Kurzzeitiger Ausfall des Kernbankverfahrens durch einen Kapazitätsengpass im Rechenzentrum.",
+      betroffeneSysteme: "Kernbankverfahren",
+      ursache: "Unzureichend dimensionierte Datenbank-Ressourcen nach Lastanstieg.",
+      prioritaet: "hoch",
+      status: "geschlossen",
+      massnahme: "Kapazitätserweiterung umgesetzt, Monitoring-Schwellenwerte angepasst.",
+      eskalationAnUserId: geschaeftsleitung.id,
+      geschaeftsleitungInformiert: true,
+      abschlussAm: new Date("2026-03-04"),
+      abschlussVonUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  const notfallplanKernbank = await prisma.itNotfallplan.create({
+    data: {
+      institutionId: institution.id,
+      assetId: kernbankverfahren.id,
+      bezeichnung: "IT-Notfallplan Kernbankverfahren",
+      rto: "4 Stunden",
+      rpo: "15 Minuten",
+      konfigurationNotbetrieb: "Failover auf Backup-Rechenzentrum, eingeschränkter Funktionsumfang (nur Kernbuchungen).",
+      abhaengigkeiten: "Netzwerkinfrastruktur Rechenzentrum, Backup-Rechenzentrum.",
+      status: "freigegeben",
+      freigegebenVonUserId: geschaeftsleitung.id,
+      freigegebenAm: new Date("2026-01-25"),
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itNotfalltest.create({
+    data: {
+      institutionId: institution.id,
+      notfallplanId: notfallplanKernbank.id,
+      datum: new Date("2026-02-20"),
+      umfang: "Vollständiger Failover-Test Kernbankverfahren inkl. Backup-Rechenzentrum.",
+      ergebnis: "Erfolgreich, Wiederanlaufzeit lag mit 3,5 Stunden innerhalb des RTO.",
+      abgeleiteteMassnahmen: "Runbook um zusätzlichen DNS-Umschaltschritt ergänzt.",
+      durchgefuehrtVonUserId: risikocontrolling.id,
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+  await prisma.itNotfallplan.update({
+    where: { id: notfallplanKernbank.id },
+    data: { letzterTestAm: new Date("2026-02-20") },
+  });
+
   // --- DORA ICT-Register demo data (Art. 28-30) --------------------------------------------
   // Same Anbieter A/C as the Auslagerungsmanagement-Musterdaten oben — DORA erfasst zwar ein
   // eigenständiges Register, aber in der Praxis überschneiden sich die Anbieter oft mit dem
@@ -1663,7 +1719,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement, IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement, IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet, inkl. Kap. 8/10 Betriebsstörungen/Notfallmanagement), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
   );
 }
 

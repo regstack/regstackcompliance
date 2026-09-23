@@ -98,3 +98,72 @@ export async function abschliessenItVorfall(id: string) {
   await apiFetch(`/it-risiko/vorfaelle/${id}/abschliessen`, { method: "POST" });
   revalidatePath("/it-risiko");
 }
+
+// --- Kap. 8 IT-Betrieb: Betriebsstörungen ---------------------------------------------------
+
+export type ItBetriebsstoerungInput = {
+  datum: string;
+  beschreibung: string;
+  betroffeneSysteme: string;
+  ursache: string;
+  prioritaet: "niedrig" | "mittel" | "hoch" | "kritisch";
+  geschaeftsleitungInformiert: boolean;
+};
+
+export async function addItBetriebsstoerung(fields: ItBetriebsstoerungInput) {
+  await apiFetch("/it-risiko/betriebsstoerungen", {
+    method: "POST",
+    body: JSON.stringify({
+      datum: new Date(fields.datum).toISOString(),
+      beschreibung: fields.beschreibung,
+      betroffeneSysteme: fields.betroffeneSysteme || undefined,
+      ursache: fields.ursache || undefined,
+      prioritaet: fields.prioritaet,
+      geschaeftsleitungInformiert: fields.geschaeftsleitungInformiert,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+export async function abschliessenItBetriebsstoerung(id: string) {
+  await apiFetch(`/it-risiko/betriebsstoerungen/${id}/abschliessen`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+// --- Kap. 10 IT-Notfallmanagement ------------------------------------------------------------
+
+export type ItNotfallplanInput = {
+  assetId: string;
+  bezeichnung: string;
+  rto: string;
+  rpo: string;
+  konfigurationNotbetrieb: string;
+};
+
+export async function addItNotfallplan(fields: ItNotfallplanInput) {
+  await apiFetch("/it-risiko/notfallmanagement/plaene", {
+    method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      bezeichnung: fields.bezeichnung,
+      rto: fields.rto || undefined,
+      rpo: fields.rpo || undefined,
+      konfigurationNotbetrieb: fields.konfigurationNotbetrieb || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+export async function freigebenItNotfallplan(id: string) {
+  await apiFetch(`/it-risiko/notfallmanagement/plaene/${id}/freigeben`, { method: "POST" });
+  revalidatePath("/it-risiko");
+}
+
+// Tz. 10.4 — mindestens jährlicher Wirksamkeitstest je Notfallplan.
+export async function addItNotfalltest(planId: string, ergebnis: string, datum: string) {
+  await apiFetch(`/it-risiko/notfallmanagement/plaene/${planId}/tests`, {
+    method: "POST",
+    body: JSON.stringify({ datum: new Date(datum).toISOString(), ergebnis: ergebnis || undefined }),
+  });
+  revalidatePath("/it-risiko");
+}

@@ -255,6 +255,16 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         icon: <AlertTriangleIcon {...iconProps} />,
         items: [{ href: "/it-risiko#vorfaelle", label: "Sicherheitsvorfälle" }],
       },
+      {
+        title: "IT-Betrieb · Kap. 8",
+        icon: <SettingsIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#betriebsstoerungen", label: "Betriebsstörungen" }],
+      },
+      {
+        title: "IT-Notfallmanagement · Kap. 10",
+        icon: <FlagIcon {...iconProps} />,
+        items: [{ href: "/it-risiko#notfallmanagement", label: "Notfallpläne" }],
+      },
     ],
   },
 };

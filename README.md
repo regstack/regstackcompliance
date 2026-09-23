@@ -112,8 +112,14 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   Stresstests (AT 4.3.3), Routen unter `/risikomanagement/kapitalplanung`/`/risikomanagement/stresstests`
   inkl. UI-Panels auf `/risikomanagement`. Ein Modellregister (AT 4.3.4 / AT 4.1 Tz. 9 Validierung)
   ist bewusst **nicht** Teil davon — zwei andere offene PRs (#10, #13) bauen das bereits parallel;
-  siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` für Details. Offene Fragen (u. a. kein eigener
-  ISB-Login im MVP) siehe ebenda.
+  siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` für Details. Auf der BAIT-Seite ebenfalls seit
+  2026-09-23 ergänzt (gegen den jetzt vorliegenden Primärtext, Rundschreiben 10/2017 (BA)):
+  Betriebsstörungen (Kap. 8) und IT-Notfallmanagement (Kap. 10), Routen unter
+  `/it-risiko/betriebsstoerungen`/`/it-risiko/notfallmanagement`. Berechtigungsmanagement (Kap. 6),
+  IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8) sind bewusst **nicht** Teil davon — PR #13
+  baut das bereits parallel, mit denselben Tabellennamen; siehe
+  `Risikomanagement_BAIT_MVP_Spezifikation.md`, Abschnitt "Koordination mit parallelen Sessions".
+  Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe ebenda.
 - Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
   umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
   Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
