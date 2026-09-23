@@ -28,6 +28,21 @@ export async function addRisikoinventurEintrag(fields: RisikoinventurInput) {
   revalidatePath("/risikomanagement");
 }
 
+export async function updateRisikoinventurEintrag(id: string, fields: RisikoinventurInput) {
+  await apiFetch(`/risikomanagement/inventur/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      kategorie: fields.kategorie,
+      bezeichnung: fields.bezeichnung,
+      wesentlichkeit: fields.wesentlichkeit,
+      begruendung: fields.begruendung || undefined,
+      naechsteUeberpruefung: fields.naechsteUeberpruefung ? new Date(fields.naechsteUeberpruefung).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
 export type RisikostrategieInput = {
   art: RmStrategieArt;
   jahr: number;
@@ -51,6 +66,18 @@ export async function addRisikostrategie(fields: RisikostrategieInput) {
 // sichtbar ist.
 export async function verabschiedeRisikostrategie(id: string) {
   await apiFetch(`/risikomanagement/strategien/${id}/verabschieden`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}
+
+// Nur solange status=entwurf möglich — nach Verabschiedung lehnt die Route selbst ab (422). Das
+// `inhalt`-JSON hat noch keinen eigenen Editor und bleibt hier bewusst ausgeklammert.
+export async function updateRisikostrategie(id: string, naechsteUeberpruefung: string) {
+  await apiFetch(`/risikomanagement/strategien/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      naechsteUeberpruefung: naechsteUeberpruefung ? new Date(naechsteUeberpruefung).toISOString() : undefined,
+    }),
+  });
   revalidatePath("/risikomanagement");
 }
 

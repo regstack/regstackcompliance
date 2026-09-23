@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
-import { addRisikoinventurEintrag, type RisikoinventurInput } from "@/app/(app)/risikomanagement/actions";
+import { addRisikoinventurEintrag, updateRisikoinventurEintrag, type RisikoinventurInput } from "@/app/(app)/risikomanagement/actions";
 import type { Risikoinventur } from "@/lib/regstack/risikomanagement";
 import { RISIKOART_LABELS, type RisikoartKategorie } from "@/lib/regstack/risikomanagement-labels";
 
@@ -19,8 +19,13 @@ const emptyForm = (): RisikoinventurInput => ({
   naechsteUeberpruefung: "",
 });
 
-function InventurForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const [form, setForm] = useState(emptyForm);
+function InventurForm({ initial, onSubmit, onDone, onCancel }: {
+  initial?: RisikoinventurInput;
+  onSubmit: (fields: RisikoinventurInput) => Promise<unknown>;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState(() => initial ?? emptyForm());
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +33,7 @@ function InventurForm({ onDone, onCancel }: { onDone: () => void; onCancel: () =
     setError(null);
     startTransition(async () => {
       try {
-        await addRisikoinventurEintrag(form);
+        await onSubmit(form);
         onDone();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
@@ -78,6 +83,7 @@ function InventurForm({ onDone, onCancel }: { onDone: () => void; onCancel: () =
 
 export function RisikoinventurPanel({ items, canWrite }: { items: Risikoinventur[]; canWrite: boolean }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <Card id="inventur">
@@ -89,7 +95,7 @@ export function RisikoinventurPanel({ items, canWrite }: { items: Risikoinventur
         <p className="mb-3 text-xs text-muted-foreground">
           Jährliche Wesentlichkeitseinstufung je Risikoart — auch geprüfte, nicht wesentliche Risikoarten bleiben im Register.
         </p>
-        {adding && <div className="mb-3"><InventurForm onDone={() => setAdding(false)} onCancel={() => setAdding(false)} /></div>}
+        {adding && <div className="mb-3"><InventurForm onSubmit={addRisikoinventurEintrag} onDone={() => setAdding(false)} onCancel={() => setAdding(false)} /></div>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -98,19 +104,45 @@ export function RisikoinventurPanel({ items, canWrite }: { items: Risikoinventur
                 <th className="px-3 py-2 font-medium">Gegenstand</th>
                 <th className="px-3 py-2 font-medium">Wesentlichkeit</th>
                 <th className="px-3 py-2 font-medium">Nächste Prüfung</th>
+                {canWrite && <th className="px-3 py-2" />}
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-b border-border-subtle last:border-0">
-                  <td className="px-3 py-2 font-medium text-foreground">{RISIKOART_LABELS[item.kategorie]}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{item.bezeichnung}</td>
-                  <td className="px-3 py-2"><StatusPill status={item.wesentlichkeit} /></td>
-                  <td className="px-3 py-2 text-muted-foreground">{item.naechsteUeberpruefung?.slice(0, 10) ?? "—"}</td>
-                </tr>
-              ))}
+              {items.map((item) =>
+                editingId === item.id ? (
+                  <tr key={item.id} className="border-b border-border-subtle last:border-0">
+                    <td colSpan={canWrite ? 5 : 4} className="px-3 py-2">
+                      <InventurForm
+                        initial={{
+                          jahr: item.jahr,
+                          kategorie: item.kategorie,
+                          bezeichnung: item.bezeichnung,
+                          wesentlichkeit: item.wesentlichkeit,
+                          begruendung: item.begruendung ?? "",
+                          naechsteUeberpruefung: item.naechsteUeberpruefung?.slice(0, 10) ?? "",
+                        }}
+                        onSubmit={(fields) => updateRisikoinventurEintrag(item.id, fields)}
+                        onDone={() => setEditingId(null)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={item.id} className="border-b border-border-subtle last:border-0">
+                    <td className="px-3 py-2 font-medium text-foreground">{RISIKOART_LABELS[item.kategorie]}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{item.bezeichnung}</td>
+                    <td className="px-3 py-2"><StatusPill status={item.wesentlichkeit} /></td>
+                    <td className="px-3 py-2 text-muted-foreground">{item.naechsteUeberpruefung?.slice(0, 10) ?? "—"}</td>
+                    {canWrite && (
+                      <td className="px-3 py-2 text-right">
+                        <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={() => setEditingId(item.id)}>Bearbeiten</Button>
+                      </td>
+                    )}
+                  </tr>
+                )
+              )}
               {items.length === 0 && (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">Noch keine Risikoinventur erfasst.</td></tr>
+                <tr><td colSpan={canWrite ? 5 : 4} className="px-3 py-6 text-center text-muted-foreground">Noch keine Risikoinventur erfasst.</td></tr>
               )}
             </tbody>
           </table>
