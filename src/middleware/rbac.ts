@@ -41,6 +41,10 @@ export type Resource =
   | "riskStrategy.approve" // Verabschiedung durch die Geschäftsleitung, AT 4.2
   | "riskManagementReport"
   | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "riskCapitalPlanning" // AT 4.1 Tz. 10 — Kapitalplanungsprozess, Entwurf-Phase (CRUD)
+  | "riskCapitalPlanning.approve" // Verabschiedung durch die Geschäftsleitung, analog riskStrategy.approve
+  | "riskStressTest" // AT 4.3.3 — Stresstests (Sensitivität/Szenario/inverser Stresstest/Gesamtbank)
+  // AT 4.3.4 Modellregister intentionally has no resource here — PR #10/#13 build it independently.
   | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
@@ -197,6 +201,17 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
   "riskManagementReport.acknowledge": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  riskCapitalPlanning: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "riskCapitalPlanning.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"], // AT 4.1 Tz. 10 — muss mit der Geschäftsstrategie im Einklang stehen, GL-Sache wie riskStrategy.approve
+  },
+  riskStressTest: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
   },
   itGovernanceRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],

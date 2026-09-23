@@ -108,8 +108,12 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
   `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
   auf der einen Seite, IT-Strategie, Schutzbedarfsfeststellung, IT-Risikoregister und
-  Sicherheitsvorfälle auf der anderen. Offene Fragen (u. a. kein eigener ISB-Login im MVP) siehe
-  `Risikomanagement_BAIT_MVP_Spezifikation.md`.
+  Sicherheitsvorfälle auf der anderen. Seit 2026-09-23 ergänzt: Kapitalplanung (AT 4.1 Tz. 10) und
+  Stresstests (AT 4.3.3), Routen unter `/risikomanagement/kapitalplanung`/`/risikomanagement/stresstests`
+  inkl. UI-Panels auf `/risikomanagement`. Ein Modellregister (AT 4.3.4 / AT 4.1 Tz. 9 Validierung)
+  ist bewusst **nicht** Teil davon — zwei andere offene PRs (#10, #13) bauen das bereits parallel;
+  siehe `Risikomanagement_BAIT_MVP_Spezifikation.md` für Details. Offene Fragen (u. a. kein eigener
+  ISB-Login im MVP) siehe ebenda.
 - Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
   umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
   Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus

@@ -22,3 +22,29 @@ export const RISIKOART_LABELS: Record<RisikoartKategorie, string> = {
   ESG_RISIKO: "ESG-Risiko",
   SONSTIGES_RISIKO: "Sonstiges Risiko",
 };
+
+export type RmStresstestTyp =
+  | "sensitivitaetsanalyse"
+  | "szenarioanalyse_historisch"
+  | "szenarioanalyse_hypothetisch"
+  | "schwerer_konjunktureller_abschwung"
+  | "inverser_stresstest"
+  | "resilienzanalyse";
+
+export const STRESSTEST_TYP_LABELS: Record<RmStresstestTyp, string> = {
+  sensitivitaetsanalyse: "Sensitivitätsanalyse",
+  szenarioanalyse_historisch: "Szenarioanalyse (historisch)",
+  szenarioanalyse_hypothetisch: "Szenarioanalyse (hypothetisch)",
+  schwerer_konjunktureller_abschwung: "Schwerer konjunktureller Abschwung",
+  inverser_stresstest: "Inverser Stresstest",
+  resilienzanalyse: "Resilienzanalyse",
+};
+
+export type RmStresstestEbene = "gesamtinstitut" | "risikoart" | "portfolio" | "geschaeftsbereich";
+
+export const STRESSTEST_EBENE_LABELS: Record<RmStresstestEbene, string> = {
+  gesamtinstitut: "Gesamtinstitut",
+  risikoart: "Risikoart",
+  portfolio: "Portfolio",
+  geschaeftsbereich: "Geschäftsbereich",
+};

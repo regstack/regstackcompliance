@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/regstack/backend-client";
-import type { RisikoartKategorie } from "@/lib/regstack/risikomanagement-labels";
+import type {
+  RisikoartKategorie,
+  RmStresstestTyp,
+  RmStresstestEbene,
+} from "@/lib/regstack/risikomanagement-labels";
 
 // Client Components must import RISIKOART_LABELS/RisikoartKategorie from
 // "@/lib/regstack/risikomanagement-labels" directly instead of from this module, since importing
@@ -80,3 +84,44 @@ export async function listRisikotragfaehigkeit() {
 export async function listRmReports() {
   return apiFetch<RmReport[]>("/risikomanagement/reports");
 }
+
+export type RmKapitalplanung = {
+  id: string;
+  jahr: number;
+  planungshorizontJahre: number;
+  kapitalbedarfPlanung: Record<string, number>;
+  verfuegbaresKapitalPlanung: Record<string, number>;
+  adverseSzenarienBeruecksichtigt: boolean;
+  konsistenzGeschaeftsplanung: string | null;
+  anlassbezogenAktualisiertAm: string | null;
+  verabschiedetAm: string | null;
+  verabschiedetVonUserId: string | null;
+};
+
+export async function listRmKapitalplanung() {
+  return apiFetch<RmKapitalplanung[]>("/risikomanagement/kapitalplanung");
+}
+
+export type RmStresstest = {
+  id: string;
+  jahr: number;
+  typ: RmStresstestTyp;
+  ebene: RmStresstestEbene;
+  betroffeneRisikoarten: RisikoartKategorie[];
+  szenariobeschreibung: string;
+  risikofaktoren: string | null;
+  wechselwirkungenBeruecksichtigt: boolean;
+  ergebnis: string | null;
+  rtfBeruecksichtigt: boolean;
+  handlungsbedarf: string | null;
+  durchgefuehrtAm: string;
+  angemessenheitGeprueftAm: string | null;
+  verantwortlichUserId: string | null;
+};
+
+export async function listRmStresstests() {
+  return apiFetch<RmStresstest[]>("/risikomanagement/stresstests");
+}
+
+// AT 4.3.4 Modellregister types intentionally omitted here — two other open PRs (#10, #13)
+// build that model independently; see the matching note in prisma/schema.prisma.

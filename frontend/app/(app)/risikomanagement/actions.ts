@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
 import type { RisikoartKategorie, RmStrategieArt, RtfAnsatz } from "@/lib/regstack/risikomanagement";
+import type { RmStresstestTyp, RmStresstestEbene } from "@/lib/regstack/risikomanagement-labels";
 
 export type RisikoinventurInput = {
   jahr: number;
@@ -104,3 +105,67 @@ export async function acknowledgeRmReport(id: string) {
   await apiFetch(`/risikomanagement/reports/${id}/acknowledge`, { method: "POST" });
   revalidatePath("/risikomanagement");
 }
+
+export type RmKapitalplanungInput = {
+  jahr: number;
+  planungshorizontJahre: number;
+  adverseSzenarienBeruecksichtigt: boolean;
+  konsistenzGeschaeftsplanung: string;
+};
+
+export async function addRmKapitalplanung(fields: RmKapitalplanungInput) {
+  await apiFetch("/risikomanagement/kapitalplanung", {
+    method: "POST",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      planungshorizontJahre: fields.planungshorizontJahre,
+      adverseSzenarienBeruecksichtigt: fields.adverseSzenarienBeruecksichtigt,
+      konsistenzGeschaeftsplanung: fields.konsistenzGeschaeftsplanung || undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+// Geschäftsleitung/Admin-only ("riskCapitalPlanning.approve"), serverseitig erzwungen — analog
+// verabschiedeRisikostrategie.
+export async function verabschiedeRmKapitalplanung(id: string) {
+  await apiFetch(`/risikomanagement/kapitalplanung/${id}/verabschieden`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}
+
+export type RmStresstestInput = {
+  jahr: number;
+  typ: RmStresstestTyp;
+  ebene: RmStresstestEbene;
+  betroffeneRisikoarten: RisikoartKategorie[];
+  szenariobeschreibung: string;
+  risikofaktoren: string;
+  wechselwirkungenBeruecksichtigt: boolean;
+  ergebnis: string;
+  rtfBeruecksichtigt: boolean;
+  handlungsbedarf: string;
+  durchgefuehrtAm: string;
+};
+
+export async function addRmStresstest(fields: RmStresstestInput) {
+  await apiFetch("/risikomanagement/stresstests", {
+    method: "POST",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      typ: fields.typ,
+      ebene: fields.ebene,
+      betroffeneRisikoarten: fields.betroffeneRisikoarten,
+      szenariobeschreibung: fields.szenariobeschreibung,
+      risikofaktoren: fields.risikofaktoren || undefined,
+      wechselwirkungenBeruecksichtigt: fields.wechselwirkungenBeruecksichtigt,
+      ergebnis: fields.ergebnis || undefined,
+      rtfBeruecksichtigt: fields.rtfBeruecksichtigt,
+      handlungsbedarf: fields.handlungsbedarf || undefined,
+      durchgefuehrtAm: fields.durchgefuehrtAm ? new Date(fields.durchgefuehrtAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+// AT 4.3.4 Modellregister actions intentionally omitted here — two other open PRs (#10, #13)
+// build that model independently; see the matching note in prisma/schema.prisma.

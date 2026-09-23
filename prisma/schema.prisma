@@ -336,6 +336,8 @@ model InstitutionProfile {
   rmStrategien             Risikostrategie[]
   rmRisikotragfaehigkeit   Risikotragfaehigkeit[]
   rmReports                RmReport[]
+  rmKapitalplanung         RmKapitalplanung[]
+  rmStresstests            RmStresstest[]
 
   itStrategien             ItStrategie[]
   itAssets                 ItAsset[]
@@ -2065,9 +2067,15 @@ model IctArrangement {
 
 // ---------------------------------------------------------------------------
 // Risikomanagement (MaRisk AT 4) — Risikoinventur, Strategien, Risikotragfähigkeit,
-// Berichtswesen an die Geschäftsleitung. MVP-Ausschnitt gemäß
-// Risikomanagement_BAIT_MVP_Spezifikation.md; Stresstests und BTR-Detailformulare
-// sind bewusst Phase 2. "Rm"-Präfix auf modulweiten Enums, analog zu "Revision".
+// Kapitalplanung (AT 4.1 Tz. 10), Stresstests (AT 4.3.3) und Berichtswesen an die
+// Geschäftsleitung. Ursprünglicher MVP-Ausschnitt gemäß Risikomanagement_BAIT_MVP_Spezifikation.md;
+// Stresstests und Kapitalplanung waren dort bewusst auf Phase 2 verschoben und sind seit
+// 2026-09-23 nachgezogen (siehe Doku dort). Das Modellregister (AT 4.3.4 / AT 4.1 Tz. 9) ist
+// bewusst NICHT hier — zwei andere offene PRs (#10, #13) bauen es bereits parallel, siehe Kommentar
+// vor der ehemaligen RmModell-Stelle unten. Granulare BTR-Detailformulare je Risikoart
+// (Kreditrisiko-Scoring, Zinsschock-Rechner als eigener Rechenkern statt Ergebnis-Erfassung)
+// bleiben weiterhin bewusst Phase 2. "Rm"-Präfix auf
+// modulweiten Enums, analog zu "Revision".
 // ---------------------------------------------------------------------------
 
 enum RisikoartKategorie {
@@ -2105,6 +2113,22 @@ enum RtfAnsatz {
 enum RmReportStatus {
   entwurf
   final
+}
+
+enum RmStresstestTyp {
+  sensitivitaetsanalyse
+  szenarioanalyse_historisch
+  szenarioanalyse_hypothetisch
+  schwerer_konjunktureller_abschwung
+  inverser_stresstest
+  resilienzanalyse
+}
+
+enum RmStresstestEbene {
+  gesamtinstitut
+  risikoart
+  portfolio
+  geschaeftsbereich
 }
 
 model Risikoinventur {
@@ -2208,6 +2232,70 @@ model RmReportAcknowledgement {
   @@unique([reportId, userId])
   @@map("rm_report_acknowledgements")
 }
+
+// AT 4.1 Tz. 10 — jährlicher Prozess zur Planung des künftigen Kapitalbedarfs und des zu dessen
+// Deckung verfügbaren Kapitals, eingebunden in die Ertrags-/Risikosteuerung. Verabschiedungs-
+// Workflow analog zu Risikostrategie, weil Kapitalplanung mit der Geschäftsstrategie im Einklang
+// stehen muss und dieselbe GL-Verantwortung trägt.
+model RmKapitalplanung {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  jahr                             Int
+  planungshorizontJahre            Int // "angemessen langer, mehrjähriger Zeitraum" (Tz. 10)
+  kapitalbedarfPlanung             Json @default("{}") // Planwerte je Periode
+  verfuegbaresKapitalPlanung       Json @default("{}")
+  adverseSzenarienBeruecksichtigt  Boolean @default(false)
+  konsistenzGeschaeftsplanung      String? // Abgleichnotiz zur operativen Geschäfts-/Strategieplanung
+  anlassbezogenAktualisiertAm      DateTime? // Aktualisierung bei wesentlichen Änderungen der Annahmen
+  verabschiedetAm                  DateTime?
+  verabschiedetVonUserId           String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_kapitalplanung")
+  @@index([institutionId])
+}
+
+// AT 4.3.3 Stresstests — regelmäßige/anlassbezogene Stresstests für wesentliche Risiken sowie für
+// das Gesamtrisikoprofil, inkl. schwerem konjunkturellem Abschwung (Tz. 3) und inversen
+// Stresstests (Tz. 4). Vormals bewusst auf Phase 2 verschoben (siehe Modul-Kommentar oben) — jetzt
+// als schlanker Datensatz je durchgeführtem Test umgesetzt, kein granularer Rechenkern.
+model RmStresstest {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  jahr                              Int
+  typ                               RmStresstestTyp
+  ebene                             RmStresstestEbene @default(gesamtinstitut)
+  betroffeneRisikoarten             RisikoartKategorie[] // leer = gesamtbankweit / risikoartenübergreifend
+  szenariobeschreibung              String
+  risikofaktoren                    String? // Tz. 1 — die für die jeweiligen Risiken wesentlichen Risikofaktoren
+  wechselwirkungenBeruecksichtigt   Boolean @default(false) // Tz. 2 — Wechselwirkungen zwischen Risikoarten
+  ergebnis                          String?
+  rtfBeruecksichtigt                Boolean @default(false) // Tz. 6 — Berücksichtigung bei der Beurteilung der Risikotragfähigkeit
+  handlungsbedarf                   String?
+  durchgefuehrtAm                   DateTime
+  angemessenheitGeprueftAm          DateTime? // Tz. 5 — mind. jährliche Überprüfung von Stresstest und Annahmen
+  verantwortlichUserId              String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_stresstests")
+  @@index([institutionId])
+}
+
+// AT 4.3.4 Verwendung von Modellen (Modellregister) und der zugehörige Validierungs-Querverweis
+// aus AT 4.1 Tz. 9 werden bewusst NICHT hier modelliert — zwei parallele PRs (siehe #10 "Modell-
+// register" und #13 "RmModell"/"RmModellValidierung") bauen das bereits unabhängig voneinander.
+// Sobald eine davon landet, ist das der Ort für diesen Baustein; ein drittes konkurrierendes
+// Modell hier hätte nur einen Tabellennamen-Konflikt garantiert.
 
 // ---------------------------------------------------------------------------
 // IT-Risikomanagement / BAIT — IT-Strategie, Schutzbedarfsfeststellung,
