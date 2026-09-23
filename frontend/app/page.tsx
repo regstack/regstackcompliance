@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
+import { RegisterPreview } from "@/components/marketing/register-preview";
 import {
   ShieldIcon,
   GaugeIcon,
@@ -115,6 +116,10 @@ export default function MarketingPage() {
                 {badge}
               </span>
             ))}
+          </div>
+
+          <div className="mt-16">
+            <RegisterPreview />
           </div>
         </section>
 
