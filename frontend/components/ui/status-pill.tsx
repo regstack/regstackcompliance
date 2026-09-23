@@ -87,12 +87,6 @@ const STATUS_TONE: Record<string, Tone> = {
   unzureichend: "danger",
   eingereicht: "warning",
   genehmigt: "success",
-  // IT-Risiko/BAIT Phase 2: Berechtigungen (Kap. 6), Änderungen/Störungen (Kap. 8)
-  deaktiviert: "warning",
-  entzogen: "danger",
-  abgebrochen: "danger",
-  umgesetzt: "success",
-  zurueckgestellt: "warning",
   // Risikomanagement: Modellregister (AT 4.3.4) — "aktiv"/"bestaetigt"/"wesentlich" reuse tones above
   ausser_betrieb: "danger",
   rekalibrierung_erforderlich: "warning",

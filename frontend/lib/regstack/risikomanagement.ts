@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/regstack/backend-client";
-import type { RisikoartKategorie } from "@/lib/regstack/risikomanagement-labels";
+import type {
+  RisikoartKategorie,
+  RmStresstestTyp,
+  RmStresstestEbene,
+} from "@/lib/regstack/risikomanagement-labels";
 
 // Client Components must import RISIKOART_LABELS/RisikoartKategorie from
 // "@/lib/regstack/risikomanagement-labels" directly instead of from this module, since importing
@@ -137,4 +141,42 @@ export async function listRmNplKennzahlen() {
 
 export async function listRmModelle() {
   return apiFetch<RmModell[]>("/risikomanagement/modelle");
+}
+
+export type RmKapitalplanung = {
+  id: string;
+  jahr: number;
+  planungshorizontJahre: number;
+  kapitalbedarfPlanung: Record<string, number>;
+  verfuegbaresKapitalPlanung: Record<string, number>;
+  adverseSzenarienBeruecksichtigt: boolean;
+  konsistenzGeschaeftsplanung: string | null;
+  anlassbezogenAktualisiertAm: string | null;
+  verabschiedetAm: string | null;
+  verabschiedetVonUserId: string | null;
+};
+
+export async function listRmKapitalplanung() {
+  return apiFetch<RmKapitalplanung[]>("/risikomanagement/kapitalplanung");
+}
+
+export type RmStresstest = {
+  id: string;
+  jahr: number;
+  typ: RmStresstestTyp;
+  ebene: RmStresstestEbene;
+  betroffeneRisikoarten: RisikoartKategorie[];
+  szenariobeschreibung: string;
+  risikofaktoren: string | null;
+  wechselwirkungenBeruecksichtigt: boolean;
+  ergebnis: string | null;
+  rtfBeruecksichtigt: boolean;
+  handlungsbedarf: string | null;
+  durchgefuehrtAm: string;
+  angemessenheitGeprueftAm: string | null;
+  verantwortlichUserId: string | null;
+};
+
+export async function listRmStresstests() {
+  return apiFetch<RmStresstest[]>("/risikomanagement/stresstests");
 }

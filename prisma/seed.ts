@@ -1,7 +1,7 @@
 // Seed data intentionally mirrors the fictional example items in regstack_cockpit.html (Anbieter
 // A-E, "Beispiel Leasing AG") — same story, same numbers, so a demo told from the prototype and a
 // demo told from this API agree with each other.
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, RisikoartKategorie } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -1307,6 +1307,67 @@ async function main() {
     },
   });
 
+  // AT 4.1 Tz. 10 — Kapitalplanungsprozess, mehrjähriger Horizont, im Einklang mit der
+  // Geschäftsstrategie 2026 (siehe oben), noch unverabschiedet für die Freigabe-Demo im Cockpit.
+  await prisma.rmKapitalplanung.create({
+    data: {
+      institutionId: institution.id,
+      jahr: 2026,
+      planungshorizontJahre: 3,
+      kapitalbedarfPlanung: { "2026": 112_000_000, "2027": 118_500_000, "2028": 124_000_000 },
+      verfuegbaresKapitalPlanung: { "2026": 128_500_000, "2027": 130_000_000, "2028": 133_000_000 },
+      adverseSzenarienBeruecksichtigt: true,
+      konsistenzGeschaeftsplanung: "Abgeglichen mit Geschäftsstrategie 2026 (Wachstum Firmenkundenleasing); keine Abweichungen.",
+      createdByUserId: risikocontrolling.id,
+    },
+  });
+
+  // AT 4.3.3 Stresstests — gesamtbankweiter schwerer konjunktureller Abschwung (Tz. 3), ein
+  // risikoartenspezifisches Sensitivitätsszenario und ein inverser Stresstest (Tz. 4).
+  await Promise.all(
+    [
+      {
+        jahr: 2026,
+        typ: "schwerer_konjunktureller_abschwung" as const,
+        ebene: "gesamtinstitut" as const,
+        betroffeneRisikoarten: ["ADRESSENAUSFALLRISIKO", "MARKTPREISRISIKO_ANLAGEBUCH", "LIQUIDITAETSRISIKO", "KONZENTRATIONSRISIKO"] as RisikoartKategorie[],
+        szenariobeschreibung: "Gesamtbankweites Abschwungszenario: BIP -3 %, Immobilienpreise -15 %, Zinsanstieg +150 BP.",
+        risikofaktoren: "Ausfallraten Firmenkunden, Sicherheitenwerte Gewerbeimmobilien, Refinanzierungskosten.",
+        wechselwirkungenBeruecksichtigt: true,
+        ergebnis: "Auslastung Risikodeckungspotenzial steigt auf 91 %; Konzentrationsrisiko Bauwirtschaft überschreitet Limit.",
+        rtfBeruecksichtigt: true,
+        handlungsbedarf: "Limitanpassung Branchenkonzentration Bauwirtschaft (siehe RM-Quartalsbericht Q1/2026).",
+        durchgefuehrtAm: new Date("2026-02-10"),
+        angemessenheitGeprueftAm: new Date("2026-02-15"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+      {
+        jahr: 2026,
+        typ: "sensitivitaetsanalyse" as const,
+        ebene: "risikoart" as const,
+        betroffeneRisikoarten: ["MARKTPREISRISIKO_ANLAGEBUCH"] as RisikoartKategorie[],
+        szenariobeschreibung: "Paralleler Zinsschock +200 BP im Bankbuch.",
+        risikofaktoren: "Barwertänderung zinstragender Positionen im Anlagebuch.",
+        ergebnis: "Barwertverlust innerhalb der aufsichtlich zulässigen Schwelle (< 20 % der Eigenmittel).",
+        rtfBeruecksichtigt: true,
+        durchgefuehrtAm: new Date("2026-03-01"),
+        angemessenheitGeprueftAm: new Date("2026-03-01"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+      {
+        jahr: 2026,
+        typ: "inverser_stresstest" as const,
+        ebene: "gesamtinstitut" as const,
+        betroffeneRisikoarten: [] as RisikoartKategorie[],
+        szenariobeschreibung: "Qualitative Analyse: welche Ereigniskombination gefährdet die Überlebensfähigkeit des Geschäftsmodells?",
+        ergebnis: "Kombinierter Ausfall der zwei größten Refinanzierungspartner zusammen mit einem schweren Bauwirtschaftseinbruch identifiziert als tragfähigkeitsgefährdend.",
+        handlungsbedarf: "Diversifizierung der Refinanzierungsstruktur als Maßnahme in Risikostrategie 2027 zu prüfen.",
+        durchgefuehrtAm: new Date("2026-04-01"),
+        verantwortlichUserId: risikocontrolling.id,
+      },
+    ].map((data) => prisma.rmStresstest.create({ data: { institutionId: institution.id, createdByUserId: risikocontrolling.id, ...data } }))
+  );
+
   // --- Aufsichtsorgan-Reporting (AT 3.2) demo data ----------------------------------------------
   // Eigenständiges Berichtsziel/-publikum ggü. dem GL-Quartalsbericht oben, gleiches Modell
   // (RmReport), unterschieden über "empfaenger" — siehe Spezifikation, "Neu gefundene Lücken" Nr. 4.
@@ -1585,154 +1646,6 @@ async function main() {
     },
   });
 
-  // --- IT-Risiko/BAIT Phase 2: Kap. 6 (Identitäts- und Rechtemanagement), Kap. 7
-  // (IT-Projekte), Kap. 8 (IT-Betrieb), Kap. 10 (IT-Notfallmanagement) ------------------------
-
-  await prisma.itBerechtigung.create({
-    data: {
-      institutionId: institution.id,
-      assetId: kernbankverfahren.id,
-      benutzerBezeichnung: "svc-kernbank-batch",
-      istTechnischerBenutzer: true,
-      istPrivilegiert: true,
-      berechtigungsart: "Technischer Benutzer, Batch-Verarbeitung Kernbankverfahren",
-      needToKnowBegruendung: "Ausschließlich für den nächtlichen Buchungslauf benötigt.",
-      status: "aktiv",
-      genehmigtVonUserId: risikocontrolling.id,
-      letzteRezertifizierung: new Date("2026-01-15"),
-      naechsteRezertifizierung: new Date("2026-07-15"),
-      rezertifiziertVonUserId: risikocontrolling.id,
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-  await prisma.itBerechtigung.create({
-    data: {
-      institutionId: institution.id,
-      assetId: firmenkundenportal.id,
-      benutzerBezeichnung: "Compliance-Team (Leserechte Auswertungen)",
-      benutzerUserId: compliance.id,
-      berechtigungsart: "Lesezugriff Reporting-Modul",
-      needToKnowBegruendung: "Für die AT-9-Auslagerungsprüfung der Portal-Nutzung.",
-      status: "aktiv",
-      genehmigtVonUserId: risikocontrolling.id,
-      naechsteRezertifizierung: new Date("2026-06-30"),
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-
-  await prisma.itProjekt.create({
-    data: {
-      institutionId: institution.id,
-      bezeichnung: "Cloud-Migration Kernbankverfahren",
-      ziel: "Umzug des Kernbankverfahrens in die freigegebene Cloud-Infrastruktur gemäß IT-Strategie 2026.",
-      vorgehensmodell: "Wasserfall mit Meilenstein-Gates",
-      risikobewertung: "Hoch — zeitkritischer Prozess, Migrationsfenster eng getaktet.",
-      ressourcenausstattung: "2 interne IT-Architekten, externer Migrationsdienstleister",
-      verantwortlichUserId: risikocontrolling.id,
-      status: "laufend",
-      startAm: new Date("2026-02-01"),
-      geplantesEndeAm: new Date("2026-11-30"),
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-  await prisma.itProjekt.create({
-    data: {
-      institutionId: institution.id,
-      bezeichnung: "Einführung Multi-Faktor-Authentifizierung Firmenkundenportal",
-      ziel: "Starke Authentifizierung für Fernzugriffe gemäß Berechtigungskonzept.",
-      vorgehensmodell: "Scrum",
-      verantwortlichUserId: risikocontrolling.id,
-      status: "abgeschlossen",
-      startAm: new Date("2025-09-01"),
-      geplantesEndeAm: new Date("2025-12-15"),
-      tatsaechlichesEndeAm: new Date("2025-12-20"),
-      lessonsLearned: "Frühzeitige Einbindung des Informationssicherheitsbeauftragten hätte den Rollout um zwei Wochen beschleunigt.",
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-
-  await prisma.itAenderung.create({
-    data: {
-      institutionId: institution.id,
-      assetId: kernbankverfahren.id,
-      bezeichnung: "Sicherheitspatch Kernbankverfahren Q1/2026",
-      art: "Sicherheitsrelevante Nachbesserung (Patch)",
-      risikobewertung: "Gering — Hersteller-Patch, in Testumgebung erfolgreich geprüft.",
-      testErgebnis: "Regressionstest bestanden, keine Auffälligkeiten.",
-      rueckabwicklungsplan: "Snapshot vor Einspielung, Rollback binnen 30 Minuten möglich.",
-      status: "umgesetzt",
-      geplantAm: new Date("2026-02-10"),
-      genehmigtVonUserId: risikocontrolling.id,
-      genehmigtAm: new Date("2026-02-08"),
-      umgesetztAm: new Date("2026-02-10"),
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-  await prisma.itAenderung.create({
-    data: {
-      institutionId: institution.id,
-      assetId: netzwerkRz.id,
-      bezeichnung: "Austausch Kernrouter Rechenzentrum",
-      art: "Austausch von Hardwarekomponenten",
-      risikobewertung: "Mittel — kurzes Wartungsfenster außerhalb der Geschäftszeiten erforderlich.",
-      status: "genehmigt",
-      geplantAm: new Date("2026-04-05"),
-      genehmigtVonUserId: risikocontrolling.id,
-      genehmigtAm: new Date("2026-03-20"),
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-
-  await prisma.itBetriebsstoerung.create({
-    data: {
-      institutionId: institution.id,
-      datum: new Date("2026-03-02"),
-      beschreibung: "Kurzzeitiger Ausfall des Kernbankverfahrens durch einen Kapazitätsengpass im Rechenzentrum.",
-      betroffeneSysteme: "Kernbankverfahren",
-      ursache: "Unzureichend dimensionierte Datenbank-Ressourcen nach Lastanstieg.",
-      prioritaet: "hoch",
-      status: "geschlossen",
-      massnahme: "Kapazitätserweiterung umgesetzt, Monitoring-Schwellenwerte angepasst.",
-      eskalationAnUserId: geschaeftsleitung.id,
-      geschaeftsleitungInformiert: true,
-      abschlussAm: new Date("2026-03-04"),
-      abschlussVonUserId: risikocontrolling.id,
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-
-  const notfallplanKernbank = await prisma.itNotfallplan.create({
-    data: {
-      institutionId: institution.id,
-      assetId: kernbankverfahren.id,
-      bezeichnung: "IT-Notfallplan Kernbankverfahren",
-      rto: "4 Stunden",
-      rpo: "15 Minuten",
-      konfigurationNotbetrieb: "Failover auf Backup-Rechenzentrum, eingeschränkter Funktionsumfang (nur Kernbuchungen).",
-      abhaengigkeiten: "Netzwerkinfrastruktur Rechenzentrum, Backup-Rechenzentrum.",
-      status: "freigegeben",
-      freigegebenVonUserId: geschaeftsleitung.id,
-      freigegebenAm: new Date("2026-01-25"),
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-  await prisma.itNotfalltest.create({
-    data: {
-      institutionId: institution.id,
-      notfallplanId: notfallplanKernbank.id,
-      datum: new Date("2026-02-20"),
-      umfang: "Vollständiger Failover-Test Kernbankverfahren inkl. Backup-Rechenzentrum.",
-      ergebnis: "Erfolgreich, Wiederanlaufzeit lag mit 3,5 Stunden innerhalb des RTO.",
-      abgeleiteteMassnahmen: "Runbook um zusätzlichen DNS-Umschaltschritt ergänzt.",
-      durchgefuehrtVonUserId: risikocontrolling.id,
-      createdByUserId: risikocontrolling.id,
-    },
-  });
-  await prisma.itNotfallplan.update({
-    where: { id: notfallplanKernbank.id },
-    data: { letzterTestAm: new Date("2026-02-20") },
-  });
-
   // --- DORA ICT-Register demo data (Art. 28-30) --------------------------------------------
   // Same Anbieter A/C as the Auslagerungsmanagement-Musterdaten oben — DORA erfasst zwar ein
   // eigenständiges Register, aber in der Praxis überschneiden sich die Anbieter oft mit dem
@@ -1826,7 +1739,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement (incl. Aufsichtsorgan-Reporting, NPL-Kennzahlen, Modellregister), IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet, inkl. Kap. 6/7/8/10 Berechtigungen/Projekte/Änderungen/Notfallmanagement), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
+    `Seeded institution ${institution.name} with 3 activities (first: ${cloudHosting.id}), Compliance, Interne Revision, Accounting, IKS, Risikomanagement (incl. Kapitalplanung, Stresstests, Aufsichtsorgan-Reporting, NPL-Kennzahlen, Modellregister), IT-Risiko/BAIT (IT-Strategie ${itStrategie2026.jahr} verabschiedet), Externe Prüfungen (2025 + 2026), and DORA ICT-Register demo data.`
   );
 }
 

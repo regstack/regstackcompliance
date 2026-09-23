@@ -48,6 +48,36 @@ describe("requirePermission — Risikomanagement resources (MaRisk AT 4)", () =>
     requirePermission("riskManagementReport.acknowledge", "write")(mockReq("ADMIN"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
   });
+
+  it("allows RISIKOCONTROLLING to write riskCapitalPlanning (AT 4.1 Tz. 10), but not INTERNE_REVISION", () => {
+    const next = vi.fn();
+    requirePermission("riskCapitalPlanning", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() =>
+      requirePermission("riskCapitalPlanning", "write")(mockReq("INTERNE_REVISION"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+  });
+
+  it("only GESCHAEFTSLEITUNG/ADMIN may verabschieden a Kapitalplanung", () => {
+    expect(() =>
+      requirePermission("riskCapitalPlanning.approve", "write")(mockReq("RISIKOCONTROLLING"), mockRes, vi.fn())
+    ).toThrow(ForbiddenError);
+    const next = vi.fn();
+    requirePermission("riskCapitalPlanning.approve", "write")(mockReq("GESCHAEFTSLEITUNG"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("allows RISIKOCONTROLLING to write a riskStressTest (AT 4.3.3), but not COMPLIANCE; every module role can read", () => {
+    const next = vi.fn();
+    requirePermission("riskStressTest", "write")(mockReq("RISIKOCONTROLLING"), mockRes, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(() => requirePermission("riskStressTest", "write")(mockReq("COMPLIANCE"), mockRes, vi.fn())).toThrow(
+      ForbiddenError
+    );
+    const readNext = vi.fn();
+    requirePermission("riskStressTest", "read")(mockReq("VIEWER"), mockRes, readNext);
+    expect(readNext).toHaveBeenCalledOnce();
+  });
 });
 
 describe("requirePermission — IT-Risiko/BAIT resources", () => {
@@ -83,27 +113,6 @@ describe("requirePermission — IT-Risiko/BAIT resources", () => {
     requirePermission("itSecurityIncident", "read")(mockReq("VIEWER"), mockRes, next);
     expect(next).toHaveBeenCalledOnce();
     expect(() => requirePermission("itSecurityIncident", "write")(mockReq("VIEWER"), mockRes, vi.fn())).toThrow(
-      ForbiddenError
-    );
-  });
-});
-
-describe("requirePermission — IT-Risiko/BAIT Phase-2 resources (Kap. 6, 7, 8, 10)", () => {
-  it.each([
-    ["itAccessRecord", "Identitäts- und Rechtemanagement, Kap. 6"],
-    ["itProjectRecord", "IT-Projekte und Anwendungsentwicklung, Kap. 7"],
-    ["itOperationsRecord", "IT-Betrieb (Änderungen/Störungen), Kap. 8"],
-    ["itContingencyRecord", "IT-Notfallmanagement, Kap. 10"],
-  ] as const)("%s (%s) is readable by every module role, but only writable by RISIKOCONTROLLING/ADMIN", (resource, _label) => {
-    const next = vi.fn();
-    requirePermission(resource, "read")(mockReq("VIEWER"), mockRes, next);
-    expect(next).toHaveBeenCalledOnce();
-    expect(() => requirePermission(resource, "read")(mockReq(undefined), mockRes, vi.fn())).toThrow(ForbiddenError);
-
-    const writeNext = vi.fn();
-    requirePermission(resource, "write")(mockReq("RISIKOCONTROLLING"), mockRes, writeNext);
-    expect(writeNext).toHaveBeenCalledOnce();
-    expect(() => requirePermission(resource, "write")(mockReq("AUSLAGERUNGSBEAUFTRAGTER"), mockRes, vi.fn())).toThrow(
       ForbiddenError
     );
   });

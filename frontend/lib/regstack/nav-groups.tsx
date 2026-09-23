@@ -265,29 +265,6 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         icon: <AlertTriangleIcon {...iconProps} />,
         items: [{ href: "/it-risiko#vorfaelle", label: "Sicherheitsvorfälle" }],
       },
-      {
-        title: "Identitäts- und Rechtemanagement · Kap. 6",
-        icon: <UsersIcon {...iconProps} />,
-        items: [{ href: "/it-risiko#berechtigungen", label: "Berechtigungen" }],
-      },
-      {
-        title: "IT-Projekte · Kap. 7",
-        icon: <ClipboardListIcon {...iconProps} />,
-        items: [{ href: "/it-risiko#projekte", label: "IT-Projekte" }],
-      },
-      {
-        title: "IT-Betrieb · Kap. 8",
-        icon: <SettingsIcon {...iconProps} />,
-        items: [
-          { href: "/it-risiko#aenderungen", label: "Änderungen" },
-          { href: "/it-risiko#betriebsstoerungen", label: "Betriebsstörungen" },
-        ],
-      },
-      {
-        title: "IT-Notfallmanagement · Kap. 10",
-        icon: <FlagIcon {...iconProps} />,
-        items: [{ href: "/it-risiko#notfallmanagement", label: "Notfallpläne" }],
-      },
     ],
   },
 };

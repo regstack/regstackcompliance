@@ -2,7 +2,14 @@
 // Datenmodell-Verifikation siehe claude/AT9_Vollstaendigkeitspruefung_und_Backend_Verifikation.md (Projekt-Docs)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; "rhel-openssl-3.0.x" for Vercel's actual Node 20-24.x serverless
+  // runtime (Amazon Linux 2023, OpenSSL 3.0) -- without this, the query engine binary built
+  // during Vercel's build step doesn't necessarily match the Lambda execution environment, and
+  // Prisma Client fails to load the engine at the first real query. That failure can crash the
+  // whole function invocation (FUNCTION_INVOCATION_FAILED) instead of throwing a catchable error,
+  // which is why this was invisible in every local/CI run and only reproduced in production.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -296,21 +303,21 @@ model InstitutionProfile {
   complianceEreignisse            Ereignis[]
   nachweise                       Nachweis[]
 
-  pruefungsobjekte              Pruefungsobjekt[]
-  auditPlans                    AuditPlan[]
-  pruefungen                    Pruefung[]
-  revisionsfeststellungen       Revisionsfeststellung[]
-  revisionPersonal              RevisionPersonal[]
-  revisionSchulungen            RevisionSchulung[]
-  revisionSperrfristen          RevisionSperrfrist[]
-  revisionSonderwissen          RevisionSonderwissen[]
-  revisionEinstellungen         RevisionEinstellungen?
-  revisionQs                    RevisionQualitaetssicherung[]
-  revisionProjektbegleitung     RevisionProjektbegleitung[]
-  revisionZugriffsvorfaelle     RevisionZugriffsvorfall[]
-  revisionGlMitteilungen        RevisionGlMitteilung[]
-  revisionSonderauftraege       RevisionSonderauftrag[]
-  revisionReports               RevisionReport[]
+  pruefungsobjekte          Pruefungsobjekt[]
+  auditPlans                AuditPlan[]
+  pruefungen                Pruefung[]
+  revisionsfeststellungen   Revisionsfeststellung[]
+  revisionPersonal          RevisionPersonal[]
+  revisionSchulungen        RevisionSchulung[]
+  revisionSperrfristen      RevisionSperrfrist[]
+  revisionSonderwissen      RevisionSonderwissen[]
+  revisionEinstellungen     RevisionEinstellungen?
+  revisionQs                RevisionQualitaetssicherung[]
+  revisionProjektbegleitung RevisionProjektbegleitung[]
+  revisionZugriffsvorfaelle RevisionZugriffsvorfall[]
+  revisionGlMitteilungen    RevisionGlMitteilung[]
+  revisionSonderauftraege   RevisionSonderauftrag[]
+  revisionReports           RevisionReport[]
   externePruefungen             ExternePruefung[]
   externePruefungFeststellungen ExternePruefungFeststellung[]
 
@@ -324,8 +331,8 @@ model InstitutionProfile {
   icsControls          IcsControl[]
   icsPolicyDocuments   IcsPolicyDocument[]
 
-  ictProviders    IctProvider[]
-  ictArrangements IctArrangement[]
+  ictProviders             IctProvider[]
+  ictArrangements          IctArrangement[]
 
   rmRisikoinventur       Risikoinventur[]
   rmStrategien           Risikostrategie[]
@@ -333,17 +340,13 @@ model InstitutionProfile {
   rmReports              RmReport[]
   rmNplKennzahlen        RmNplKennzahl[]
   rmModelle              RmModell[]
+  rmKapitalplanung       RmKapitalplanung[]
+  rmStresstests          RmStresstest[]
 
-  itStrategien           ItStrategie[]
-  itAssets               ItAsset[]
-  itRisiken              ItRisiko[]
-  itSicherheitsvorfaelle ItSicherheitsvorfall[]
-  itBerechtigungen       ItBerechtigung[]
-  itProjekte             ItProjekt[]
-  itAenderungen          ItAenderung[]
-  itBetriebsstoerungen   ItBetriebsstoerung[]
-  itNotfallplaene        ItNotfallplan[]
-  itNotfalltests         ItNotfalltest[]
+  itStrategien             ItStrategie[]
+  itAssets                 ItAsset[]
+  itRisiken                ItRisiko[]
+  itSicherheitsvorfaelle   ItSicherheitsvorfall[]
 
   @@map("institution_profiles")
 }
@@ -591,8 +594,8 @@ model Weiterverlagerung {
 // re-sends the same threshold twice for the same contract/Handlungsoption/monitoring deadline.
 model DeadlineReminder {
   id            String   @id @default(uuid())
-  entityType    String // "CONTRACT" | "HANDLUNGSOPTION" | "MONITORING"
-  entityId      String // OutsourcingActivity.id / MonitoringRecord.id
+  entityType    String   // "CONTRACT" | "HANDLUNGSOPTION" | "MONITORING"
+  entityId      String   // OutsourcingActivity.id / MonitoringRecord.id
   thresholdDays Int
   sentAt        DateTime @default(now())
 
@@ -1941,7 +1944,7 @@ model IcsPolicyControl {
 // on Feststellung/Revisionsfeststellung — a once-a-year external event with its own GL
 // Kenntnisnahme, not a norm-linked compliance gap or a self-generated internal-audit finding.
 model ExternePruefung {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -1957,8 +1960,8 @@ model ExternePruefung {
 
   feststellungen ExternePruefungFeststellung[]
 
-  @@index([institutionId])
   @@map("externe_pruefungen")
+  @@index([institutionId])
 }
 
 // One row per finding from an ExternePruefung, distributed to a Fachbereich/Modul for
@@ -1967,23 +1970,23 @@ model ExternePruefung {
 // since that is the same "Fachbereich remediates, Revision confirms effectiveness" pattern —
 // only the source (external audit vs. norm gap) differs.
 model ExternePruefungFeststellung {
-  id                String             @id @default(uuid())
+  id                String   @id @default(uuid())
   institutionId     String
   institution       InstitutionProfile @relation(fields: [institutionId], references: [id])
   externePruefungId String
-  externePruefung   ExternePruefung    @relation(fields: [externePruefungId], references: [id])
+  externePruefung   ExternePruefung @relation(fields: [externePruefungId], references: [id])
 
-  titel                String
-  beschreibung         String?
-  schweregrad          Schweregrad?
-  frist                DateTime?
-  modul                EvidenceModule?
-  fachbereich          String? // Freitext, falls kein RegStack-Modul zutrifft (z.B. IT, Personal)
+  titel        String
+  beschreibung String?
+  schweregrad  Schweregrad?
+  frist        DateTime?
+  modul        EvidenceModule?
+  fachbereich  String? // Freitext, falls kein RegStack-Modul zutrifft (z.B. IT, Personal)
   verantwortlichUserId String?
 
   status FeststellungStatus @default(offen)
 
-  verteiltAm  DateTime? // wann Interne Revision diese Feststellung dem Fachbereich zugewiesen hat
+  verteiltAm DateTime? // wann Interne Revision diese Feststellung dem Fachbereich zugewiesen hat
   verteiltVon String?
 
   fachbereichErledigtAm           DateTime?
@@ -1998,9 +2001,9 @@ model ExternePruefungFeststellung {
   createdByUserId String?
   createdAt       DateTime @default(now())
 
+  @@map("externe_pruefung_feststellungen")
   @@index([institutionId])
   @@index([externePruefungId])
-  @@map("externe_pruefung_feststellungen")
 }
 
 // DORA (Verordnung (EU) 2022/2554) Art. 28-30 — Register of Information über ICT-Drittanbieter.
@@ -2021,58 +2024,64 @@ enum IctArrangementStatus {
 }
 
 model IctProvider {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+  id                     String   @id @default(uuid())
+  institutionId          String
+  institution            InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  name                  String
-  legalEntityIdentifier String? // LEI, sofern vorhanden
-  country               String?
-  providerType          IctProviderType @default(DIREKT)
-  parentUndertaking     String? // Mutterunternehmen, bei Konzernbezug relevant
+  name                   String
+  legalEntityIdentifier  String?  // LEI, sofern vorhanden
+  country                String?
+  providerType           IctProviderType @default(DIREKT)
+  parentUndertaking      String?  // Mutterunternehmen, bei Konzernbezug relevant
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  arrangements IctArrangement[]
+  arrangements           IctArrangement[]
 
-  @@index([institutionId])
   @@map("ict_providers")
+  @@index([institutionId])
 }
 
 model IctArrangement {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-  providerId    String
-  provider      IctProvider        @relation(fields: [providerId], references: [id])
+  id                       String   @id @default(uuid())
+  institutionId            String
+  institution              InstitutionProfile @relation(fields: [institutionId], references: [id])
+  providerId               String
+  provider                 IctProvider @relation(fields: [providerId], references: [id])
 
-  functionDescription      String // erbrachte IKT-Dienstleistung/-Funktion
-  supportsCriticalFunction Boolean @default(false) // Art. 28(3) — kritische oder wichtige Funktion
-  criticalityReason        String? // Pflicht, sobald supportsCriticalFunction = true
+  functionDescription      String   // erbrachte IKT-Dienstleistung/-Funktion
+  supportsCriticalFunction Boolean  @default(false) // Art. 28(3) — kritische oder wichtige Funktion
+  criticalityReason        String?  // Pflicht, sobald supportsCriticalFunction = true
 
-  contractStart           DateTime?
-  contractEnd             DateTime?
-  terminationNoticeMonths Int?
-  dataCategories          String?
-  hasSubcontracting       Boolean   @default(false)
-  subcontractingNote      String?
+  contractStart            DateTime?
+  contractEnd              DateTime?
+  terminationNoticeMonths  Int?
+  dataCategories           String?
+  hasSubcontracting        Boolean  @default(false)
+  subcontractingNote       String?
 
-  status IctArrangementStatus @default(AKTIV)
+  status                   IctArrangementStatus @default(AKTIV)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
+  @@map("ict_arrangements")
   @@index([institutionId])
   @@index([providerId])
-  @@map("ict_arrangements")
 }
 
 // ---------------------------------------------------------------------------
 // Risikomanagement (MaRisk AT 4) — Risikoinventur, Strategien, Risikotragfähigkeit,
-// Berichtswesen an die Geschäftsleitung. MVP-Ausschnitt gemäß
-// Risikomanagement_BAIT_MVP_Spezifikation.md; Stresstests und BTR-Detailformulare
-// sind bewusst Phase 2. "Rm"-Präfix auf modulweiten Enums, analog zu "Revision".
+// Kapitalplanung (AT 4.1 Tz. 10), Stresstests (AT 4.3.3) und Berichtswesen an die
+// Geschäftsleitung. Ursprünglicher MVP-Ausschnitt gemäß Risikomanagement_BAIT_MVP_Spezifikation.md;
+// Stresstests und Kapitalplanung waren dort bewusst auf Phase 2 verschoben und sind seit
+// 2026-09-23 nachgezogen (siehe Doku dort). Das Modellregister (AT 4.3.4 / AT 4.1 Tz. 9) ist
+// bewusst NICHT hier — zwei andere offene PRs (#10, #13) bauen es bereits parallel, siehe Kommentar
+// vor der ehemaligen RmModell-Stelle unten. Granulare BTR-Detailformulare je Risikoart
+// (Kreditrisiko-Scoring, Zinsschock-Rechner als eigener Rechenkern statt Ergebnis-Erfassung)
+// bleiben weiterhin bewusst Phase 2. "Rm"-Präfix auf
+// modulweiten Enums, analog zu "Revision".
 // ---------------------------------------------------------------------------
 
 enum RisikoartKategorie {
@@ -2112,8 +2121,24 @@ enum RmReportStatus {
   final
 }
 
+enum RmStresstestTyp {
+  sensitivitaetsanalyse
+  szenarioanalyse_historisch
+  szenarioanalyse_hypothetisch
+  schwerer_konjunktureller_abschwung
+  inverser_stresstest
+  resilienzanalyse
+}
+
+enum RmStresstestEbene {
+  gesamtinstitut
+  risikoart
+  portfolio
+  geschaeftsbereich
+}
+
 model Risikoinventur {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -2131,18 +2156,18 @@ model Risikoinventur {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([institutionId])
   @@map("rm_risikoinventur")
+  @@index([institutionId])
 }
 
 model Risikostrategie {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   art                    RmStrategieArt
   jahr                   Int
-  inhalt                 Json              @default("{}")
+  inhalt                 Json @default("{}")
   status                 RmStrategieStatus @default(entwurf)
   verabschiedetAm        DateTime?
   verabschiedetVonUserId String?
@@ -2152,21 +2177,21 @@ model Risikostrategie {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([institutionId])
   @@map("rm_strategien")
+  @@index([institutionId])
 }
 
 // Periodischer RTF-Snapshot statt eines einzigen laufend überschriebenen Datensatzes — jede
 // Periode bleibt als eigene Zeile historisch nachvollziehbar, analog zu ComplianceRating.
 model Risikotragfaehigkeit {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
   periode                 String // z. B. "2026-Q1"
   ansatz                  RtfAnsatz
   risikodeckungspotenzial Float?
-  limits                  Json      @default("{}") // { RisikoartKategorie: { limit, auslastung } }
+  limits                  Json @default("{}") // { RisikoartKategorie: { limit, auslastung } }
   auslastungGesamt        Float?
   ergebnis                String?
   methodenpruefungAm      DateTime?
@@ -2177,8 +2202,8 @@ model Risikotragfaehigkeit {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([institutionId])
   @@map("rm_risikotragfaehigkeit")
+  @@index([institutionId])
 }
 
 // "empfaenger" unterscheidet den GL-Bericht (Standardfall, AT 4.3.2 Tz. 3) vom quartalsweisen
@@ -2192,7 +2217,7 @@ enum RmReportEmpfaenger {
 }
 
 model RmReport {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -2201,7 +2226,7 @@ model RmReport {
   periodFrom  DateTime?
   periodTo    DateTime?
   status      RmReportStatus @default(entwurf)
-  content     Json           @default("{}")
+  content     Json @default("{}")
   finalizedAt DateTime?
 
   createdByUserId String?
@@ -2210,8 +2235,8 @@ model RmReport {
 
   acknowledgements RmReportAcknowledgement[]
 
-  @@index([institutionId])
   @@map("rm_reports")
+  @@index([institutionId])
 }
 
 model RmReportAcknowledgement {
@@ -2224,6 +2249,70 @@ model RmReportAcknowledgement {
   @@unique([reportId, userId])
   @@map("rm_report_acknowledgements")
 }
+
+// AT 4.1 Tz. 10 — jährlicher Prozess zur Planung des künftigen Kapitalbedarfs und des zu dessen
+// Deckung verfügbaren Kapitals, eingebunden in die Ertrags-/Risikosteuerung. Verabschiedungs-
+// Workflow analog zu Risikostrategie, weil Kapitalplanung mit der Geschäftsstrategie im Einklang
+// stehen muss und dieselbe GL-Verantwortung trägt.
+model RmKapitalplanung {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  jahr                             Int
+  planungshorizontJahre            Int // "angemessen langer, mehrjähriger Zeitraum" (Tz. 10)
+  kapitalbedarfPlanung             Json @default("{}") // Planwerte je Periode
+  verfuegbaresKapitalPlanung       Json @default("{}")
+  adverseSzenarienBeruecksichtigt  Boolean @default(false)
+  konsistenzGeschaeftsplanung      String? // Abgleichnotiz zur operativen Geschäfts-/Strategieplanung
+  anlassbezogenAktualisiertAm      DateTime? // Aktualisierung bei wesentlichen Änderungen der Annahmen
+  verabschiedetAm                  DateTime?
+  verabschiedetVonUserId           String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_kapitalplanung")
+  @@index([institutionId])
+}
+
+// AT 4.3.3 Stresstests — regelmäßige/anlassbezogene Stresstests für wesentliche Risiken sowie für
+// das Gesamtrisikoprofil, inkl. schwerem konjunkturellem Abschwung (Tz. 3) und inversen
+// Stresstests (Tz. 4). Vormals bewusst auf Phase 2 verschoben (siehe Modul-Kommentar oben) — jetzt
+// als schlanker Datensatz je durchgeführtem Test umgesetzt, kein granularer Rechenkern.
+model RmStresstest {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  jahr                              Int
+  typ                               RmStresstestTyp
+  ebene                             RmStresstestEbene @default(gesamtinstitut)
+  betroffeneRisikoarten             RisikoartKategorie[] // leer = gesamtbankweit / risikoartenübergreifend
+  szenariobeschreibung              String
+  risikofaktoren                    String? // Tz. 1 — die für die jeweiligen Risiken wesentlichen Risikofaktoren
+  wechselwirkungenBeruecksichtigt   Boolean @default(false) // Tz. 2 — Wechselwirkungen zwischen Risikoarten
+  ergebnis                          String?
+  rtfBeruecksichtigt                Boolean @default(false) // Tz. 6 — Berücksichtigung bei der Beurteilung der Risikotragfähigkeit
+  handlungsbedarf                   String?
+  durchgefuehrtAm                   DateTime
+  angemessenheitGeprueftAm          DateTime? // Tz. 5 — mind. jährliche Überprüfung von Stresstest und Annahmen
+  verantwortlichUserId              String?
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rm_stresstests")
+  @@index([institutionId])
+}
+
+// AT 4.3.4 Verwendung von Modellen (Modellregister) und der zugehörige Validierungs-Querverweis
+// aus AT 4.1 Tz. 9 werden bewusst NICHT hier modelliert — zwei parallele PRs (siehe #10 "Modell-
+// register" und #13 "RmModell"/"RmModellValidierung") bauen das bereits unabhängig voneinander.
+// Sobald eine davon landet, ist das der Ort für diesen Baustein; ein drittes konkurrierendes
+// Modell hier hätte nur einen Tabellennamen-Konflikt garantiert.
 
 // ---------------------------------------------------------------------------
 // AT 4.2 Tz. 3: NPL-Strategie — konditional, nur für Institute mit hohem Bestand notleidender
@@ -2366,28 +2455,28 @@ enum ItVorfallStatus {
 }
 
 model ItStrategie {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  jahr                                  Int
-  inhalt                                Json              @default("{}")
-  status                                ItStrategieStatus @default(entwurf)
-  verabschiedetAm                       DateTime?
-  verabschiedetVonUserId                String?
-  konsistenzpruefungGeschaeftsstrategie String? // Abgleichnotiz zu Geschäfts-/Risikostrategie, Kap. 1
-  naechsteUeberpruefung                 DateTime?
+  jahr                                    Int
+  inhalt                                  Json @default("{}")
+  status                                  ItStrategieStatus @default(entwurf)
+  verabschiedetAm                         DateTime?
+  verabschiedetVonUserId                  String?
+  konsistenzpruefungGeschaeftsstrategie   String? // Abgleichnotiz zu Geschäfts-/Risikostrategie, Kap. 1
+  naechsteUeberpruefung                   DateTime?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([institutionId])
   @@map("bait_it_strategien")
+  @@index([institutionId])
 }
 
 model ItAsset {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -2403,267 +2492,18 @@ model ItAsset {
   letzteUeberpruefung   DateTime?
   naechsteUeberpruefung DateTime?
 
-  // Kap. 7.13/7.14 — Individuelle Datenverarbeitung (IDV): dasselbe Anwendungsregister
-  // (kategorie = anwendung) wird um die dort verlangten Zusatzfelder ergänzt statt ein
-  // zweites Register zu führen, siehe Verzahnungs-Hinweis in
-  // Risikomanagement_BAIT_MVP_Spezifikation.md.
-  istIdv                        Boolean            @default(false)
-  zweck                         String?
-  version                       String?
-  fremdOderEigenentwicklung     ItEntwicklungsart?
-  technischVerantwortlichUserId String?
-  technologie                   String?
-
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  itRisiken        ItRisiko[]
-  itBerechtigungen ItBerechtigung[]
-  itAenderungen    ItAenderung[]
-  itNotfallplaene  ItNotfallplan[]
+  itRisiken ItRisiko[]
 
-  @@index([institutionId])
   @@map("bait_it_assets")
-}
-
-enum ItEntwicklungsart {
-  eigenentwicklung
-  fremdentwicklung
-}
-
-// ---------------------------------------------------------------------------
-// BAIT Kap. 6 — Identitäts- und Rechtemanagement (Berechtigungsvergabe,
-// -rezertifizierung und -entzug, Tz. 6.2–6.7).
-// ---------------------------------------------------------------------------
-
-enum ItBerechtigungStatus {
-  aktiv
-  deaktiviert
-  entzogen
-}
-
-model ItBerechtigung {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  assetId String?
-  asset   ItAsset? @relation(fields: [assetId], references: [id])
-
-  benutzerBezeichnung    String // Name bei personalisierten, Kennung bei technischen Benutzern
-  benutzerUserId         String? // gesetzt, wenn personalisiert einem App-User zuordenbar (Tz. 6.3)
-  istTechnischerBenutzer Boolean @default(false)
-  istPrivilegiert        Boolean @default(false) // Tz. 6.7 — besonders kritische Rechte
-
-  berechtigungsart      String // z. B. Rolle/Zugriffsumfang
-  needToKnowBegruendung String?
-  befristetBis          DateTime?
-
-  status             ItBerechtigungStatus @default(aktiv)
-  genehmigtVonUserId String? // fachlich verantwortliche Stelle, Tz. 6.4
-
-  deaktiviertAm        DateTime?
-  deaktiviertVonUserId String?
-
-  letzteRezertifizierung   DateTime?
-  naechsteRezertifizierung DateTime?
-  rezertifiziertVonUserId  String?
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
   @@index([institutionId])
-  @@index([assetId])
-  @@map("bait_it_berechtigungen")
-}
-
-// ---------------------------------------------------------------------------
-// BAIT Kap. 7 — IT-Projekte und Anwendungsentwicklung (Portfolio-Steuerung,
-// Tz. 7.3–7.5; IDV-Zusatzfelder liegen direkt an ItAsset, siehe oben).
-// ---------------------------------------------------------------------------
-
-enum ItProjektStatus {
-  geplant
-  laufend
-  abgeschlossen
-  abgebrochen
-}
-
-model ItProjekt {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  bezeichnung           String
-  ziel                  String?
-  vorgehensmodell       String?
-  risikobewertung       String?
-  ressourcenausstattung String?
-  verantwortlichUserId  String?
-
-  status               ItProjektStatus @default(geplant)
-  startAm              DateTime?
-  geplantesEndeAm      DateTime?
-  tatsaechlichesEndeAm DateTime?
-  lessonsLearned       String? // Tz. 7.2 — Aufarbeitung der gewonnenen Erkenntnisse
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([institutionId])
-  @@map("bait_it_projekte")
-}
-
-// ---------------------------------------------------------------------------
-// BAIT Kap. 8 — IT-Betrieb: Änderungsmanagement (Tz. 8.4–8.5) und Störungen
-// (Tz. 8.6). Bewusst getrennt von ItSicherheitsvorfall (Kap. 4/5) — die BAIT
-// grenzt "Informationssicherheitsvorfall", "sicherheitsrelevantes Ereignis"
-// und "ungeplante Abweichung vom Regelbetrieb" (Störung) explizit voneinander ab.
-// ---------------------------------------------------------------------------
-
-enum ItAenderungStatus {
-  beantragt
-  genehmigt
-  umgesetzt
-  zurueckgestellt
-}
-
-model ItAenderung {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  assetId String?
-  asset   ItAsset? @relation(fields: [assetId], references: [id])
-
-  bezeichnung          String
-  art                  String? // Funktionserweiterung, Patch, Hardwaretausch, Umzug, ...
-  risikobewertung      String?
-  testErgebnis         String?
-  rueckabwicklungsplan String?
-
-  status             ItAenderungStatus @default(beantragt)
-  geplantAm          DateTime?
-  genehmigtVonUserId String?
-  genehmigtAm        DateTime?
-  umgesetztAm        DateTime?
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([institutionId])
-  @@index([assetId])
-  @@map("bait_it_aenderungen")
-}
-
-enum ItStoerungPrioritaet {
-  niedrig
-  mittel
-  hoch
-  kritisch
-}
-
-enum ItStoerungStatus {
-  offen
-  in_bearbeitung
-  geschlossen
-}
-
-model ItBetriebsstoerung {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  datum             DateTime
-  beschreibung      String
-  betroffeneSysteme String?
-  ursache           String?
-  prioritaet        ItStoerungPrioritaet @default(mittel)
-
-  status                      ItStoerungStatus @default(offen)
-  massnahme                   String?
-  eskalationAnUserId          String?
-  geschaeftsleitungInformiert Boolean          @default(false)
-  abschlussAm                 DateTime?
-  abschlussVonUserId          String?
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([institutionId])
-  @@map("bait_it_betriebsstoerungen")
-}
-
-// ---------------------------------------------------------------------------
-// BAIT Kap. 10 — IT-Notfallmanagement: IT-Notfallpläne je zeitkritischem
-// System/Prozess (Tz. 10.3) und ihre mindestens jährlichen Tests (Tz. 10.4).
-// ---------------------------------------------------------------------------
-
-enum ItNotfallplanStatus {
-  entwurf
-  freigegeben
-}
-
-model ItNotfallplan {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  assetId String?
-  asset   ItAsset? @relation(fields: [assetId], references: [id])
-
-  bezeichnung             String
-  rto                     String? // Recovery Time Objective
-  rpo                     String? // Recovery Point Objective
-  konfigurationNotbetrieb String?
-  abhaengigkeiten         String?
-
-  status               ItNotfallplanStatus @default(entwurf)
-  freigegebenVonUserId String?
-  freigegebenAm        DateTime?
-  letzterTestAm        DateTime? // Tz. 10.4 — aus dem letzten ItNotfalltest fortgeschrieben
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  tests ItNotfalltest[]
-
-  @@index([institutionId])
-  @@index([assetId])
-  @@map("bait_it_notfallplaene")
-}
-
-model ItNotfalltest {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
-
-  notfallplanId String
-  notfallplan   ItNotfallplan @relation(fields: [notfallplanId], references: [id])
-
-  datum                  DateTime
-  umfang                 String?
-  ergebnis               String?
-  abgeleiteteMassnahmen  String?
-  durchgefuehrtVonUserId String?
-
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([institutionId])
-  @@index([notfallplanId])
-  @@map("bait_it_notfalltests")
 }
 
 model ItRisiko {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
@@ -2685,35 +2525,35 @@ model ItRisiko {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@map("bait_it_risiken")
   @@index([institutionId])
   @@index([assetId])
-  @@map("bait_it_risiken")
 }
 
 model ItSicherheitsvorfall {
-  id            String             @id @default(uuid())
+  id            String   @id @default(uuid())
   institutionId String
   institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
 
-  datum              DateTime
-  kategorie          String?
-  schweregrad        ItVorfallSchweregrad
-  beschreibung       String
-  betroffeneSysteme  String?
+  datum             DateTime
+  kategorie         String?
+  schweregrad       ItVorfallSchweregrad
+  beschreibung      String
+  betroffeneSysteme String?
   eskalationAnUserId String?
 
   meldepflichtBaFin Boolean   @default(false)
   meldedatumBaFin   DateTime?
 
-  status             ItVorfallStatus @default(offen)
-  massnahme          String?
-  abschlussAm        DateTime?
+  status      ItVorfallStatus @default(offen)
+  massnahme   String?
+  abschlussAm DateTime?
   abschlussVonUserId String?
 
   createdByUserId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([institutionId])
   @@map("bait_it_sicherheitsvorfaelle")
+  @@index([institutionId])
 }

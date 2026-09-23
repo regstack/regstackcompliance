@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
 import type { RisikoartKategorie, RmModellErklaerbarkeit, RmModellValidierungErgebnis, RmReportEmpfaenger, RmStrategieArt, RtfAnsatz } from "@/lib/regstack/risikomanagement";
+import type { RmStresstestTyp, RmStresstestEbene } from "@/lib/regstack/risikomanagement-labels";
 
 export type RisikoinventurInput = {
   jahr: number;
@@ -147,6 +148,33 @@ export async function acknowledgeRmReport(id: string) {
   revalidatePath("/risikomanagement");
 }
 
+export type RmKapitalplanungInput = {
+  jahr: number;
+  planungshorizontJahre: number;
+  adverseSzenarienBeruecksichtigt: boolean;
+  konsistenzGeschaeftsplanung: string;
+};
+
+export async function addRmKapitalplanung(fields: RmKapitalplanungInput) {
+  await apiFetch("/risikomanagement/kapitalplanung", {
+    method: "POST",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      planungshorizontJahre: fields.planungshorizontJahre,
+      adverseSzenarienBeruecksichtigt: fields.adverseSzenarienBeruecksichtigt,
+      konsistenzGeschaeftsplanung: fields.konsistenzGeschaeftsplanung || undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+// Geschäftsleitung/Admin-only ("riskCapitalPlanning.approve"), serverseitig erzwungen — analog
+// verabschiedeRisikostrategie.
+export async function verabschiedeRmKapitalplanung(id: string) {
+  await apiFetch(`/risikomanagement/kapitalplanung/${id}/verabschieden`, { method: "POST" });
+  revalidatePath("/risikomanagement");
+}
+
 export type RmNplKennzahlInput = {
   periode: string;
   nplQuote: number | null;
@@ -244,6 +272,40 @@ export async function validiereRmModell(id: string, fields: RmModellValidierungI
       durchgefuehrtAm: new Date(fields.durchgefuehrtAm).toISOString(),
       ergebnis: fields.ergebnis,
       kommentar: fields.kommentar || undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+export type RmStresstestInput = {
+  jahr: number;
+  typ: RmStresstestTyp;
+  ebene: RmStresstestEbene;
+  betroffeneRisikoarten: RisikoartKategorie[];
+  szenariobeschreibung: string;
+  risikofaktoren: string;
+  wechselwirkungenBeruecksichtigt: boolean;
+  ergebnis: string;
+  rtfBeruecksichtigt: boolean;
+  handlungsbedarf: string;
+  durchgefuehrtAm: string;
+};
+
+export async function addRmStresstest(fields: RmStresstestInput) {
+  await apiFetch("/risikomanagement/stresstests", {
+    method: "POST",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      typ: fields.typ,
+      ebene: fields.ebene,
+      betroffeneRisikoarten: fields.betroffeneRisikoarten,
+      szenariobeschreibung: fields.szenariobeschreibung,
+      risikofaktoren: fields.risikofaktoren || undefined,
+      wechselwirkungenBeruecksichtigt: fields.wechselwirkungenBeruecksichtigt,
+      ergebnis: fields.ergebnis || undefined,
+      rtfBeruecksichtigt: fields.rtfBeruecksichtigt,
+      handlungsbedarf: fields.handlungsbedarf || undefined,
+      durchgefuehrtAm: fields.durchgefuehrtAm ? new Date(fields.durchgefuehrtAm).toISOString() : undefined,
     }),
   });
   revalidatePath("/risikomanagement");

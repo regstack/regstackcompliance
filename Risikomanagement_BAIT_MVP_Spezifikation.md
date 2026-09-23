@@ -10,6 +10,20 @@ untergeschobenes `institutionId` im Body). Seed-Daten für alle Bausteine sind i
 ergänzt. Die drei "Neu gefundenen Lücken" (AT 3.2, AT 4.2 Tz. 3, AT 4.3.4) sind ebenfalls
 umgesetzt, siehe "Phase 2" im Modul-1-Abschnitt unten.
 
+**Update 2026-09-23 — AT 4.1 Tz. 10 und AT 4.3.3 zusätzlich nachgezogen:** Auf Basis des
+vollständigen AT-4-Primärtexts (BA 54, Stand 30.06.2026) kamen zwei weitere, unabhängig
+entwickelte Bausteine hinzu: `RmKapitalplanung` (AT 4.1 Tz. 10) und `RmStresstest` (AT 4.3.3,
+inkl. schwerem konjunkturellem Abschwung und inversem Stresstest). Gleiches Muster wie die
+bestehenden Modelle: `institutionId`-Scoping, jeder Write über `withAudit(...)`, RBAC-Einträge
+(`riskCapitalPlanning[.approve]`, `riskStressTest`) mit derselben Rollenaufteilung wie
+`riskManagementRecord`/`riskStrategy.approve`. Frontend-Panels für beide liegen ebenfalls vor
+(`/risikomanagement`, `components/risikomanagement/{kapitalplanung,stresstest}-panel.tsx`).
+AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst **kein** eigenes Datenmodell — das ist
+Funktionstrennung/Prozessdesign (serverseitig ohnehin über RBAC erzwungen), kein wiederkehrender
+Datensatz, analog zur Entscheidung gegen ein eigenes ISB-Login. Granulare BTR-Detailformulare je
+Risikoart (ein eigener Zinsschock-/Kreditrisiko-Rechenkern statt reiner Ergebnis-Erfassung)
+bleiben offen.
+
 **Nachweis-Integration ist ebenfalls umgesetzt (23.09.2026)** — `EvidenceModule` um
 `RISK_MANAGEMENT`/`IT_RISK` erweitert. Es gab bereits ein reales, ausgereiftes Upload-Muster im
 Produkt (Pre-Signed-S3-URLs, siehe `src/modules/contracts/objectStorage.ts` für
@@ -37,21 +51,8 @@ je Resource in `src/middleware/rbac.ts`, jeder Write über `withAudit(...)`.
 Text von Rundschreiben 06/2026 (BA), "BA 54 – MaRisk vom 30.06.2026" (9. MaRisk-Novelle) geprüft
 — dieselbe Fassung, auf die README.md und die Marketing-Seite bereits Bezug nehmen. Ergebnis:
 im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken, siehe
-"Korrekturen nach Quellenabgleich" unten.
-
-**BAIT-Kapitelbezeichnungen jetzt gegen die Primärquelle geprüft (23.09.2026):** uns liegt jetzt
-der Volltext von Rundschreiben 10/2017 (BA) in der Fassung vom 16.12.2024 vor. Die zwölf Kapitel
-(Kap. 11 ist aufgehoben) lauten exakt: 1. IT-Strategie, 2. IT-Governance, 3.
-Informationsrisikomanagement, 4. Informationssicherheitsmanagement, 5. Operative
-Informationssicherheit, 6. Identitäts- und Rechtemanagement, 7. IT-Projekte und
-Anwendungsentwicklung, 8. IT-Betrieb, 9. Auslagerungen und sonstiger Fremdbezug von
-IT-Dienstleistungen, 10. IT-Notfallmanagement, 12. Kritische Infrastrukturen. Die weiter unten
-verwendeten "Arbeitstitel" waren an zwei Stellen falsch nummeriert und werden hiermit korrigiert:
-das ursprünglich als "Kap. 5" bezeichnete Berechtigungsmanagement ist tatsächlich **Kap. 6**, das
-als "Kap. 6" bezeichnete IT-Projekte-Register ist **Kap. 7**, "Kap. 7" IT-Betrieb ist **Kap. 8**
-und "Kap. 8" Auslagerungssteuerung ist **Kap. 9**. Kap. 12 (Kritische Infrastrukturen) betrifft
-nur KRITIS-Betreiber (§ 8a BSIG) und bleibt bewusst außen vor — siehe "Bewusst nicht umgesetzt"
-unten.
+"Korrekturen nach Quellenabgleich" unten. Die BAIT-Kapitelbezeichnungen (Rundschreiben 10/2017
+(BA)) sind davon unberührt und weiterhin ungeprüft — dafür liegt uns noch kein Primärtext vor.
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
 das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
@@ -118,10 +119,15 @@ Beide Module verzahnen sich mit dem, was schon da ist, statt es zu duplizieren:
 | Risikostrategie | Geschäfts-/Risikostrategie + Teilstrategien, Verabschiedungs-Workflow durch die GL |
 | Risikotragfähigkeit | Periodischer RTF-Snapshot (normativ/ökonomisch), Limits je Risikoart, Auslastung |
 | RM-Reporting | Quartalsbericht an die GL, Entwurf→final wie bei Compliance/Revision |
+| Kapitalplanung (seit 2026-09-23) | Jährlicher mehrjähriger Kapitalbedarfs-/Kapitaldeckungsplan, GL-Verabschiedung — AT 4.1 Tz. 10 |
+| Stresstests (seit 2026-09-23) | Je-Test-Datensatz: Typ (Sensitivität/Szenario/schwerer Abschwung/invers/Resilienz), Ebene, Ergebnis, RTF-Bezug — AT 4.3.3 |
+| Modellregister | AT 4.3.4 / AT 4.1 Tz. 9 — absichtlich nicht hier; wird von PR #10/#13 gebaut |
 
-**Bewusst auf Phase 2 verschoben:** granulare BTR-Formulare je Risikoart (Kreditrisiko-Scoring,
-Zinsschock-Rechner etc.), Stresstest-Workflow, Limitüberschreitungs-Eskalationskette. Diese sind
-fachlich groß genug für eigene Sub-Specs und sollten nicht die MVP-Lieferung blockieren.
+**Weiterhin bewusst auf Phase 2 verschoben:** granulare BTR-Formulare je Risikoart (ein eigener
+Kreditrisiko-Scoring-/Zinsschock-Rechenkern statt reiner Ergebnis-Erfassung im Stresstest-Datensatz)
+und eine Limitüberschreitungs-Eskalationskette. Diese sind fachlich groß genug für eigene Sub-Specs
+und sollten nicht die MVP-Lieferung blockieren. AT 4.3.1 (Aufbau-/Ablauforganisation) bekommt bewusst
+kein eigenes Datenmodell — Funktionstrennung ist Prozessdesign/RBAC, kein wiederkehrender Datensatz.
 
 ### Vorgeschlagene Enums
 
@@ -275,11 +281,18 @@ model RmReportAcknowledgement {
 | "riskStrategy.approve"    // Verabschiedung Geschäfts-/Risikostrategie — GL-exklusiv
 | "riskManagementReport"
 | "riskManagementReport.acknowledge"
+| "riskCapitalPlanning"           // seit 2026-09-23 — Kapitalplanung, AT 4.1 Tz. 10
+| "riskCapitalPlanning.approve"   // Verabschiedung — GL-exklusiv, wie riskStrategy.approve
+| "riskStressTest"                // seit 2026-09-23 — Stresstests, AT 4.3.3
 ```
 
 Vorschlag Matrix: `riskManagementRecord` write = `RISIKOCONTROLLING, ADMIN`, read = alle Rollen
 (inkl. `VIEWER`) — deckungsgleich mit dem Muster der bestehenden Module. `riskStrategy.approve`
-write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9.
+write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9. Die zwei neuen
+Resources folgen exakt demselben Muster: `riskCapitalPlanning`/`riskStressTest` write =
+`RISIKOCONTROLLING, ADMIN`, read = alle Rollen; `riskCapitalPlanning.approve` write =
+`GESCHAEFTSLEITUNG, ADMIN`. Ein `riskModelRecord` für das Modellregister wird bewusst hier nicht
+vorgeschlagen — siehe Update 2026-09-23 oben.
 
 ### Routen (Vorschlag)
 
@@ -289,6 +302,9 @@ write = `GESCHAEFTSLEITUNG, ADMIN`, exakt wie `report.approve` heute für AT 9.
 /risikomanagement/strategien/:id/approve
 /risikomanagement/risikotragfaehigkeit
 /risikomanagement/reports
+/risikomanagement/kapitalplanung              (seit 2026-09-23)
+/risikomanagement/kapitalplanung/:id/verabschieden
+/risikomanagement/stresstests                 (seit 2026-09-23)
 ```
 
 ### Phase 2: AT 3.2 / AT 4.2 Tz. 3 / AT 4.3.4 — umgesetzt (23.09.2026)
@@ -405,34 +421,10 @@ Bearbeiten-Button pro Zeile, PUT-Route re-nutzt bestehende Lifecycle-Guards unve
 | Informationsrisiko-Register | Bedrohung → Maßnahme → Restrisiko je Asset, GL-Akzeptanz bei Restrisiko | Kap. 3 Informationsrisikomanagement |
 | IT-Sicherheitsvorfälle | Erfassung, Eskalation, BaFin-Meldepflicht-Flag | Kap. 4 Informationssicherheit (operativ) |
 
-**Phase 2 — umgesetzt (23.09.2026):** vier weitere Bausteine, korrekt nummeriert gegen den
-jetzt vorliegenden Primärtext (siehe Korrektur oben):
-
-| Baustein | Zweck | BAIT-Kapitel |
-|---|---|---|
-| Berechtigungsmanagement | `ItBerechtigung` — Einrichtung/Genehmigung, Rezertifizierung, Entzug; Flag für privilegierte/technische Benutzer | Kap. 6 Identitäts- und Rechtemanagement |
-| IT-Projekte-Register | `ItProjekt` — Portfolio-Steuerung, Lessons-Learned bei Abschluss | Kap. 7 IT-Projekte und Anwendungsentwicklung |
-| IDV-Zusatzfelder | `ItAsset` erweitert um `istIdv`/`fremdOderEigenentwicklung`/`technischVerantwortlichUserId`/`technologie` statt eines zweiten Registers | Kap. 7.13/7.14 IDV |
-| Änderungsmanagement | `ItAenderung` — beantragt→genehmigt→umgesetzt, mit Rückabwicklungsplan | Kap. 8 IT-Betrieb |
-| Betriebsstörungen | `ItBetriebsstoerung` — bewusst getrennt von `ItSicherheitsvorfall` (Kap. 4/5), da die BAIT "Störung" explizit von "Informationssicherheitsvorfall" abgrenzt (Tz. 4.7) | Kap. 8 IT-Betrieb |
-| IT-Notfallmanagement | `ItNotfallplan` (RTO/RPO/Notbetrieb je Asset) + `ItNotfalltest` (mindestens jährlich, Tz. 10.4) | Kap. 10 IT-Notfallmanagement |
-
-Migration `20260923000000_bait_kap6_7_8_10_workflows`, RBAC-Ressourcen `itAccessRecord` /
-`itProjectRecord` / `itOperationsRecord` / `itContingencyRecord` (gleiche vorläufige
-Rollenzuordnung wie die Phase-1-Ressourcen — `RISIKOCONTROLLING`/`ADMIN` schreiben, alle
-Modul-Rollen lesen), Routen unter `/it-risiko/berechtigungen`, `/it-risiko/projekte`,
-`/it-risiko/aenderungen`, `/it-risiko/betriebsstoerungen`, `/it-risiko/notfallmanagement`.
-Tests in `tests/risk-bait-rbac.test.ts`.
-
-**Bewusst nicht umgesetzt:** eine eigene ISB-Login-Rolle (offene Frage 3 unten bleibt offen);
-Kap. 8.7/8.8 (Datensicherungskonzept-Dokument, Kapazitätsplanung) — die tägliche technische
-Datensicherung selbst läuft bereits über `docs/backup-disaster-recovery.md`, ein eigenes
-BAIT-Nachweisdokument dafür ist ein sauberer Phase-3-Kandidat; Kap. 8.2 vollständige
-Bestandsangaben (Patchlevel, Supportverträge) — `ItAsset` deckt Schutzbedarf/Eigentümer ab, nicht
-die volle CMDB-Tiefe. Kap. 9 (Auslagerungssteuerung IT-Dienstleister) bekommt weiterhin bewusst
-**kein** eigenes Modell — siehe Verzahnungs-Hinweis oben, das ist bereits `OutsourcingActivity`.
-Kap. 12 (Kritische Infrastrukturen) ist KRITIS-Betreiber-spezifisch (§ 8a BSIG) und für das MVP
-nicht relevant, solange kein Institut als KRITIS-Betreiber eingestuft ist.
+**Bewusst auf Phase 2 verschoben:** Benutzerberechtigungsmanagement/Rezertifizierungszyklen
+(Kap. 5), IT-Projekte-Register (Kap. 6), IT-Betrieb/Kapazitätskennzahlen (Kap. 7), eine eigene
+ISB-Login-Rolle. Kap. 8 (Auslagerungssteuerung IT-Dienstleister) bekommt bewusst **kein** eigenes
+Modell — siehe Verzahnungs-Hinweis oben, das ist bereits `OutsourcingActivity`.
 
 ### Vorgeschlagene Enums
 
@@ -593,17 +585,12 @@ model ItSicherheitsvorfall {
 | "itRiskRecord"           // ItAsset, ItRisiko
 | "itRisk.accept"          // GL akzeptiert Restrisiko — analog handlungsoption.approve
 | "itSecurityIncident"
-| "itAccessRecord"         // Phase 2, Kap. 6 — ItBerechtigung
-| "itProjectRecord"        // Phase 2, Kap. 7 — ItProjekt
-| "itOperationsRecord"     // Phase 2, Kap. 8 — ItAenderung, ItBetriebsstoerung
-| "itContingencyRecord"    // Phase 2, Kap. 10 — ItNotfallplan, ItNotfalltest
 ```
 
 Offene Frage unten: ob es dafür eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Rolle braucht,
-oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht — Phase 2 übernimmt für alle vier
-neuen Ressourcen dieselbe vorläufige Antwort (`RISIKOCONTROLLING`/`ADMIN` schreiben).
+oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht.
 
-### Routen
+### Routen (Vorschlag)
 
 ```
 /it-risiko/strategie
@@ -611,24 +598,6 @@ neuen Ressourcen dieselbe vorläufige Antwort (`RISIKOCONTROLLING`/`ADMIN` schre
 /it-risiko/risiken
 /it-risiko/risiken/:id/accept
 /it-risiko/vorfaelle
-
-# Phase 2
-/it-risiko/berechtigungen
-/it-risiko/berechtigungen/:id/rezertifizieren
-/it-risiko/berechtigungen/:id/deaktivieren
-/it-risiko/berechtigungen/:id/entziehen
-/it-risiko/projekte
-/it-risiko/projekte/:id/abschliessen
-/it-risiko/projekte/:id/abbrechen
-/it-risiko/aenderungen
-/it-risiko/aenderungen/:id/genehmigen
-/it-risiko/aenderungen/:id/umsetzen
-/it-risiko/aenderungen/:id/zurueckstellen
-/it-risiko/betriebsstoerungen
-/it-risiko/betriebsstoerungen/:id/abschliessen
-/it-risiko/notfallmanagement/plaene
-/it-risiko/notfallmanagement/plaene/:id/freigeben
-/it-risiko/notfallmanagement/plaene/:planId/tests
 ```
 
 ---
@@ -644,18 +613,14 @@ Beide Module folgen den drei Grundsätzen aus dem README ausnahmslos:
    `Nachweis`-Modell (dafür müsste `EvidenceModule` um `RISK_MANAGEMENT` und `IT_RISK` ergänzt
    werden).
 
-## Rollout-Reihenfolge
+## Rollout-Reihenfolge (Vorschlag)
 
 1. Migration: neue Enums/Modelle für beide Module (additiv, keine bestehenden Tabellen ändern
-   sich). ✅ (`20260919090000_risikomanagement_and_bait_module`)
+   sich).
 2. Modul 1 MVP (Risikoinventur, Strategie, RTF, Report) — kleinerer Blast Radius, kein neuer
-   RBAC-Rollentyp nötig. ✅
-3. Modul 2 MVP (IT-Strategie, Asset-Register, IT-Risiko-Register, Sicherheitsvorfälle). ✅
-4. Modul 2 Phase 2 (Berechtigungsmanagement Kap. 6, IT-Projekte Kap. 7, Änderungen/Störungen
-   Kap. 8, Notfallmanagement Kap. 10). ✅ (`20260923000000_bait_kap6_7_8_10_workflows`)
-5. Je nach Entscheidung zur ISB-Rolle: `Role`-Enum erweitern + Seed-User anpassen. Offen.
-6. Frontend-Anbindung für die vier Phase-2-Bausteine (bisher nur Backend + Tests + Seed-Daten).
-   Offen.
+   RBAC-Rollentyp nötig.
+3. Modul 2 MVP (IT-Strategie, Asset-Register, IT-Risiko-Register, Sicherheitsvorfälle).
+4. Je nach Entscheidung zur ISB-Rolle: `Role`-Enum erweitern + Seed-User anpassen.
 
 ## Offene Fragen an dich
 

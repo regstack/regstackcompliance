@@ -5,6 +5,8 @@ import {
   listRmReports,
   listRmNplKennzahlen,
   listRmModelle,
+  listRmKapitalplanung,
+  listRmStresstests,
 } from "@/lib/regstack/risikomanagement";
 import { getBackendSession, canWriteRiskManagement, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
@@ -15,18 +17,22 @@ import { RtfPanel } from "@/components/risikomanagement/rtf-panel";
 import { ReportPanel } from "@/components/risikomanagement/report-panel";
 import { NplPanel } from "@/components/risikomanagement/npl-panel";
 import { ModellPanel } from "@/components/risikomanagement/modell-panel";
+import { KapitalplanungPanel } from "@/components/risikomanagement/kapitalplanung-panel";
+import { StresstestPanel } from "@/components/risikomanagement/stresstest-panel";
 
 export default async function RisikomanagementPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
 
-  const [inventur, strategien, rtfSnapshots, reports, nplKennzahlen, modelle] = await Promise.all([
+  const [inventur, strategien, rtfSnapshots, reports, nplKennzahlen, modelle, kapitalplanung, stresstests] = await Promise.all([
     listRisikoinventur(),
     listRisikostrategien(),
     listRisikotragfaehigkeit(),
     listRmReports(),
     listRmNplKennzahlen(),
     listRmModelle(),
+    listRmKapitalplanung(),
+    listRmStresstests(),
   ]);
 
   const canWrite = canWriteRiskManagement(session.role);
@@ -80,6 +86,8 @@ export default async function RisikomanagementPage() {
       <RisikoinventurPanel items={inventur} canWrite={canWrite} />
       <StrategiePanel items={strategien} canWrite={canWrite} canApprove={canApprove} />
       <RtfPanel items={rtfSnapshots} canWrite={canWrite} />
+      <KapitalplanungPanel items={kapitalplanung} canWrite={canWrite} canApprove={canApprove} />
+      <StresstestPanel items={stresstests} canWrite={canWrite} />
       <ReportPanel reports={reports} canWrite={canWrite} canAcknowledge={canApprove} currentUserId={session.userId} />
       <NplPanel items={nplKennzahlen} canWrite={canWrite} />
       <ModellPanel items={modelle} canWrite={canWrite} />

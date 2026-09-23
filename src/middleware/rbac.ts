@@ -41,16 +41,15 @@ export type Resource =
   | "riskStrategy.approve" // Verabschiedung durch die Geschäftsleitung, AT 4.2
   | "riskManagementReport" // inkl. Aufsichtsorgan-Reporting (AT 3.2), unterschieden über "empfaenger"
   | "riskManagementReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
+  | "riskCapitalPlanning" // AT 4.1 Tz. 10 — Kapitalplanungsprozess, Entwurf-Phase (CRUD)
+  | "riskCapitalPlanning.approve" // Verabschiedung durch die Geschäftsleitung, analog riskStrategy.approve
+  | "riskStressTest" // AT 4.3.3 — Stresstests (Sensitivität/Szenario/inverser Stresstest/Gesamtbank)
   | "modelGovernanceRecord" // Modellregister und -validierungen, AT 4.3.4
   | "itGovernanceRecord" // IT-Strategie, Entwurf-Phase (CRUD)
   | "itStrategy.approve" // Verabschiedung durch die Geschäftsleitung, BAIT Kap. 1
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
   | "itRisk.accept" // Geschäftsleitung akzeptiert verbleibendes Restrisiko, BAIT Kap. 3
   | "itSecurityIncident" // Sicherheitsvorfälle, BAIT Kap. 4
-  | "itAccessRecord" // Berechtigungsvergabe/-rezertifizierung/-entzug, BAIT Kap. 6
-  | "itProjectRecord" // IT-Projekte-Portfolio, BAIT Kap. 7
-  | "itOperationsRecord" // Änderungsmanagement + Betriebsstörungen, BAIT Kap. 8
-  | "itContingencyRecord" // IT-Notfallpläne und -tests, BAIT Kap. 10
   | "nachweis"; // Generisches Nachweis-/Belegregister, modulübergreifend (Outsourcing, Compliance,
   // Interne Revision, Risikomanagement, IT-Risiko)
 
@@ -209,6 +208,17 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   "riskManagementReport.acknowledge": {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"],
   },
+  riskCapitalPlanning: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  "riskCapitalPlanning.approve": {
+    write: ["GESCHAEFTSLEITUNG", "ADMIN"], // AT 4.1 Tz. 10 — muss mit der Geschäftsstrategie im Einklang stehen, GL-Sache wie riskStrategy.approve
+  },
+  riskStressTest: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
   itGovernanceRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     // Kein eigener ISB-Login in diesem MVP (siehe Risikomanagement_BAIT_MVP_Spezifikation.md,
@@ -226,24 +236,6 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"], // verbleibendes hohes Restrisiko braucht GL-Akzeptanz, BAIT Kap. 3
   },
   itSecurityIncident: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itAccessRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    // Kein eigener ISB-Login (siehe Risikomanagement_BAIT_MVP_Spezifikation.md) — dieselbe
-    // vorläufige Rollenzuordnung wie die übrigen BAIT-Ressourcen.
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itProjectRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itOperationsRecord: {
-    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
-    write: ["RISIKOCONTROLLING", "ADMIN"],
-  },
-  itContingencyRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
   },
