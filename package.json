@@ -65,6 +65,7 @@
     "@prisma/engines@5.22.0": true
   },
   "overrides": {
-    "@scure/base": "1.2.6"
+    "@scure/base": "1.2.6",
+    "@noble/hashes": "1.8.0"
   }
 }
