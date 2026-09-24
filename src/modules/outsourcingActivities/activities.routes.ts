@@ -79,6 +79,25 @@ router.get(
   })
 );
 
+// Institution-wide KPI/KRI feed for the sidebar's KPI/KRI-Monitoring view — same cross-activity
+// pattern as /monitoring/escalations above (the per-activity GET already includes
+// monitoringRecords, the list endpoint deliberately doesn't).
+router.get(
+  "/monitoring/kpis",
+  requirePermission("monitoring", "read"),
+  asyncHandler(async (req, res) => {
+    const records = await prisma.monitoringRecord.findMany({
+      where: {
+        type: "KPI",
+        activity: { institutionId: req.user!.institutionId },
+      },
+      include: { activity: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(records);
+  })
+);
+
 router.get(
   "/:id",
   requirePermission("outsourcingActivity", "read"),
