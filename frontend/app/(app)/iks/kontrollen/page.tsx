@@ -1,30 +1,27 @@
 import Link from "next/link";
 import { listControls, listControlTests, CONTROL_TYPE_LABELS, CONTROL_FREQUENCY_LABELS } from "@/lib/regstack/ics";
+import { controlDueState } from "@/lib/regstack/ics-utils";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export default async function KontrollenPage() {
   const [controls, tests] = await Promise.all([listControls(), listControlTests()]);
 
-  function dueState(controlId: string): { label: string; tone: "success" | "warning" | "danger" } {
-    const controlTests = tests.filter((t) => t.controlId === controlId);
-    if (controlTests.length === 0) return { label: "noch nie getestet", tone: "warning" };
-    const latest = [...controlTests].sort((a, b) => (b.plannedDate ?? "").localeCompare(a.plannedDate ?? ""))[0];
-    if (latest.status === "COMPLETED") return { label: "aktuell", tone: "success" };
-    const overdue = latest.plannedDate ? new Date(latest.plannedDate) <= new Date() : false;
-    return overdue ? { label: "fällig", tone: "danger" } : { label: "geplant", tone: "warning" };
-  }
-
   return (
     <div className="space-y-6">
-      <div>
-        <Link href="/iks" className="text-xs text-muted-foreground hover:text-copper-300">
-          ← Übersicht
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <Link href="/iks" className="text-xs text-muted-foreground hover:text-copper-300">
+            ← Übersicht
+          </Link>
+          <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight text-foreground">Alle Kontrollen</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Vollständiges Kontrollregister über alle Geschäftsprozesse hinweg, mit Teststatus.
+          </p>
+        </div>
+        <Link href="/iks/matrix" className="text-sm text-copper-300 hover:underline">
+          Als Kontrollmatrix →
         </Link>
-        <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight text-foreground">Alle Kontrollen</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Vollständiges Kontrollregister über alle Geschäftsprozesse hinweg, mit Teststatus.
-        </p>
       </div>
 
       {controls.length === 0 ? (
@@ -47,7 +44,7 @@ export default async function KontrollenPage() {
               </thead>
               <tbody>
                 {controls.map((c) => {
-                  const due = dueState(c.id);
+                  const due = controlDueState(c.id, tests);
                   return (
                     <tr key={c.id} className="border-b border-border-subtle last:border-0 hover:bg-surface-raised">
                       <td className="px-5 py-3">

@@ -57,6 +57,9 @@ export default async function IksPage() {
         <Link href="/iks/kontrollen" className="inline-block text-sm text-copper-300 hover:underline">
           Alle Kontrollen →
         </Link>
+        <Link href="/iks/matrix" className="inline-block text-sm text-copper-300 hover:underline">
+          Kontrollmatrix →
+        </Link>
         <Link href="/iks/richtlinien" className="inline-block text-sm text-copper-300 hover:underline">
           Richtlinien- &amp; Workflow-Dokumente →
         </Link>

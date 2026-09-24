@@ -208,6 +208,7 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         icon: <ClipboardListIcon {...iconProps} />,
         items: [
           { href: "/iks/kontrollen", label: "Alle Kontrollen" },
+          { href: "/iks/matrix", label: "Kontrollmatrix" },
           { href: "/iks/richtlinien", label: "Richtlinien & Workflow-Dokumente" },
         ],
       },
