@@ -1,6 +1,7 @@
 // Seed data intentionally mirrors the fictional example items in regstack_cockpit.html (Anbieter
 // A-E, "Beispiel Leasing AG") — same story, same numbers, so a demo told from the prototype and a
 // demo told from this API agree with each other.
+import "dotenv/config";
 import { PrismaClient, RisikoartKategorie } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
