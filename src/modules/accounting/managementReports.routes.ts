@@ -7,8 +7,14 @@ import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { acknowledgeAccountingDocument, listSignOffs } from "./signoff";
+import { listAccountingFiles } from "./fileAttachment";
+import { createDocumentFileRoutes } from "./documentFileRoutes";
 
 const router = Router();
+router.use(
+  "/:id",
+  createDocumentFileRoutes("LAGEBERICHT", (id, institutionId) => prisma.managementReport.findFirst({ where: { id, institutionId } }))
+);
 
 const sectionSchema = z.object({
   title: z.string().min(1),
@@ -31,8 +37,17 @@ router.get(
       include: { sections: { orderBy: { sortOrder: "asc" } } },
       orderBy: { fiscalYear: "desc" },
     });
-    const signOffs = await listSignOffs("LAGEBERICHT", reports.map((r) => r.id));
-    res.json(reports.map((r) => ({ ...r, signOffs: signOffs.filter((a) => a.documentId === r.id) })));
+    const [signOffs, files] = await Promise.all([
+      listSignOffs("LAGEBERICHT", reports.map((r) => r.id)),
+      listAccountingFiles("LAGEBERICHT", reports.map((r) => r.id)),
+    ]);
+    res.json(
+      reports.map((r) => ({
+        ...r,
+        signOffs: signOffs.filter((a) => a.documentId === r.id),
+        file: files.find((f) => f.documentId === r.id) ?? null,
+      }))
+    );
   })
 );
 
@@ -45,8 +60,11 @@ router.get(
       include: { sections: { orderBy: { sortOrder: "asc" } } },
     });
     if (!report) throw new NotFoundError("Lagebericht nicht gefunden");
-    const signOffs = await listSignOffs("LAGEBERICHT", [report.id]);
-    res.json({ ...report, signOffs });
+    const [signOffs, files] = await Promise.all([
+      listSignOffs("LAGEBERICHT", [report.id]),
+      listAccountingFiles("LAGEBERICHT", [report.id]),
+    ]);
+    res.json({ ...report, signOffs, file: files[0] ?? null });
   })
 );
 

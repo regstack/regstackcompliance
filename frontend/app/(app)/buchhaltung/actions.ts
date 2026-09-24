@@ -115,3 +115,39 @@ export async function acknowledgeManagementReport(id: string) {
   await apiFetch(`/accounting/management-reports/${id}/acknowledge`, { method: "POST" });
   revalidatePath(REVALIDATE);
 }
+
+// ---------------------------------------------------------------------------
+// Document upload (Bilanz/GuV/Anhang/Lagebericht) — generic over `basePath`
+// (e.g. "/accounting/balance-sheets/{id}") since all four backends expose the same
+// upload-url/file/download-url shape via src/modules/accounting/documentFileRoutes.ts.
+// Mirrors the three-step flow in outsourcing/actions.ts (getContractUploadUrl/
+// registerContractFile/getContractDownloadUrl).
+// ---------------------------------------------------------------------------
+
+export async function getAccountingUploadUrl(basePath: string, fileName: string, fileMime: string, fileSize: number) {
+  return apiFetch<{ uploadUrl: string; objectKey: string }>(`${basePath}/upload-url`, {
+    method: "POST",
+    body: JSON.stringify({ fileName, fileMime, fileSize }),
+  });
+}
+
+export async function registerAccountingFile(
+  basePath: string,
+  file: { objectKey: string; fileName: string; fileSize: number; fileMime: string }
+) {
+  await apiFetch(`${basePath}/file`, {
+    method: "POST",
+    body: JSON.stringify({
+      fileObjectKey: file.objectKey,
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      fileMime: file.fileMime,
+    }),
+  });
+  revalidatePath(REVALIDATE);
+}
+
+export async function getAccountingDownloadUrl(basePath: string) {
+  const res = await apiFetch<{ downloadUrl: string }>(`${basePath}/download-url`);
+  return res.downloadUrl;
+}

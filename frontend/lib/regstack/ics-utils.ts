@@ -93,6 +93,19 @@ export type PolicyDocument = {
   controls?: Control[];
 };
 
+export type ControlDueState = { label: string; tone: "success" | "warning" | "danger" };
+
+/** Same "due for testing" logic as controlsDueForTesting below, but for a single control — the
+ * label/tone shown per row on the Kontrollen-Übersicht and the Kontrollmatrix. */
+export function controlDueState(controlId: string, tests: ControlTest[]): ControlDueState {
+  const controlTests = tests.filter((t) => t.controlId === controlId);
+  if (controlTests.length === 0) return { label: "noch nie getestet", tone: "warning" };
+  const latest = [...controlTests].sort((a, b) => (b.plannedDate ?? "").localeCompare(a.plannedDate ?? ""))[0];
+  if (latest.status === "COMPLETED") return { label: "aktuell", tone: "success" };
+  const overdue = latest.plannedDate ? new Date(latest.plannedDate) <= new Date() : false;
+  return overdue ? { label: "fällig", tone: "danger" } : { label: "geplant", tone: "warning" };
+}
+
 /** Controls due for testing: no test at all, or their latest test's planned date has passed
  * without a COMPLETED result. Used by the process/control detail pages and the dashboard's
  * IKS at-a-glance stat. */

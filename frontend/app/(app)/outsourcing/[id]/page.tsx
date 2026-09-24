@@ -15,6 +15,7 @@ import { HandlungsoptionPanel } from "@/components/outsourcing/handlungsoption-p
 import { WesentlichkeitPanel } from "@/components/outsourcing/wesentlichkeit-panel";
 import { MonitoringPanel } from "@/components/outsourcing/monitoring-panel";
 import { WeiterverlagerungTree } from "@/components/outsourcing/weiterverlagerung-tree";
+import { StammdatenPanel } from "@/components/outsourcing/stammdaten-panel";
 
 export default async function AuslagerungDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -81,6 +82,18 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
 
       <DetailTabs
         tabs={[
+          {
+            key: "stammdaten",
+            label: "Stammdaten",
+            content: (
+              <StammdatenPanel
+                activityId={id}
+                activity={activity}
+                groupReliefEnabled={institution.groupRelief}
+                canWrite={canWrite}
+              />
+            ),
+          },
           {
             key: "wesentlichkeit",
             label: "Wesentlichkeit",

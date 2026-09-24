@@ -2,8 +2,32 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/regstack/backend-client";
-import type { ClauseStatus, ContractRecord, HandlungsoptionRecord, MonitoringRecord, WeiterverlagerungNode } from "@/lib/regstack/outsourcing";
+import {
+  createActivity as createActivityBackend,
+  updateActivityStammdaten as updateActivityStammdatenBackend,
+} from "@/lib/regstack/outsourcing";
+import type {
+  ClauseStatus,
+  ContractRecord,
+  CreateActivityInput,
+  HandlungsoptionRecord,
+  MonitoringRecord,
+  StammdatenInput,
+  WeiterverlagerungNode,
+} from "@/lib/regstack/outsourcing";
 import type { Handlungsoption } from "@/lib/regstack/classification";
+
+export async function createActivity(input: CreateActivityInput) {
+  const created = await createActivityBackend(input);
+  revalidatePath("/outsourcing");
+  return created.id;
+}
+
+export async function updateActivityStammdaten(activityId: string, input: StammdatenInput) {
+  await updateActivityStammdatenBackend(activityId, input);
+  revalidatePath(`/outsourcing/${activityId}`);
+  revalidatePath("/outsourcing");
+}
 
 export type ChecklistStatus = "erfuellt" | "nicht_erfuellt" | "in_ueberarbeitung";
 

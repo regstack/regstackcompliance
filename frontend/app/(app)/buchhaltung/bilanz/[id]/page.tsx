@@ -5,6 +5,7 @@ import { getBackendSession, canWriteAccounting, isGeschaeftsleitung } from "@/li
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { LineItemsEditor } from "@/components/buchhaltung/line-items-editor";
 import { DocumentActions } from "@/components/buchhaltung/document-actions";
+import { DocumentFileUpload } from "@/components/buchhaltung/document-file-upload";
 import {
   updateBalanceSheetLineItems, finalizeBalanceSheet, reviseBalanceSheet, acknowledgeBalanceSheet,
 } from "@/app/(app)/buchhaltung/actions";
@@ -80,6 +81,13 @@ export default async function BilanzDetailPage({ params }: { params: Promise<{ i
           />
         </CardBody>
       </Card>
+
+      <DocumentFileUpload
+        basePath={`/accounting/balance-sheets/${id}`}
+        file={sheet.file}
+        canWrite={session ? canWriteAccounting(session.role) : false}
+        title="Signierte Bilanz (PDF)"
+      />
     </div>
   );
 }

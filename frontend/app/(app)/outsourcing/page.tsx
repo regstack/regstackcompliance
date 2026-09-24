@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { listActivities } from "@/lib/regstack/outsourcing";
-import { getBackendSession } from "@/lib/regstack/backend-session";
+import { getBackendSession, canWriteOutsourcing } from "@/lib/regstack/backend-session";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { ActivityForm } from "@/components/outsourcing/activity-form";
 
 export default async function OutsourcingPage() {
   const session = await getBackendSession();
@@ -18,6 +19,7 @@ export default async function OutsourcingPage() {
   }
 
   const activities = await listActivities();
+  const canWrite = canWriteOutsourcing(session.role);
 
   return (
     <div>
@@ -28,6 +30,7 @@ export default async function OutsourcingPage() {
             AT 9 — alle Auslagerungen Ihrer Institution.
           </p>
         </div>
+        {canWrite && <ActivityForm />}
       </div>
 
       {activities.length === 0 ? (

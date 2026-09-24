@@ -93,6 +93,7 @@ router.get(
 );
 
 const stammdatenSchema = createSchema.partial().extend({
+  bafinReferenceNumber: z.string().optional(),
   contractStart: z.string().datetime().optional(),
   contractEnd: z.string().datetime().optional(),
   terminationNoticeMonths: z.number().int().optional(),

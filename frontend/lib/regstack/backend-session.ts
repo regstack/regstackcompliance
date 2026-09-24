@@ -62,6 +62,15 @@ export function canWriteOutsourcingContract(role: BackendRole): boolean {
   return OUTSOURCING_CONTRACT_WRITE_ROLES.includes(role);
 }
 
+// Mirrors src/middleware/rbac.ts's MATRIX.report.write (Tz. 13 — Bericht über die Auslagerungen)
+// — narrower than OUTSOURCING_WRITE_ROLES above (excludes RISIKOCONTROLLING). Approval
+// (report.approve) is Geschäftsleitung-only and covered by isGeschaeftsleitung below.
+const OUTSOURCING_REPORT_WRITE_ROLES: BackendRole[] = ["COMPLIANCE", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN"];
+
+export function canWriteOutsourcingReport(role: BackendRole): boolean {
+  return OUTSOURCING_REPORT_WRITE_ROLES.includes(role);
+}
+
 // Mirrors src/middleware/rbac.ts's MATRIX.complianceRecord.write.
 const COMPLIANCE_WRITE_ROLES: BackendRole[] = ["COMPLIANCE", "ADMIN"];
 

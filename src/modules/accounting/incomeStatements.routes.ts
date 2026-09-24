@@ -7,8 +7,14 @@ import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { acknowledgeAccountingDocument, listSignOffs } from "./signoff";
+import { listAccountingFiles } from "./fileAttachment";
+import { createDocumentFileRoutes } from "./documentFileRoutes";
 
 const router = Router();
+router.use(
+  "/:id",
+  createDocumentFileRoutes("GUV", (id, institutionId) => prisma.incomeStatement.findFirst({ where: { id, institutionId } }))
+);
 
 const lineItemSchema = z.object({
   section: z.enum(["ERTRAEGE", "AUFWENDUNGEN", "ERGEBNIS"]),
@@ -34,8 +40,17 @@ router.get(
       include: { lineItems: { orderBy: [{ section: "asc" }, { sortOrder: "asc" }] } },
       orderBy: { fiscalYear: "desc" },
     });
-    const signOffs = await listSignOffs("GUV", statements.map((s) => s.id));
-    res.json(statements.map((s) => ({ ...s, signOffs: signOffs.filter((a) => a.documentId === s.id) })));
+    const [signOffs, files] = await Promise.all([
+      listSignOffs("GUV", statements.map((s) => s.id)),
+      listAccountingFiles("GUV", statements.map((s) => s.id)),
+    ]);
+    res.json(
+      statements.map((s) => ({
+        ...s,
+        signOffs: signOffs.filter((a) => a.documentId === s.id),
+        file: files.find((f) => f.documentId === s.id) ?? null,
+      }))
+    );
   })
 );
 
@@ -48,8 +63,8 @@ router.get(
       include: { lineItems: { orderBy: [{ section: "asc" }, { sortOrder: "asc" }] } },
     });
     if (!statement) throw new NotFoundError("Gewinn- und Verlustrechnung nicht gefunden");
-    const signOffs = await listSignOffs("GUV", [statement.id]);
-    res.json({ ...statement, signOffs });
+    const [signOffs, files] = await Promise.all([listSignOffs("GUV", [statement.id]), listAccountingFiles("GUV", [statement.id])]);
+    res.json({ ...statement, signOffs, file: files[0] ?? null });
   })
 );
 

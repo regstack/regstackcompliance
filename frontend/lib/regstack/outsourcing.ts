@@ -82,15 +82,26 @@ export type WeiterverlagerungNode = {
   status: WeiterverlagerungStatus;
 };
 
+export type SpecialFunction = "KEINE" | "RISIKOCONTROLLING" | "COMPLIANCE" | "INTERNE_REVISION" | "KERNBANKBEREICH";
+
 export type OutsourcingActivity = {
   id: string;
   name: string;
   category: string;
   provider: string | null;
+  bafinReferenceNumber: string | null;
   scope: ScopeType;
   scopeJustification: string | null;
   status: ActivityStatus;
+  contractStart: string | null;
+  contractEnd: string | null;
+  terminationNoticeMonths: number | null;
+  serviceLocations: string | null;
+  dataCategories: string | null;
+  isCloud: boolean;
   isSubOutsourcing: boolean;
+  groupInternal: boolean;
+  specialFunction: SpecialFunction;
   createdAt: string;
   deepDive: boolean;
   riskAnalysis: RiskAnalysis | null;
@@ -102,6 +113,41 @@ export type OutsourcingActivity = {
 
 export async function listActivities(): Promise<OutsourcingActivity[]> {
   return apiFetch<OutsourcingActivity[]>("/activities");
+}
+
+export type CreateActivityInput = {
+  name: string;
+  category: string;
+  provider?: string;
+  scope: ScopeType;
+  scopeJustification?: string;
+};
+
+export async function createActivity(input: CreateActivityInput): Promise<OutsourcingActivity> {
+  return apiFetch<OutsourcingActivity>("/activities", { method: "POST", body: JSON.stringify(input) });
+}
+
+export type StammdatenInput = Partial<{
+  name: string;
+  category: string;
+  provider: string;
+  bafinReferenceNumber: string;
+  scope: ScopeType;
+  scopeJustification: string;
+  contractStart: string;
+  contractEnd: string;
+  terminationNoticeMonths: number;
+  serviceLocations: string;
+  dataCategories: string;
+  isCloud: boolean;
+  isSubOutsourcing: boolean;
+  groupInternal: boolean;
+  specialFunction: SpecialFunction;
+  deepDive: boolean;
+}>;
+
+export async function updateActivityStammdaten(id: string, input: StammdatenInput): Promise<OutsourcingActivity> {
+  return apiFetch<OutsourcingActivity>(`/activities/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }
 
 export async function getActivity(id: string): Promise<OutsourcingActivity | null> {

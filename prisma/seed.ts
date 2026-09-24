@@ -1,6 +1,7 @@
 // Seed data intentionally mirrors the fictional example items in regstack_cockpit.html (Anbieter
 // A-E, "Beispiel Leasing AG") — same story, same numbers, so a demo told from the prototype and a
 // demo told from this API agree with each other.
+import "dotenv/config";
 import { PrismaClient, RisikoartKategorie } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -632,6 +633,23 @@ async function main() {
       createdByUserId: revision.id,
     },
   });
+  // Not yet distributed — Interne Revision has logged the finding but hasn't assigned a
+  // Verantwortliche/r yet, so this is the one the "Feststellung verteilen" action itself has
+  // something to do (every other seeded finding above is already distributed).
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2026.id,
+      titel: "Eskalationswege bei Sicherheitsvorfällen unklar dokumentiert",
+      beschreibung: "Das Eskalationsschema für BaFin-meldepflichtige IT-Sicherheitsvorfälle verweist auf eine veraltete Kontaktliste.",
+      schweregrad: "wesentlich",
+      modul: null,
+      fachbereich: "IT",
+      frist: new Date("2026-10-31"),
+      status: "offen",
+      createdByUserId: revision.id,
+    },
+  });
 
   // --- Accounting / Buchhaltung demo data -------------------------------------------------
   // Three fiscal years so the dashboard's period-over-period analysis has something to show;
@@ -915,6 +933,18 @@ async function main() {
       description: "Vergabe, Überprüfung und Entzug von Berechtigungen für IT-Systeme und Kernanwendungen.",
     },
   });
+  const treasury = await prisma.icsBusinessProcess.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000005" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000005",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      name: "Treasury / Liquiditätssteuerung",
+      owner: "Treasury",
+      description: "Disposition der Zahlungsmittel, Kontoführung und Ausführung von Treasury-Transaktionen.",
+    },
+  });
 
   const controlP2P1 = await prisma.icsControl.upsert({
     where: { id: "30000000-0000-0000-0000-000000000101" },
@@ -1052,6 +1082,61 @@ async function main() {
       businessProcesses: { create: [{ businessProcessId: itAccess.id }] },
     },
   });
+  // Cross-process controls — the ones above are each 1:1 with a single process; these two are
+  // what actually makes a Kontrollmatrix worth looking at instead of a flat list.
+  const controlSod = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000109" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000109",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      code: "ITGC-04",
+      name: "Segregation-of-Duties-Prüfung ERP-Rollen",
+      controlType: "ITGC",
+      frequency: "QUARTERLY",
+      description: "Quartalsweiser Abgleich der vergebenen ERP-Rollen gegen die SoD-Konfliktmatrix (z. B. Rechnungserfassung vs. Zahlungsfreigabe, Auftrag vs. Wareneingang).",
+      risksAddressed: "Funktionstrennungsverstöße, die Einzelkontrollen wie das Vier-Augen-Prinzip aushebeln",
+      controlOwnerUserId: risikocontrolling.id,
+      businessProcesses: { create: [{ businessProcessId: p2p.id }, { businessProcessId: o2c.id }, { businessProcessId: treasury.id }] },
+    },
+  });
+  const controlDr = await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000110" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000110",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      code: "ITGC-05",
+      name: "Notfallwiederherstellungstest Kernsysteme",
+      controlType: "ITGC",
+      frequency: "ANNUALLY",
+      description: "Jährlicher Test der Wiederherstellung von Kernbankverfahren und Treasury-Systemen aus dem Backup-Rechenzentrum.",
+      risksAddressed: "Verlängerter Systemausfall ohne funktionierende Notfallwiederherstellung",
+      controlOwnerUserId: revision.id,
+      businessProcesses: { create: [{ businessProcessId: itAccess.id }, { businessProcessId: treasury.id }] },
+    },
+  });
+  await prisma.icsControl.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000111" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000111",
+      institutionId: institution.id,
+      createdByUserId: risikocontrolling.id,
+      code: "TREAS-01",
+      name: "Vier-Augen-Prinzip bei Treasury-Transaktionen",
+      controlType: "MANUAL",
+      frequency: "PER_TRANSACTION",
+      description: "Jede Treasury-Transaktion (Kontoüberträge, Anlagen) erfordert die Freigabe durch eine zweite, von der Disposition unabhängige Person.",
+      risksAddressed: "Fehlerhafte oder unautorisierte Treasury-Transaktionen",
+      controlOwnerUserId: buchhaltung.id,
+      businessProcesses: { create: [{ businessProcessId: treasury.id }] },
+      // Noch nie getestet — bewusst ohne icsControlTest-Eintrag, damit das Register auch den
+      // "noch nie getestet"-Zustand zeigt (wie schon controlO2C1 oben, jetzt zusätzlich hier).
+    },
+  });
 
   await prisma.icsControlTest.upsert({
     where: { id: "30000000-0000-0000-0000-000000000201" },
@@ -1106,6 +1191,33 @@ async function main() {
       resultNotes: "In 2 von 20 Stichproben fehlte die zweite Freigabe — Nachschärfung des Freigabeworkflows empfohlen.",
       testedByUserId: risikocontrolling.id,
       testedAt: new Date("2026-03-12"),
+    },
+  });
+  await prisma.icsControlTest.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000204" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000204",
+      controlId: controlSod.id,
+      createdByUserId: risikocontrolling.id,
+      plannedPeriod: "Q3 2026",
+      plannedDate: new Date("2026-09-15"),
+      status: "IN_PROGRESS",
+      resultNotes: "SoD-Konfliktreport gezogen, Abgleich mit Fachbereichen für die verbleibenden 4 Rollenkombinationen läuft noch.",
+    },
+  });
+  // Overdue on purpose — plannedDate is in the past and the test is still PLANNED, so this is
+  // the one that should show up as "fällig" on the Kontrollen-Übersicht.
+  await prisma.icsControlTest.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000205" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000205",
+      controlId: controlDr.id,
+      createdByUserId: revision.id,
+      plannedPeriod: "Q3 2026",
+      plannedDate: new Date("2026-07-31"),
+      status: "PLANNED",
     },
   });
 
