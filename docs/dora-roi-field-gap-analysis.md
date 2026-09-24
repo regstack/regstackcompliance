@@ -1,13 +1,16 @@
 # DORA Register of Information — preliminary field gap analysis
 
 **Status: PRELIMINARY. Do not present this as a verified compliance check.** This was compiled on
-2026-09-19/20 without direct access to the authoritative source (the EBA's official "Data Model for
-DORA RoI" PDF and Commission Implementing Regulation (EU) 2024/2956, Annexes). The sandbox this was
-written in blocks outbound access to eba.europa.eu, eur-lex.europa.eu, and every industry-guide
-domain tried — only search-engine result snippets were available, not the full authoritative text.
-Everything below is inference from those snippets, cross-checked against `prisma/schema.prisma`.
-**Before any real filing or a compliance-sensitive customer conversation, get the actual EBA Data
-Model PDF (link below) and re-verify field-by-field.**
+2026-09-19/20, then given a follow-up pass on 2026-09-24 (see bottom), without direct access to the
+authoritative source (the EBA's official "Data Model for DORA RoI" PDF and Commission Implementing
+Regulation (EU) 2024/2956, Annexes). Every sandbox this has been written from so far blocks *all*
+outbound HTTP fetches wholesale — confirmed again on 2026-09-24 against eba.europa.eu,
+eur-lex.europa.eu, and three independent third-party regulatory-guide domains, all `EGRESS_BLOCKED`.
+Only search-engine result snippets get through, not the full authoritative text or any direct page
+fetch. Everything below is inference from those snippets, cross-checked against
+`prisma/schema.prisma`. **Before any real filing or a compliance-sensitive customer conversation,
+get the actual EBA Data Model PDF (link below) and re-verify field-by-field, from an environment
+that isn't network-restricted this way.**
 
 Source to fetch when unblocked: `https://www.eba.europa.eu/sites/default/files/2025-04/035dd2b6-c7e3-4c7d-954f-6ffd41903de2/Data%20Model%20for%20DORA%20RoI.pdf`
 ("Data Model for DORA RoI.pdf")
@@ -43,22 +46,25 @@ Two templates are most directly comparable to `IctProvider`/`IctArrangement`:
 | 3 | `parentUndertaking` is free text, not a structured reference | The register appears to want the parent as its own registered provider entity (with its own LEI/code), linked by reference — not a text field on the child. |
 | 4 | `providerType` enum too narrow (`DIREKT`/`KONZERNINTERN` only) | The register's provider taxonomy (direct / intra-group / subcontractor-as-own-entity / ultimate parent) doesn't map cleanly onto 2 values — subcontractors here are only a free-text note on the arrangement (`subcontractingNote`), not a registered provider entity with their own identity, country, LEI. |
 | 5 | No stable, business-facing contract reference number on `IctArrangement` | Per snippets, B_02.01 assigns a reference number reused consistently across all 15 templates — the DB `id` (UUID) isn't that; a mismatch/inconsistent reference is called out as "one of the most common errors" in register submissions. |
-| 6 | No arrangement "type" (standalone / master agreement / sub-arrangement) | Referenced as a required B_02.01 field in snippets. |
-| 7 | No governing law field | Referenced as a required B_02.01 field in snippets. |
+| 6 | No arrangement "type" (standalone / master agreement / sub-arrangement) | **Upgraded to high confidence 2026-09-24** — a snippet quoting the ITS text itself describes the reference-number field covering "overarching or framework arrangements" (incl. master/framework) and "subsequent or associated arrangements" (incl. implementing arrangements, subservice arrangements, order forms) — a 3-way taxonomy, not exactly the 3 guessed originally, but confirms the field exists and is required. |
+| 7 | No governing law field | **Corrected 2026-09-24, high confidence**: a real EBA Single Rulebook Q&A citation surfaced (publicId `2024_7279`, "Template specific instructions – field **B_02.02.0130** (Country of the governing law of the contractual arrangement)") — this field lives on **B_02.02**, not B_02.01 as originally guessed. Worth double-checking which other "B_02.01" gaps below actually belong on B_02.02 once the primary text is in hand. |
 | 8 | No substitutability assessment, distinct from `supportsCriticalFunction` | Snippets describe substitutability as its own flag alongside the criticality flag, not the same thing. |
 | 9 | No explicit "open-ended" boolean | Currently a null `contractEnd` is ambiguous between "not yet entered" and "genuinely open-ended contract" — the register appears to want this stated explicitly. |
-| 10 | No renewal-terms field | Referenced in snippets as part of B_02.01. |
+| 10 | No renewal-terms field | **Upgraded to high confidence 2026-09-24** — a snippet paraphrasing B_02.01 lists "start/end dates, renewal terms, governing law, and notice period" together as key fields (though per #7 above, governing law itself may actually sit on B_02.02 — the snippet may be conflating the two linked templates). |
+| 11 | No annual cost/expense field on `IctArrangement` | **New 2026-09-24, resolves the open question below**: a snippet directly confirms "the annual expense or estimated cost (or intragroup transfer) of the ICT service arrangement for the past year" is a real register data point, "expressed in a specific currency." Note: PR #10 (open, see git history) already adds `annualCostEur` to `IctArrangement` for exactly this — this finding supports keeping that addition regardless of how PR #10's other overlap with master gets resolved. |
 
 ## Needs direct verification — not enough evidence either way
 
 - Whether the register requires structured data-storage/processing-location detail beyond the
-  current free-text `dataCategories` field (one snippet mentioned a linked template, B_02.02,
-  covering exactly this — unconfirmed whether it's mandatory for all arrangements or only
-  criticality-flagged ones).
-- Whether an annual cost/expense figure per arrangement is required (common in comparable EU
-  registers; not confirmed for this one from available snippets).
+  current free-text `dataCategories` field — **partially resolved 2026-09-24**: a snippet states
+  B_02.02 covers "data storage and processing locations" and calls it a mandatory field "among
+  other information required in contractual arrangements templates," but doesn't say whether that's
+  mandatory for every arrangement or only criticality-flagged ones. Lean toward assuming mandatory
+  until the primary text confirms otherwise.
 - The complete, authoritative field list and data types for both templates — only a handful of
-  fields were confirmed via snippets, not the full ~200-field set.
+  fields were confirmed via snippets, not the full ~200-field set. This remains the biggest gap;
+  nothing found on 2026-09-24 closes it, since every attempt to fetch the actual Annex I text
+  (including a site — springlex.eu — that appears to host it directly) hit the same network block.
 
 ## Recommended next step
 
