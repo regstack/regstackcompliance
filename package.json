@@ -18,6 +18,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
+    "db:reset": "prisma migrate reset",
     "reminders:send": "ts-node src/scripts/send-deadline-reminders.ts",
     "backup:run": "ts-node src/scripts/backup-database.ts",
     "backup:fetch": "ts-node src/scripts/fetch-backup.ts"
@@ -55,6 +56,9 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4",
     "vitest": "^2.1.1"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "allowScripts": {
     "esbuild@0.21.5": true,

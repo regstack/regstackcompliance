@@ -54,6 +54,12 @@ Health-Check: `curl http://localhost:4000/health`. Login mit den Seed-Usern (Pas
 `regstack-dev-2026`): `geschaeftsleitung@beispiel-leasing.de`, `compliance@beispiel-leasing.de`,
 `admin@regstack.de`.
 
+`prisma/seed.ts` ist nicht idempotent (mischt `.upsert()` mit einfachem `.create()`) — ein
+zweiter `npm run seed`-Lauf gegen eine bereits befüllte DB schlägt an der ersten
+Unique-Constraint-Verletzung fehl. Zum Zurücksetzen `npm run db:reset` (= `prisma migrate reset`,
+setzt die DB komplett zurück, spielt alle Migrationen erneut ein und seedet automatisch neu, dank
+des `prisma.seed`-Eintrags in `package.json`) statt `npm run seed` erneut auszuführen.
+
 ## Struktur
 
 ```
