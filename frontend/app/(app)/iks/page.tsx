@@ -53,9 +53,14 @@ export default async function IksPage() {
         </div>
       )}
 
-      <Link href="/iks/richtlinien" className="inline-block text-sm text-copper-300 hover:underline">
-        Richtlinien- &amp; Workflow-Dokumente →
-      </Link>
+      <div className="flex flex-wrap gap-4">
+        <Link href="/iks/kontrollen" className="inline-block text-sm text-copper-300 hover:underline">
+          Alle Kontrollen →
+        </Link>
+        <Link href="/iks/richtlinien" className="inline-block text-sm text-copper-300 hover:underline">
+          Richtlinien- &amp; Workflow-Dokumente →
+        </Link>
+      </div>
     </div>
   );
 }

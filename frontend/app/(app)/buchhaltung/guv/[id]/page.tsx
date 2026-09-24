@@ -5,6 +5,7 @@ import { getBackendSession, canWriteAccounting, isGeschaeftsleitung } from "@/li
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { LineItemsEditor } from "@/components/buchhaltung/line-items-editor";
 import { DocumentActions } from "@/components/buchhaltung/document-actions";
+import { DocumentFileUpload } from "@/components/buchhaltung/document-file-upload";
 import {
   updateIncomeStatementLineItems, finalizeIncomeStatement, reviseIncomeStatement, acknowledgeIncomeStatement,
 } from "@/app/(app)/buchhaltung/actions";
@@ -74,6 +75,13 @@ export default async function GuvDetailPage({ params }: { params: Promise<{ id: 
           />
         </CardBody>
       </Card>
+
+      <DocumentFileUpload
+        basePath={`/accounting/income-statements/${id}`}
+        file={statement.file}
+        canWrite={session ? canWriteAccounting(session.role) : false}
+        title="Signierte GuV (PDF)"
+      />
     </div>
   );
 }

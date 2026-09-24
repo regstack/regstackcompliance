@@ -7,8 +7,14 @@ import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { acknowledgeAccountingDocument, listSignOffs } from "./signoff";
+import { listAccountingFiles } from "./fileAttachment";
+import { createDocumentFileRoutes } from "./documentFileRoutes";
 
 const router = Router();
+router.use(
+  "/:id",
+  createDocumentFileRoutes("ANHANG", (id, institutionId) => prisma.accountingNotes.findFirst({ where: { id, institutionId } }))
+);
 
 const sectionSchema = z.object({
   title: z.string().min(1),
@@ -32,8 +38,17 @@ router.get(
       include: { sections: { orderBy: { sortOrder: "asc" } } },
       orderBy: { fiscalYear: "desc" },
     });
-    const signOffs = await listSignOffs("ANHANG", notes.map((n) => n.id));
-    res.json(notes.map((n) => ({ ...n, signOffs: signOffs.filter((a) => a.documentId === n.id) })));
+    const [signOffs, files] = await Promise.all([
+      listSignOffs("ANHANG", notes.map((n) => n.id)),
+      listAccountingFiles("ANHANG", notes.map((n) => n.id)),
+    ]);
+    res.json(
+      notes.map((n) => ({
+        ...n,
+        signOffs: signOffs.filter((a) => a.documentId === n.id),
+        file: files.find((f) => f.documentId === n.id) ?? null,
+      }))
+    );
   })
 );
 
@@ -46,8 +61,8 @@ router.get(
       include: { sections: { orderBy: { sortOrder: "asc" } } },
     });
     if (!notes) throw new NotFoundError("Anhang nicht gefunden");
-    const signOffs = await listSignOffs("ANHANG", [notes.id]);
-    res.json({ ...notes, signOffs });
+    const [signOffs, files] = await Promise.all([listSignOffs("ANHANG", [notes.id]), listAccountingFiles("ANHANG", [notes.id])]);
+    res.json({ ...notes, signOffs, file: files[0] ?? null });
   })
 );
 

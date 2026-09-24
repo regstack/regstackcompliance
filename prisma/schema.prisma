@@ -326,6 +326,7 @@ model InstitutionProfile {
   accountingNotes             AccountingNotes[]
   accountingManagementReports ManagementReport[]
   accountingSignOffs          AccountingSignOff[]
+  accountingDocumentFiles     AccountingDocumentFile[]
 
   icsBusinessProcesses IcsBusinessProcess[]
   icsControls          IcsControl[]
@@ -1760,6 +1761,30 @@ model AccountingSignOff {
   @@unique([documentType, documentId, userId])
   @@index([institutionId])
   @@map("accounting_sign_offs")
+}
+
+// One current file per document (upsert-on-reupload), mirroring Contract.fileObjectKey rather
+// than AccountingSignOff's per-person rows — a Bilanz/GuV/Anhang/Lagebericht has exactly one
+// attached source document (the signed PDF), not one per person. Shared across all four document
+// types via the documentType discriminator, same rationale as AccountingSignOff.
+model AccountingDocumentFile {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  documentType AccountingDocumentType
+  documentId   String
+
+  fileObjectKey    String
+  fileName         String
+  fileSize         Int
+  fileMime         String
+  uploadedAt       DateTime @default(now())
+  uploadedByUserId String
+
+  @@unique([documentType, documentId])
+  @@index([institutionId])
+  @@map("accounting_document_files")
 }
 
 // ---------------------------------------------------------------------------

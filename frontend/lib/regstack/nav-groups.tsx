@@ -61,6 +61,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
     dashboardLabel: "Auslagerungsregister",
     groups: [
       {
+        title: "Bericht · Tz. 13",
+        icon: <FileBarChartIcon {...iconProps} />,
+        items: [{ href: "/outsourcing/bericht", label: "Bericht über die Auslagerungen" }],
+      },
+      {
         title: "IKT-Drittanbieter · DORA Art. 28–30",
         icon: <AlertTriangleIcon {...iconProps} />,
         items: [{ href: "/outsourcing/ict-register", label: "DORA-Register" }],
@@ -201,7 +206,10 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
       {
         title: "Prozesse & Kontrollen",
         icon: <ClipboardListIcon {...iconProps} />,
-        items: [{ href: "/iks/richtlinien", label: "Richtlinien & Workflow-Dokumente" }],
+        items: [
+          { href: "/iks/kontrollen", label: "Alle Kontrollen" },
+          { href: "/iks/richtlinien", label: "Richtlinien & Workflow-Dokumente" },
+        ],
       },
     ],
   },

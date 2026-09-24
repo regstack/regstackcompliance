@@ -5,6 +5,7 @@ import { getBackendSession, canWriteAccounting, isGeschaeftsleitung } from "@/li
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { SectionsEditor } from "@/components/buchhaltung/sections-editor";
 import { DocumentActions } from "@/components/buchhaltung/document-actions";
+import { DocumentFileUpload } from "@/components/buchhaltung/document-file-upload";
 import { updateManagementReportSections, finalizeManagementReport, acknowledgeManagementReport } from "@/app/(app)/buchhaltung/actions";
 
 export default async function LageberichtDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +57,13 @@ export default async function LageberichtDetailPage({ params }: { params: Promis
           />
         </CardBody>
       </Card>
+
+      <DocumentFileUpload
+        basePath={`/accounting/management-reports/${id}`}
+        file={report.file}
+        canWrite={session ? canWriteAccounting(session.role) : false}
+        title="Signierter Lagebericht (PDF)"
+      />
     </div>
   );
 }

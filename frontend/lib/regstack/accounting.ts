@@ -4,6 +4,14 @@ import type { YearSeriesDatum } from "@/components/buchhaltung/charts/year-over-
 
 export type AccountingDocStatus = "entwurf" | "final";
 export type SignOff = { id: string; userId: string; acknowledgedAt: string };
+export type AccountingDocumentFile = {
+  fileObjectKey: string;
+  fileName: string;
+  fileSize: number;
+  fileMime: string;
+  uploadedAt: string;
+  uploadedByUserId: string;
+};
 
 export const BILANZ_SECTION_LABELS: Record<string, string> = {
   ANLAGEVERMOEGEN: "Anlagevermögen",
@@ -41,6 +49,7 @@ export type BalanceSheet = {
   createdAt: string;
   lineItems: BalanceSheetLineItem[];
   signOffs: SignOff[];
+  file: AccountingDocumentFile | null;
 };
 
 export type IncomeStatementLineItem = {
@@ -62,6 +71,7 @@ export type IncomeStatement = {
   createdAt: string;
   lineItems: IncomeStatementLineItem[];
   signOffs: SignOff[];
+  file: AccountingDocumentFile | null;
 };
 
 export type NotesSection = { id: string; title: string; content: string; linkedLineItemLabel: string | null; sortOrder: number };
@@ -73,6 +83,7 @@ export type AccountingNotes = {
   createdAt: string;
   sections: NotesSection[];
   signOffs: SignOff[];
+  file: AccountingDocumentFile | null;
 };
 
 export type ManagementReportSection = { id: string; title: string; content: string; sortOrder: number };
@@ -84,6 +95,7 @@ export type ManagementReport = {
   createdAt: string;
   sections: ManagementReportSection[];
   signOffs: SignOff[];
+  file: AccountingDocumentFile | null;
 };
 
 export async function listBalanceSheets(): Promise<BalanceSheet[]> {

@@ -5,6 +5,7 @@ import { getBackendSession, canWriteAccounting, isGeschaeftsleitung } from "@/li
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { SectionsEditor } from "@/components/buchhaltung/sections-editor";
 import { DocumentActions } from "@/components/buchhaltung/document-actions";
+import { DocumentFileUpload } from "@/components/buchhaltung/document-file-upload";
 import { updateAccountingNotesSections, finalizeAccountingNotes, acknowledgeAccountingNotes } from "@/app/(app)/buchhaltung/actions";
 
 export default async function AnhangDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -57,6 +58,13 @@ export default async function AnhangDetailPage({ params }: { params: Promise<{ i
           />
         </CardBody>
       </Card>
+
+      <DocumentFileUpload
+        basePath={`/accounting/notes/${id}`}
+        file={notes.file}
+        canWrite={session ? canWriteAccounting(session.role) : false}
+        title="Signierter Anhang (PDF)"
+      />
     </div>
   );
 }
