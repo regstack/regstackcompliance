@@ -7,6 +7,26 @@ import {
 import { Card, CardBody } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
+
+const WALKTHROUGH_STEPS: WalkthroughStep[] = [
+  {
+    title: "Compliance-Dashboard",
+    body: "Rating der Periode, wesentliche Regelungen und offene Punkte auf einen Blick — Tz. 6.",
+  },
+  {
+    title: "Rechtsnormenkataster & Überwachung",
+    body: "In der Seitenleiste erfassen und prüfen Sie Regelungen und behalten die Überwachung von Quellen und Änderungen im Blick — Tz. 2.",
+  },
+  {
+    title: "Risiken, Kontrollen & Feststellungen",
+    body: "Risiken & Kontrollen, die Nachweis-Ablage sowie Feststellungen & Maßnahmen finden Sie als eigene Bereiche — Tz. 1.",
+  },
+  {
+    title: "Organisation & Berichte",
+    body: "Governance & Beauftragte, Informationsrechte sowie der Bericht an die Geschäftsleitung inkl. Audit-Trail und Prüfer-Export runden das Modul ab — Tz. 3–6.",
+  },
+];
 
 const CHAIN = [
   "Überwachungsquelle", "Regulatorische Änderung", "Regelung (Kataster)", "Compliance-Risiko",
@@ -55,6 +75,7 @@ export default async function CompliancePage() {
 
   return (
     <div className="space-y-8">
+      <Walkthrough id="compliance-dashboard" steps={WALKTHROUGH_STEPS} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatCard
           label="Rating der Periode"
