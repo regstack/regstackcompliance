@@ -104,6 +104,18 @@ export async function listActivities(): Promise<OutsourcingActivity[]> {
   return apiFetch<OutsourcingActivity[]>("/activities");
 }
 
+export type CreateActivityInput = {
+  name: string;
+  category: string;
+  provider?: string;
+  scope: ScopeType;
+  scopeJustification?: string;
+};
+
+export async function createActivity(input: CreateActivityInput): Promise<OutsourcingActivity> {
+  return apiFetch<OutsourcingActivity>("/activities", { method: "POST", body: JSON.stringify(input) });
+}
+
 export async function getActivity(id: string): Promise<OutsourcingActivity | null> {
   try {
     return await apiFetch<OutsourcingActivity>(`/activities/${id}`);
