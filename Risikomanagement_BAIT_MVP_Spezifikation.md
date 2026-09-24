@@ -42,6 +42,72 @@ je Arbeitspapier, wo zuvor ein Code-Kommentar den exakt selben Gap dokumentierte
 Komponente (`components/nachweise/`) ist bereit für weitere Verdrahtung in anderen Modulen
 (Outsourcing, Risikomanagement, IT-Risiko), aber das ist bewusst nicht in diesem Schritt passiert.
 
+**Update 2026-09-23 (später) — BAIT-Primärtext jetzt vorhanden, Kapitelnumerierung korrigiert,
+Kap. 8/10 ergänzt:** Der Nutzer hat den Volltext von Rundschreiben 10/2017 (BA) in der Fassung vom
+16.12.2024 bereitgestellt. Die zwölf Kapitel (Kap. 11 ist aufgehoben) lauten exakt: 1. IT-Strategie,
+2. IT-Governance, 3. Informationsrisikomanagement, 4. Informationssicherheitsmanagement,
+5. Operative Informationssicherheit, 6. Identitäts- und Rechtemanagement, 7. IT-Projekte und
+Anwendungsentwicklung, 8. IT-Betrieb, 9. Auslagerungen und sonstiger Fremdbezug von
+IT-Dienstleistungen, 10. IT-Notfallmanagement, 12. Kritische Infrastrukturen. Die weiter unten in
+der Mapping-Tabelle verwendete Numerierung für Kap. 5-8 war **falsch** (Berechtigungsmanagement
+stand fälschlich als "Kap. 5", tatsächlich Kap. 6; IT-Projekte als "Kap. 6", tatsächlich Kap. 7;
+IT-Betrieb als "Kap. 7", tatsächlich Kap. 8) — sie wurde vor dem jetzt vorliegenden Primärtext
+geschrieben. Kap. 8 IT-Betrieb umfasst zusätzlich Betriebsstörungen (Tz. 8.6, bisher nicht
+abgedeckt — die BAIT grenzt "Informationssicherheitsvorfall", "sicherheitsrelevantes Ereignis" und
+"ungeplante Abweichung vom Regelbetrieb" (Störung) explizit voneinander ab, Tz. 4.7), und Kap. 10
+IT-Notfallmanagement (IT-Notfallpläne je zeitkritischem System mit RTO/RPO, Tz. 10.3, und
+mindestens jährliche Tests, Tz. 10.4) fehlte komplett.
+
+**Koordination mit parallelen Sessions:** Beim Versuch, alle BAIT-Phase-2-Kapitel (6-8, 10) in
+einem PR zu liefern, stellte sich beim Deploy heraus, dass **PR #13** ("Risikomanagement/BAIT
+Phase 2: Kap. 5-7, editing UI, regulatory gaps, and Nachweis upload") bereits unabhängig
+Berechtigungsmanagement (als `Berechtigung`/`BerechtigungsRezertifizierung`), IT-Projekte (als
+`ItProjekt`) und Änderungsmanagement + Datensicherungstests (als `ItAenderung`/
+`ItDatensicherungstest`) gebaut hatte — mit denselben Tabellennamen (`bait_it_projekte`,
+`bait_it_aenderungen`) für `ItProjekt`/`ItAenderung`, die dieser Branch ebenfalls verwendet hatte.
+Der erste Merge-Versuch dieses Branches (PR #17) hatte zusätzlich unabhängig davon einen
+produktionsweiten Crash ausgelöst (fehlendes `binaryTargets` in `generator client` — seit
+`20260923000000_bait_kap6_7_8_10_workflows`-Vorgänger behoben, siehe PR #20) und wurde deshalb
+zunächst revertiert (PR #19). Bei der erneuten Aufbereitung wurden daher **Berechtigungsmanagement,
+IT-Projekte und Änderungsmanagement aus diesem Branch entfernt** — in der Annahme, dass PR #13
+diese Bausteine bereits abdeckt und weiter fortgeschritten ist (u. a. Editing-UI, Nachweis-Upload).
+Bereits produktiv angelegte, dadurch verwaiste Tabellen/Spalten (`bait_it_berechtigungen`,
+`bait_it_projekte`, `bait_it_aenderungen`, die IDV-Zusatzfelder auf `bait_it_assets`) wurden wieder
+entfernt (leer, 0 Zeilen, verifiziert vor dem Drop), damit PR #13s Migration ohne
+Tabellennamen-Konflikt läuft.
+
+**Nachtrag — gegenseitiger Rückzug führte zu einer echten Lücke:** PR #13 ist inzwischen gemerged
+(`2ca05c9`), hat dabei aber **ebenfalls** sein eigenes Berechtigungsmanagement/IT-Projekte/
+Änderungsmanagement fallengelassen — in der spiegelbildlichen Annahme, PR #17 (dieser Branch) decke
+das bereits ab. Ergebnis: Beide Seiten haben sich gegenseitig den Vortritt gelassen, und keine
+Implementierung landete auf `master` (verifiziert: `master`s `schema.prisma` enthält weder
+`model Berechtigung`, `model ItProjekt`, `model ItAenderung` noch `model ItDatensicherungstest`,
+kein anderer offener PR deckt diesen Baustein ab). Dieser Branch **reintroduziert deshalb
+Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und Änderungsmanagement (Kap. 8, Tz.
+8.4-8.5)** mit der zu diesem Zeitpunkt bereits gegen den Primärtext verifizierten korrekten
+Kapitelnumerierung — inkl. Schema (`ItBerechtigung`/`ItProjekt`/`ItAenderung` + IDV-Zusatzfelder auf
+`ItAsset`), RBAC (`itAccessRecord`/`itProjectRecord`), Routen, Frontend-Panels, Seed-Daten und einer
+gegen eine echte Postgres-Instanz verifizierten Migration (`prisma migrate deploy` +
+`prisma migrate diff` ohne Drift). PR #13s abweichende Datenmodellierung (Datensicherungstests als
+eigenes `ItDatensicherungstest`-Modell statt als Teil von `ItAenderung`) wurde bewusst nicht
+übernommen, da sie nicht mehr existiert und dieser Branch die einzige verbliebene Implementierung
+dieser drei Kapitel ist.
+
+**Verbleibend und nicht mit anderen offenen PRs überlappend:** Kap. 6 Berechtigungsmanagement
+(`ItBerechtigung`), Kap. 7 IT-Projekte (`ItProjekt`), Kap. 8 Änderungsmanagement (`ItAenderung`) und
+Betriebsstörungen (`ItBetriebsstoerung`), sowie Kap. 10 IT-Notfallmanagement
+(`ItNotfallplan`/`ItNotfalltest`) — alles inkl. Migration, RBAC (`itAccessRecord`/`itProjectRecord`/
+`itOperationsRecord`/`itContingencyRecord`), Routen, Frontend-Panels, Seed-Daten, gegen eine echte
+Postgres-Instanz verifiziert. Kap. 8/10 waren bereits vor diesem Nachtrag gegen die Produktions-DB
+(Supabase-Projekt `qtcptpmxijxruzbcxlah`) angewendet; Kap. 6/7/8-Änderungsmanagement folgen mit
+derselben Vorgehensweise.
+
+Nebenbei entdeckt und ebenfalls auf der Produktions-DB behoben: `RmKapitalplanung`/`RmStresstest`
+(PR #18, oben) waren zwar bereits im gemergten `master` als Code live, ihre Migration war aber nie
+gegen die Produktions-DB gefahren worden (Tabellen fehlten) — jeder Aufruf von
+`/risikomanagement/kapitalplanung` oder `/risikomanagement/stresstests` hätte mit einem
+Datenbankfehler quittiert. Nachgeholt.
+
 Zwei neue Fachmodule als nächster Ausbauschritt von RegStack, im selben Baustil wie die drei
 bestehenden Module (Auslagerungsmanagement AT 9, Compliance AT 4.4.2, Interne Revision AT 4.4.3):
 ein Ordner je Modul unter `src/modules/`, Prisma-Modelle mit `institutionId`-Scoping, RBAC-Eintrag
@@ -51,8 +117,8 @@ je Resource in `src/middleware/rbac.ts`, jeder Write über `withAudit(...)`.
 Text von Rundschreiben 06/2026 (BA), "BA 54 – MaRisk vom 30.06.2026" (9. MaRisk-Novelle) geprüft
 — dieselbe Fassung, auf die README.md und die Marketing-Seite bereits Bezug nehmen. Ergebnis:
 im Kern richtig, mit drei konkreten Korrekturen und vier neu gefundenen Lücken, siehe
-"Korrekturen nach Quellenabgleich" unten. Die BAIT-Kapitelbezeichnungen (Rundschreiben 10/2017
-(BA)) sind davon unberührt und weiterhin ungeprüft — dafür liegt uns noch kein Primärtext vor.
+"Korrekturen nach Quellenabgleich" unten. Die BAIT-Kapitelbezeichnungen sind seit 23.09.2026 gegen
+den Primärtext von Rundschreiben 10/2017 (BA) (Fassung 16.12.2024) geprüft, siehe Update oben.
 
 Umsetzungsstand: AT 4.1 (Risikotragfähigkeit), AT 4.2 (Strategien), AT 4.3.2 (RM-Prozesse, nur
 das Reporting-Element), AT 4.4.1 (Risikocontrolling-Funktion) sowie die AT-2.2-Pflichtrisikoarten
@@ -421,10 +487,19 @@ Bearbeiten-Button pro Zeile, PUT-Route re-nutzt bestehende Lifecycle-Guards unve
 | Informationsrisiko-Register | Bedrohung → Maßnahme → Restrisiko je Asset, GL-Akzeptanz bei Restrisiko | Kap. 3 Informationsrisikomanagement |
 | IT-Sicherheitsvorfälle | Erfassung, Eskalation, BaFin-Meldepflicht-Flag | Kap. 4 Informationssicherheit (operativ) |
 
-**Bewusst auf Phase 2 verschoben:** Benutzerberechtigungsmanagement/Rezertifizierungszyklen
-(Kap. 5), IT-Projekte-Register (Kap. 6), IT-Betrieb/Kapazitätskennzahlen (Kap. 7), eine eigene
-ISB-Login-Rolle. Kap. 8 (Auslagerungssteuerung IT-Dienstleister) bekommt bewusst **kein** eigenes
-Modell — siehe Verzahnungs-Hinweis oben, das ist bereits `OutsourcingActivity`.
+**Kapitelnumerierung korrigiert (23.09.2026, siehe Update oben):** Der Primärtext von
+Rundschreiben 10/2017 (BA) liegt jetzt vor. Kap. 5 ist tatsächlich Operative Informationssicherheit
+(kein Modell im MVP), Kap. 6 Identitäts- und Rechtemanagement (Berechtigungsmanagement), Kap. 7
+IT-Projekte und Anwendungsentwicklung, Kap. 8 IT-Betrieb (Änderungsmanagement, Betriebsstörungen,
+Datensicherung, Kapazitätsmanagement), Kap. 9 Auslagerungen, Kap. 10 IT-Notfallmanagement.
+
+**Phase 2, Stand 23.09.2026:** Berechtigungsmanagement (Kap. 6), IT-Projekte (Kap. 7) und
+Änderungsmanagement/Datensicherung (Kap. 8) werden auf **PR #13** geliefert (bereits weiter
+fortgeschritten, inkl. Editing-UI). **Kap. 8 Betriebsstörungen** und **Kap. 10
+IT-Notfallmanagement** sind in diesem Branch umgesetzt, siehe Abschnitt weiter unten. Eine eigene
+ISB-Login-Rolle bleibt bewusst offen. Kap. 9 (Auslagerungssteuerung IT-Dienstleister) bekommt
+bewusst **kein** eigenes Modell — siehe Verzahnungs-Hinweis oben, das ist bereits
+`OutsourcingActivity`.
 
 ### Vorgeschlagene Enums
 
@@ -585,10 +660,13 @@ model ItSicherheitsvorfall {
 | "itRiskRecord"           // ItAsset, ItRisiko
 | "itRisk.accept"          // GL akzeptiert Restrisiko — analog handlungsoption.approve
 | "itSecurityIncident"
+| "itOperationsRecord"     // Betriebsstörungen, Kap. 8 (Tz. 8.6) — umgesetzt 23.09.2026
+| "itContingencyRecord"    // IT-Notfallpläne/-tests, Kap. 10 — umgesetzt 23.09.2026
 ```
 
 Offene Frage unten: ob es dafür eine eigene `INFORMATIONSSICHERHEITSBEAUFTRAGTER`-Rolle braucht,
-oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht.
+oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht. `itOperationsRecord`/
+`itContingencyRecord` übernehmen dieselbe vorläufige Antwort.
 
 ### Routen (Vorschlag)
 
@@ -598,7 +676,75 @@ oder ob `RISIKOCONTROLLING`/`ADMIN` für die MVP-Phase reicht.
 /it-risiko/risiken
 /it-risiko/risiken/:id/accept
 /it-risiko/vorfaelle
+
+# Kap. 8 Betriebsstörungen / Kap. 10 IT-Notfallmanagement — umgesetzt 23.09.2026
+/it-risiko/betriebsstoerungen
+/it-risiko/betriebsstoerungen/:id/abschliessen
+/it-risiko/notfallmanagement/plaene
+/it-risiko/notfallmanagement/plaene/:id/freigeben
+/it-risiko/notfallmanagement/plaene/:planId/tests
 ```
+
+### Kap. 8 Betriebsstörungen und Kap. 10 IT-Notfallmanagement — umgesetzt (23.09.2026)
+
+Bewusst getrennt von `ItSicherheitsvorfall` (Kap. 4/5) — die BAIT grenzt
+"Informationssicherheitsvorfall", "sicherheitsrelevantes Ereignis" und "ungeplante Abweichung vom
+Regelbetrieb" (Störung) explizit voneinander ab (Tz. 4.7).
+
+```prisma
+enum ItStoerungPrioritaet { niedrig mittel hoch kritisch }
+enum ItStoerungStatus { offen in_bearbeitung geschlossen }
+
+model ItBetriebsstoerung {
+  id                          String   @id @default(uuid())
+  institutionId               String
+  datum                       DateTime
+  beschreibung                String
+  betroffeneSysteme           String?
+  ursache                     String?
+  prioritaet                  ItStoerungPrioritaet @default(mittel)
+  status                      ItStoerungStatus @default(offen)
+  massnahme                   String?
+  eskalationAnUserId          String?
+  geschaeftsleitungInformiert Boolean @default(false)
+  abschlussAm                 DateTime?
+  abschlussVonUserId          String?
+}
+
+enum ItNotfallplanStatus { entwurf freigegeben }
+
+model ItNotfallplan {
+  id                      String   @id @default(uuid())
+  institutionId           String
+  assetId                 String?
+  bezeichnung             String
+  rto                     String? // Recovery Time Objective, Tz. 10.3
+  rpo                     String? // Recovery Point Objective, Tz. 10.3
+  konfigurationNotbetrieb String?
+  abhaengigkeiten         String?
+  status                  ItNotfallplanStatus @default(entwurf)
+  freigegebenVonUserId    String?
+  freigegebenAm           DateTime?
+  letzterTestAm           DateTime? // aus dem letzten ItNotfalltest fortgeschrieben, Tz. 10.4
+}
+
+// Mindestens jährlicher Wirksamkeitstest je Notfallplan (Tz. 10.4).
+model ItNotfalltest {
+  id                     String   @id @default(uuid())
+  institutionId          String
+  notfallplanId          String
+  datum                  DateTime
+  umfang                 String?
+  ergebnis               String?
+  abgeleiteteMassnahmen  String?
+  durchgefuehrtVonUserId String?
+}
+```
+
+Migration `20260923190000_bait_kap8_betriebsstoerungen_kap10_notfallmanagement`, verifiziert gegen
+eine frische Postgres-16-Instanz (`prisma migrate deploy` + `prisma migrate diff` ohne Drift) und
+gegen die Produktions-DB angewendet. Frontend-Panels unter `/it-risiko#betriebsstoerungen` und
+`/it-risiko#notfallmanagement`.
 
 ---
 

@@ -50,6 +50,10 @@ export type Resource =
   | "itRiskRecord" // Schutzbedarfsfeststellung (ItAsset), Informationsrisiken (ItRisiko)
   | "itRisk.accept" // Geschäftsleitung akzeptiert verbleibendes Restrisiko, BAIT Kap. 3
   | "itSecurityIncident" // Sicherheitsvorfälle, BAIT Kap. 4
+  | "itAccessRecord" // Berechtigungsvergabe/-rezertifizierung/-entzug, BAIT Kap. 6
+  | "itProjectRecord" // IT-Projekte inkl. Lessons Learned, BAIT Kap. 7
+  | "itOperationsRecord" // Änderungsmanagement (Kap. 8, Tz. 8.4-8.5) und Betriebsstörungen (Tz. 8.6)
+  | "itContingencyRecord" // IT-Notfallpläne und -tests, BAIT Kap. 10
   | "nachweis"; // Generisches Nachweis-/Belegregister, modulübergreifend (Outsourcing, Compliance,
   // Interne Revision, Risikomanagement, IT-Risiko)
 
@@ -236,6 +240,22 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
     write: ["GESCHAEFTSLEITUNG", "ADMIN"], // verbleibendes hohes Restrisiko braucht GL-Akzeptanz, BAIT Kap. 3
   },
   itSecurityIncident: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  itAccessRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  itProjectRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  itOperationsRecord: {
+    read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
+    write: ["RISIKOCONTROLLING", "ADMIN"],
+  },
+  itContingencyRecord: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["RISIKOCONTROLLING", "ADMIN"],
   },
