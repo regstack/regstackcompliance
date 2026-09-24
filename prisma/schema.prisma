@@ -334,6 +334,7 @@ model InstitutionProfile {
 
   ictProviders    IctProvider[]
   ictArrangements IctArrangement[]
+  ictServices     IctService[]
 
   rmRisikoinventur       Risikoinventur[]
   rmStrategien           Risikostrategie[]
@@ -2054,6 +2055,11 @@ enum IctArrangementStatus {
   BEENDET
 }
 
+enum IctSubcontractingStatus {
+  AKTIV
+  ENTFERNT
+}
+
 model IctProvider {
   id            String             @id @default(uuid())
   institutionId String
@@ -2081,25 +2087,82 @@ model IctArrangement {
   providerId    String
   provider      IctProvider        @relation(fields: [providerId], references: [id])
 
-  functionDescription      String // erbrachte IKT-Dienstleistung/-Funktion
+  functionDescription      String // erbrachte IKT-Dienstleistung/-Funktion — Kurzbeschreibung; für
+                                   // mehrere separat abzurechnende IKT-Dienstleistungen je Vertrag
+                                   // siehe IctService unten (Ebene 4 der ITS-Vorlagen)
   supportsCriticalFunction Boolean @default(false) // Art. 28(3) — kritische oder wichtige Funktion
   criticalityReason        String? // Pflicht, sobald supportsCriticalFunction = true
 
   contractStart           DateTime?
   contractEnd             DateTime?
   terminationNoticeMonths Int?
+  annualCostEur           Float? // Jahreskosten — ITS-Ebene 3 (Vertragsverhältnis)
+  exitStrategyNote        String? // Exit-Strategie — ITS-Ebene 3, eigenständig von Handlungsoption
+                                   // (die ist OutsourcingActivity-spezifisch, IctArrangement bewusst nicht)
   dataCategories          String?
   hasSubcontracting       Boolean   @default(false)
-  subcontractingNote      String?
+  subcontractingNote      String? // Kurzfassung; strukturierte Kette siehe IctSubcontracting unten
 
   status IctArrangementStatus @default(AKTIV)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  services            IctService[]
+  subcontractingChain IctSubcontracting[]
+
   @@index([institutionId])
   @@index([providerId])
   @@map("ict_arrangements")
+}
+
+// ITS-Ebene 4 (Durchführungsverordnung (EU) 2024/2956): je Vertragsverhältnis können mehrere
+// separate IKT-Dienstleistungen mit eigenen Service-Level-Objectives bezogen werden —
+// `functionDescription` auf IctArrangement bleibt die Kurzbeschreibung für den Normalfall (eine
+// Dienstleistung je Vertrag), das hier ist additiv für den Fall mehrerer.
+model IctService {
+  id            String   @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+  arrangementId String
+  arrangement   IctArrangement @relation(fields: [arrangementId], references: [id])
+
+  serviceDescription    String
+  serviceLevelObjective String?
+
+  createdAt DateTime @default(now())
+
+  @@map("ict_services")
+  @@index([institutionId])
+  @@index([arrangementId])
+}
+
+// ITS-Ebene 6 (Weiterverlagerungskette bei kritischen/wichtigen Vertragsverhältnissen) — dieselbe
+// Baumstruktur wie Weiterverlagerung (AT 9), hier an IctArrangement statt an OutsourcingActivity
+// gehängt, da DORA-Register und AT-9-Auslagerungsmanagement bewusst getrennte Register sind (siehe
+// Kommentar oben). Ersetzt nicht `hasSubcontracting`/`subcontractingNote` (schnelle Filterung ohne
+// Join), sondern ergänzt die strukturierte Kette additiv.
+model IctSubcontracting {
+  id            String   @id @default(uuid())
+  arrangementId String
+  arrangement   IctArrangement @relation(fields: [arrangementId], references: [id])
+
+  parentId String?
+  parent   IctSubcontracting?  @relation("IctSubcontractingChain", fields: [parentId], references: [id])
+  children IctSubcontracting[] @relation("IctSubcontractingChain")
+
+  level       Int
+  provider    String
+  country     String?
+  description String?
+  status      IctSubcontractingStatus @default(AKTIV)
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  @@index([arrangementId])
+  @@index([parentId])
+  @@map("ict_subcontracting")
 }
 
 // ---------------------------------------------------------------------------
