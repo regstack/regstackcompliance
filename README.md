@@ -103,7 +103,13 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   `IctArrangement`) — deckt die Kerninhalte ab (Anbieterregister, Vertragsverhältnisse,
   Kritikalitäts-Flag nach Art. 28 Abs. 3, CSV-Export), ist aber **keine geprüfte 1:1-Abbildung**
   der offiziellen EBA/ESA-Meldevorlagen (Durchführungsverordnung (EU) 2024/2956). Vor einer
-  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen.
+  aufsichtsrechtlichen Meldung fachlich/rechtlich gegen die aktuellen ITS-Templates prüfen. Ein
+  Strukturvergleich (nur Sekundärquellen — BaFin/EUR-Lex waren aus der Sandbox nicht erreichbar)
+  gegen das Sechs-Ebenen-Modell der 15 Meldevorlagen deckte drei strukturelle Lücken auf —
+  **inzwischen additiv geschlossen:** `IctArrangement` hat jetzt `annualCostEur`/`exitStrategyNote`
+  je Vertrag, `IctService` bildet mehrere IKT-Dienstleistungen/SLAs je Vertrag ab, und
+  `IctSubcontracting` bildet die Weiterverlagerungskette ab (gleiche Baumstruktur wie AT 9
+  `Weiterverlagerung`), inkl. UI unter Outsourcing → „DORA-Register" → Details je Vertrag.
 - Risikomanagement (MaRisk AT 4) und IT-Risikomanagement/BAIT: eine erste Fassung ist da
   (`src/modules/risikomanagement/`, `src/modules/itRisiko/`, UI unter `/risikomanagement` und
   `/it-risiko`) — Risikoinventur, Geschäfts-/Risikostrategien, Risikotragfähigkeit und Berichte
@@ -123,10 +129,10 @@ im selben Lauf in eine Wegwerf-Postgres-Instanz zur Kontrolle. Benötigt eigene 
   Implementierung mehr auf `master` existierte; siehe `Risikomanagement_BAIT_MVP_Spezifikation.md`,
   Abschnitt "Koordination mit parallelen Sessions". Offene Fragen (u. a. kein eigener ISB-Login im
   MVP) siehe ebenda.
-- Backup/Disaster-Recovery: tägliche Zweitsicherung + automatischer Struktur-Restore-Check sind
-  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren, wöchentliche/monatliche
-  Retention-Staffelung und der erste vollständige anwendungsseitige Restore-Test stehen noch aus
-  (`docs/backup-disaster-recovery.md`, Abschnitt 7).
+- Backup/Disaster-Recovery: tägliche Zweitsicherung, automatischer Struktur-Restore-Check und die
+  wöchentliche/monatliche Retention-Staffelung (Großvater-Vater-Sohn, `selectStaleKeysTiered`) sind
+  umgesetzt (siehe oben); Supabase-eigenes PITR-Tier aktivieren und der erste vollständige
+  anwendungsseitige Restore-Test stehen noch aus (`docs/backup-disaster-recovery.md`, Abschnitt 7).
 - Objektspeicher ist entschieden und produktiv konfiguriert: Supabase Storage (S3-kompatibel,
   eu-central-1) über dieselbe Pre-Signed-Upload/Download-Anbindung
   (`src/modules/contracts/objectStorage.ts`) — Bucket `contracts` für Vertragsdokumente, Bucket
