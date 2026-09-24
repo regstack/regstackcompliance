@@ -305,10 +305,10 @@ export const MODULE_ORDER: NavModuleKey[] = [
   "outsourcing",
   "compliance",
   "internal_audit",
-  "accounting",
-  "iks",
   "risikomanagement",
   "it_risiko",
+  "iks",
+  "accounting",
 ];
 
 export function moduleForPathname(pathname: string): NavModuleKey | null {
