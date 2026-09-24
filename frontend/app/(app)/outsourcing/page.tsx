@@ -4,6 +4,7 @@ import { getBackendSession, canWriteOutsourcing } from "@/lib/regstack/backend-s
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ActivityForm } from "@/components/outsourcing/activity-form";
+import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
 
 export default async function OutsourcingPage() {
   const session = await getBackendSession();
@@ -21,8 +22,28 @@ export default async function OutsourcingPage() {
   const activities = await listActivities();
   const canWrite = canWriteOutsourcing(session.role);
 
+  const walkthroughSteps: WalkthroughStep[] = [
+    {
+      title: "Auslagerungsregister",
+      body: "Hier sehen Sie alle Auslagerungen Ihrer Institution auf einen Blick — Wesentlichkeit und Status je Aktivität.",
+    },
+    ...(canWrite
+      ? [
+          {
+            title: "Neue Auslagerung erfassen",
+            body: "Über „Neue Auslagerung“ legen Sie eine neue Aktivität an und pflegen Stammdaten, Wesentlichkeit und Vertrag.",
+          },
+        ]
+      : []),
+    {
+      title: "Bericht & DORA-Register",
+      body: "In der Seitenleiste finden Sie den Bericht über die Auslagerungen (Tz. 13) sowie das DORA-Register für IKT-Drittanbieter.",
+    },
+  ];
+
   return (
     <div>
+      <Walkthrough id="outsourcing-register" steps={walkthroughSteps} />
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Auslagerungsregister</h1>
