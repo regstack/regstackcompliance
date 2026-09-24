@@ -632,6 +632,23 @@ async function main() {
       createdByUserId: revision.id,
     },
   });
+  // Not yet distributed — Interne Revision has logged the finding but hasn't assigned a
+  // Verantwortliche/r yet, so this is the one the "Feststellung verteilen" action itself has
+  // something to do (every other seeded finding above is already distributed).
+  await prisma.externePruefungFeststellung.create({
+    data: {
+      institutionId: institution.id,
+      externePruefungId: externePruefung2026.id,
+      titel: "Eskalationswege bei Sicherheitsvorfällen unklar dokumentiert",
+      beschreibung: "Das Eskalationsschema für BaFin-meldepflichtige IT-Sicherheitsvorfälle verweist auf eine veraltete Kontaktliste.",
+      schweregrad: "wesentlich",
+      modul: null,
+      fachbereich: "IT",
+      frist: new Date("2026-10-31"),
+      status: "offen",
+      createdByUserId: revision.id,
+    },
+  });
 
   // --- Accounting / Buchhaltung demo data -------------------------------------------------
   // Three fiscal years so the dashboard's period-over-period analysis has something to show;
