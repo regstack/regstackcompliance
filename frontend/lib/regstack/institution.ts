@@ -9,6 +9,7 @@ export type InstitutionSettings = {
   cscImpactThreshold: number;
   teslaLogicAnd: boolean;
   teslaThreshold: number;
+  groupRelief: boolean;
 };
 
 export async function getInstitutionSettings(): Promise<InstitutionSettings> {
