@@ -12,15 +12,83 @@ const execFileAsync = promisify(execFile);
 export const BACKUP_PREFIX = "db-backups/";
 export const DUMP_FILE = "dump.sql";
 
-// ISO-8601 timestamps (with ":"/"." replaced so the result is a valid S3 key) sort correctly as
-// plain strings, so "newest first" is just a descending string sort — no need to parse dates back
-// out of the key.
-export function selectStaleKeys(keys: string[], retentionCount: number): string[] {
-  return [...keys].sort((a, b) => (a > b ? -1 : 1)).slice(retentionCount);
-}
-
 export function backupObjectKey(now: Date = new Date()): string {
   return `${BACKUP_PREFIX}${now.toISOString().replace(/[:.]/g, "-")}.sql.gz`;
+}
+
+function parseBackupTimestamp(key: string): Date | null {
+  const match = /(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.sql\.gz$/.exec(key);
+  if (!match) return null;
+  const [, datePart, hh, mm, ss, ms] = match;
+  const parsed = new Date(`${datePart}T${hh}:${mm}:${ss}.${ms}Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// ISO 8601 week (Monday-start, week 1 = the week containing the year's first Thursday) — a stable
+// bucket key independent of which weekday the daily backup job happens to run on.
+function isoWeekKey(d: Date): string {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function monthKey(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export interface RetentionTiers {
+  dailyDays: number;
+  weeklyWeeks: number;
+  monthlyMonths: number;
+}
+
+// Grandfather-father-son tiering: every backup within the daily window is kept; beyond that, only
+// the oldest backup in each ISO week is promoted to the weekly tier, then only the oldest backup in
+// each calendar month to the monthly tier; anything past all three windows is stale. Keys that
+// don't parse as a dated backup (nothing this module has ever written, or written by something
+// else entirely) are never returned as stale — silently deleting an object we can't date is worse
+// than silently keeping one to look at manually.
+export function selectStaleKeysTiered(keys: string[], now: Date, tiers: RetentionTiers): string[] {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const dailyCutoffMs = tiers.dailyDays * DAY_MS;
+  const weeklyCutoffMs = dailyCutoffMs + tiers.weeklyWeeks * 7 * DAY_MS;
+  // 31 days/month is a deliberately generous upper bound for the monthly window's outer edge —
+  // the per-month bucketing below is what actually caps it at one kept backup per calendar month,
+  // this cutoff only decides how many months back to keep looking at all.
+  const monthlyCutoffMs = weeklyCutoffMs + tiers.monthlyMonths * 31 * DAY_MS;
+
+  const dated = keys
+    .map((key) => ({ key, date: parseBackupTimestamp(key) }))
+    .filter((k): k is { key: string; date: Date } => k.date !== null)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const keep = new Set<string>();
+  const weeklyBucketsSeen = new Set<string>();
+  const monthlyBucketsSeen = new Set<string>();
+
+  for (const { key, date } of dated) {
+    const age = now.getTime() - date.getTime();
+    if (age <= dailyCutoffMs) {
+      keep.add(key);
+    } else if (age <= weeklyCutoffMs) {
+      const bucket = isoWeekKey(date);
+      if (!weeklyBucketsSeen.has(bucket)) {
+        weeklyBucketsSeen.add(bucket);
+        keep.add(key);
+      }
+    } else if (age <= monthlyCutoffMs) {
+      const bucket = monthKey(date);
+      if (!monthlyBucketsSeen.has(bucket)) {
+        monthlyBucketsSeen.add(bucket);
+        keep.add(key);
+      }
+    }
+  }
+
+  return dated.map((d) => d.key).filter((key) => !keep.has(key));
 }
 
 // Prisma's connection URL carries query params libpq/pg_dump don't understand (?schema=public is
@@ -63,16 +131,19 @@ async function pruneOldBackups(): Promise<void> {
   const listed = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: BACKUP_PREFIX }));
   const keys = (listed.Contents ?? []).map((o) => o.Key).filter((k): k is string => !!k);
 
-  for (const key of selectStaleKeys(keys, RETENTION_COUNT)) {
+  for (const key of selectStaleKeysTiered(keys, new Date(), RETENTION_TIERS)) {
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
     logger.info({ key }, "Alte Datenbank-Sicherung gelöscht (Retention überschritten)");
   }
 }
 
-// Simple count-based retention (default 35 = roughly the daily tier from
-// docs/backup-disaster-recovery.md). The weekly/monthly promotion described there isn't automated
-// yet — every kept backup is still a full daily snapshot, just capped in number, not tiered.
-const RETENTION_COUNT = Number(process.env.BACKUP_RETENTION_COUNT ?? 35);
+// Grandfather-father-son tiering matching the targets in docs/backup-disaster-recovery.md §2: 7
+// daily / 4 weekly / 12 monthly by default.
+const RETENTION_TIERS: RetentionTiers = {
+  dailyDays: Number(process.env.BACKUP_RETENTION_DAILY_DAYS ?? 7),
+  weeklyWeeks: Number(process.env.BACKUP_RETENTION_WEEKLY_WEEKS ?? 4),
+  monthlyMonths: Number(process.env.BACKUP_RETENTION_MONTHLY_MONTHS ?? 12),
+};
 
 export async function runDatabaseBackup(databaseUrl: string): Promise<{ key: string; bytes: number }> {
   const bucket = env.s3BackupBucket;

@@ -46,14 +46,18 @@ versehentliches Löschen, Abrechnungsproblem, Anbieterausfall).
    - Komprimiert (gzip) und in S3-kompatiblen Objektspeicher hochgeladen (dieselbe Anbindung wie
      `src/modules/contracts/objectStorage.ts`, standardmäßig derselbe Bucket unter dem Präfix
      `db-backups/`, optional per `S3_BACKUP_BUCKET` ein eigener, stärker abgeschotteter Bucket).
-   - **Aufbewahrung:** aktuell ein einfaches Zähl-Limit (`BACKUP_RETENTION_COUNT`, Standard 35 —
-     entspricht der täglichen Stufe unten), älteste Sicherungen werden automatisch gelöscht. Die
-     wöchentliche/monatliche Staffelung unten ist **noch nicht automatisiert** — das ist eine
-     bewusste Lücke, kein Versehen (siehe Abschnitt 7).
-   - **Zielwerte, noch nicht alle erreicht:**
-     - 7 tägliche Backups (✅ durch Zähl-Retention grob abgedeckt)
-     - 4 wöchentliche Backups **[Noch einzurichten]**
-     - 12 monatliche Backups **[Noch einzurichten]**
+   - **Aufbewahrung:** echte Großvater-Vater-Sohn-Staffelung (`selectStaleKeysTiered` in
+     `src/modules/backup/backupDatabase.ts`) — innerhalb des Tages-Fensters bleibt jede Sicherung
+     erhalten, danach wird pro ISO-Kalenderwoche nur die älteste zur wöchentlichen Sicherung
+     hochgestuft, danach pro Kalendermonat nur die älteste zur monatlichen; alles außerhalb aller
+     drei Fenster wird gelöscht. Konfigurierbar über `BACKUP_RETENTION_DAILY_DAYS`/
+     `BACKUP_RETENTION_WEEKLY_WEEKS`/`BACKUP_RETENTION_MONTHLY_MONTHS`. Ein S3-Schlüssel, dessen
+     Zeitstempel sich nicht aus dem Dateinamen parsen lässt, wird nie als "veraltet" eingestuft —
+     im Zweifel eher zu viel behalten als versehentlich etwas Fremdes löschen.
+   - **Zielwerte (Default-Konfiguration):**
+     - 7 tägliche Backups ✅
+     - 4 wöchentliche Backups ✅
+     - 12 monatliche Backups ✅
    - Diese Aufbewahrung betrifft ausschließlich die *technischen Backups* zur Wiederherstellung im
      Störungsfall. Sie ersetzt nicht die fachliche Aufbewahrungspflicht für Audit-Trail- und
      Nachweisdaten selbst (MaRisk-, handels- und steuerrechtliche Fristen, siehe
@@ -156,8 +160,8 @@ Sandbox keinen Zugriff auf die echte Supabase-Produktivdatenbank hat):**
   `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`) — ohne sie läuft der Workflow ins Leere.
   `PRODUCTION_DATABASE_URL_DIRECT` muss Supabases direkte (nicht gepoolte) Verbindung sein, siehe
   Kommentar in `src/scripts/backup-database.ts`.
-- Wöchentliche/monatliche Retention-Staffelung automatisieren — aktuell nur ein tägliches
-  Zähl-Limit (Abschnitt 2).
+- ~~Wöchentliche/monatliche Retention-Staffelung automatisieren~~ — **erledigt, siehe Abschnitt
+  2:** echte Großvater-Vater-Sohn-Staffelung statt Zähl-Limit.
 - ~~Ersten vollständigen (manuellen, anwendungsseitigen) Restore-Test terminieren und Ergebnis
   dokumentieren~~ — **erledigt am 2026-09-19, siehe Abschnitt 3.** Mechanismus bestätigt
   funktionsfähig; ein Durchlauf gegen einen echten Produktions-Dump (statt Seed-Daten) mit
