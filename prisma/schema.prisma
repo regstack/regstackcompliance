@@ -39,6 +39,10 @@ enum Role {
 enum AccessModule {
   OUTSOURCING
   COMPLIANCE
+  ACCOUNTING
+  IKS
+  RISIKOMANAGEMENT
+  IT_RISIKO
 }
 
 enum AccessGrantStatus {

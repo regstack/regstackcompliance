@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -14,6 +14,7 @@ const STATUS = ["offen", "in_bearbeitung", "akzeptiert_von_gl", "geschlossen"] a
 router.get(
   "/",
   requirePermission("itRiskRecord", "read"),
+  requireAccessGrant("IT_RISIKO"),
   asyncHandler(async (req, res) => {
     const risiken = await prisma.itRisiko.findMany({
       where: { institutionId: req.user!.institutionId },

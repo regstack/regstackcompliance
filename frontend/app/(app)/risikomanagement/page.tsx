@@ -9,6 +9,7 @@ import {
   listRmStresstests,
 } from "@/lib/regstack/risikomanagement";
 import { getBackendSession, canWriteRiskManagement, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
+import { accessGrantBanner } from "@/components/access-grants/access-gate";
 import { isOverdue } from "@/lib/regstack/compliance-utils";
 import { StatCard } from "@/components/ui/stat-card";
 import { RisikoinventurPanel } from "@/components/risikomanagement/risikoinventur-panel";
@@ -23,6 +24,9 @@ import { StresstestPanel } from "@/components/risikomanagement/stresstest-panel"
 export default async function RisikomanagementPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
+
+  const gateBanner = await accessGrantBanner(session.role, "RISIKOMANAGEMENT");
+  if (gateBanner) return gateBanner;
 
   const [inventur, strategien, rtfSnapshots, reports, nplKennzahlen, modelle, kapitalplanung, stresstests] = await Promise.all([
     listRisikoinventur(),

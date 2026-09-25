@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { acknowledgeAccountingDocument, listSignOffs } from "./signoff";
@@ -42,6 +42,7 @@ const balanceSheetSchema = z.object({
 router.get(
   "/",
   requirePermission("accountingRecord", "read"),
+  requireAccessGrant("ACCOUNTING"),
   asyncHandler(async (req, res) => {
     const fiscalYear = typeof req.query.fiscalYear === "string" ? Number(req.query.fiscalYear) : undefined;
     const sheets = await prisma.balanceSheet.findMany({
@@ -66,6 +67,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("accountingRecord", "read"),
+  requireAccessGrant("ACCOUNTING"),
   asyncHandler(async (req, res) => {
     const sheet = await prisma.balanceSheet.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },

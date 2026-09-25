@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { listActivities } from "@/lib/regstack/outsourcing";
 import { getBackendSession, canWriteOutsourcing } from "@/lib/regstack/backend-session";
-import { listAccessGrants, findAccessGrant } from "@/lib/regstack/access-grants";
+import { accessGrantBanner } from "@/components/access-grants/access-gate";
 import { Card } from "@/components/ui/card";
-import { Banner } from "@/components/ui/banner";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ActivityForm } from "@/components/outsourcing/activity-form";
 import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
@@ -21,26 +20,8 @@ export default async function OutsourcingPage() {
     );
   }
 
-  // Interne Revision braucht seit der Zugriffsfreigabe-Pflicht eine APPROVED
-  // ModuleAccessGrant für OUTSOURCING — ohne die würde listActivities() unten mit einem 403
-  // scheitern und nur das generische ModuleError-Fallback zeigen. Hier stattdessen direkt auf die
-  // Anfrageseite verweisen.
-  if (session.role === "INTERNE_REVISION") {
-    const grants = await listAccessGrants();
-    const grant = findAccessGrant(grants, "OUTSOURCING");
-    if (grant?.status !== "APPROVED") {
-      return (
-        <Banner title="Zugriff noch nicht freigegeben">
-          Die Interne Revision benötigt eine aktive Freigabe des Auslagerungsbeauftragten, um das
-          Auslagerungsregister einzusehen.{" "}
-          <Link href="/interne-revision/zugriffsanfragen" className="underline hover:text-copper-300">
-            Zugriff anfragen
-          </Link>
-          .
-        </Banner>
-      );
-    }
-  }
+  const gateBanner = await accessGrantBanner(session.role, "OUTSOURCING");
+  if (gateBanner) return gateBanner;
 
   const activities = await listActivities();
   const canWrite = canWriteOutsourcing(session.role);

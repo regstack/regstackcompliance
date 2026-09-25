@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { collectRemovalIds } from "../weiterverlagerung/tree";
@@ -21,6 +21,7 @@ async function requireArrangement(arrangementId: string, institutionId: string) 
 router.get(
   "/",
   requirePermission("ictRegister", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     await requireArrangement(req.params.arrangementId, req.user!.institutionId);
     const nodes = await prisma.ictSubcontracting.findMany({

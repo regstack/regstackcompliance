@@ -3,6 +3,8 @@ import {
   listBalanceSheets, listIncomeStatements, listAccountingNotes, listManagementReports,
   buildBilanzSectionTotals, buildGuvSectionTotals, buildBiggestMovers,
 } from "@/lib/regstack/accounting";
+import { getBackendSession } from "@/lib/regstack/backend-session";
+import { accessGrantBanner } from "@/components/access-grants/access-gate";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { AccountingAnalysis } from "@/components/buchhaltung/accounting-analysis";
@@ -15,6 +17,11 @@ const DOC_LINKS = [
 ];
 
 export default async function BuchhaltungPage() {
+  const session = await getBackendSession();
+
+  const gateBanner = await accessGrantBanner(session?.role, "ACCOUNTING");
+  if (gateBanner) return gateBanner;
+
   const [balanceSheets, incomeStatements, notes, managementReports] = await Promise.all([
     listBalanceSheets(),
     listIncomeStatements(),

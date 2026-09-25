@@ -58,7 +58,7 @@ export type Resource =
   | "itContingencyRecord" // IT-Notfallpläne und -tests, BAIT Kap. 10
   | "nachweis" // Generisches Nachweis-/Belegregister, modulübergreifend (Outsourcing, Compliance,
   // Interne Revision, Risikomanagement, IT-Risiko)
-  | "moduleAccessGrant"; // Zugriffsfreigabe Interne Revision -> Outsourcing/Compliance (Anfrage/Genehmigung/Entzug)
+  | "moduleAccessGrant"; // Zugriffsfreigabe Interne Revision -> jedes andere Modul (Anfrage/Genehmigung/Entzug)
 
 export type Action = "read" | "write" | "delete";
 
@@ -295,11 +295,13 @@ export function requirePermission(resource: Resource, action: Action) {
   };
 }
 
-// Static role permission (above) says INTERNE_REVISION *may* read Outsourcing/Compliance data in
+// Static role permission (above) says INTERNE_REVISION *may* read another module's data in
 // principle — this middleware adds the second, stateful condition the product now requires: that
-// the fachbereich actually approved a ModuleAccessGrant for this institution. Only INTERNE_REVISION
-// is gated; every other role that already passed requirePermission(..., "read") is unaffected, so
-// this must run strictly AFTER requirePermission on the same route.
+// the fachbereich actually approved a ModuleAccessGrant for this institution+module (Outsourcing,
+// Compliance, Accounting, IKS, Risikomanagement, IT-Risiko — Interne Revision's own module is
+// never gated against itself). Only INTERNE_REVISION is gated; every other role that already
+// passed requirePermission(..., "read") is unaffected, so this must run strictly AFTER
+// requirePermission on the same route.
 export function requireAccessGrant(accessModule: AccessModule) {
   return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
     if (req.user?.role !== "INTERNE_REVISION") {

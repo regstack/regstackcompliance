@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -34,6 +34,7 @@ const EBENEN = ["gesamtinstitut", "risikoart", "portfolio", "geschaeftsbereich"]
 router.get(
   "/",
   requirePermission("riskStressTest", "read"),
+  requireAccessGrant("RISIKOMANAGEMENT"),
   asyncHandler(async (req, res) => {
     const stresstests = await prisma.rmStresstest.findMany({
       where: { institutionId: req.user!.institutionId },

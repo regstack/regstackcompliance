@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { AccountingDocumentType } from "@prisma/client";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import {
   assertAccountingObjectKeyBelongsToInstitution,
@@ -88,6 +88,7 @@ export function createDocumentFileRoutes(
   router.get(
     "/download-url",
     requirePermission("accountingRecord", "read"),
+    requireAccessGrant("ACCOUNTING"),
     asyncHandler(async (req, res) => {
       const doc = await findDocument(req.params.id, req.user!.institutionId);
       if (!doc) throw new NotFoundError("Dokument nicht gefunden");

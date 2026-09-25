@@ -15,15 +15,21 @@ const router = Router();
 const APPROVER_ROLES: Record<AccessModule, Role[]> = {
   OUTSOURCING: ["AUSLAGERUNGSBEAUFTRAGTER", "GESCHAEFTSLEITUNG", "ADMIN"],
   COMPLIANCE: ["COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"],
+  ACCOUNTING: ["BUCHHALTUNG", "GESCHAEFTSLEITUNG", "ADMIN"],
+  IKS: ["RISIKOCONTROLLING", "COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"],
+  RISIKOMANAGEMENT: ["RISIKOCONTROLLING", "GESCHAEFTSLEITUNG", "ADMIN"],
+  IT_RISIKO: ["RISIKOCONTROLLING", "GESCHAEFTSLEITUNG", "ADMIN"],
 };
+
+const ALL_ACCESS_MODULES = Object.keys(APPROVER_ROLES) as AccessModule[];
 
 const REQUESTER_ROLES: Role[] = ["INTERNE_REVISION", "ADMIN"];
 
 function parseModule(raw: string): AccessModule {
-  if (raw !== "OUTSOURCING" && raw !== "COMPLIANCE") {
-    throw new ValidationError(`Unbekanntes Modul "${raw}" — erlaubt sind OUTSOURCING, COMPLIANCE.`);
+  if (!ALL_ACCESS_MODULES.includes(raw as AccessModule)) {
+    throw new ValidationError(`Unbekanntes Modul "${raw}" — erlaubt sind ${ALL_ACCESS_MODULES.join(", ")}.`);
   }
-  return raw;
+  return raw as AccessModule;
 }
 
 router.get(

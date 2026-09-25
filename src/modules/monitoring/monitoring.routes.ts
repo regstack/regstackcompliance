@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -11,6 +11,7 @@ const router = Router({ mergeParams: true });
 router.get(
   "/",
   requirePermission("monitoring", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const activity = await prisma.outsourcingActivity.findFirst({
       where: { id: req.params.activityId, institutionId: req.user!.institutionId },

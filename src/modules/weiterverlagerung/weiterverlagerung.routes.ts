@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { collectRemovalIds } from "./tree";
@@ -18,6 +18,7 @@ async function requireActivity(activityId: string, institutionId: string) {
 router.get(
   "/",
   requirePermission("weiterverlagerung", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     await requireActivity(req.params.activityId, req.user!.institutionId);
     const nodes = await prisma.weiterverlagerung.findMany({

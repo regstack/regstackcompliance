@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/regstack/backend-client";
 // Mirrors src/modules/accessGrants/accessGrants.routes.ts — Interne Revision's read access to
 // Outsourcing/Compliance data now requires an explicit, approved grant per institution+module
 // instead of the static RBAC role matrix alone (see requireAccessGrant in rbac.ts).
-export type AccessGrantModule = "OUTSOURCING" | "COMPLIANCE";
+export type AccessGrantModule = "OUTSOURCING" | "COMPLIANCE" | "ACCOUNTING" | "IKS" | "RISIKOMANAGEMENT" | "IT_RISIKO";
 export type AccessGrantStatus = "PENDING" | "APPROVED" | "DENIED" | "REVOKED";
 
 export type AccessGrant = {

@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { assertIcsKeyBelongsToInstitution, buildIcsPolicyKey, createIcsUploadUrl } from "./objectStorage";
@@ -20,6 +20,7 @@ const MAX_POLICY_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 router.get(
   "/",
   requirePermission("icsPolicy", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const businessProcessId = typeof req.query.businessProcessId === "string" ? req.query.businessProcessId : undefined;
     const controlId = typeof req.query.controlId === "string" ? req.query.controlId : undefined;
@@ -48,6 +49,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("icsPolicy", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const policy = await prisma.icsPolicyDocument.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },

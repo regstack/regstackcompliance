@@ -10,6 +10,7 @@ import {
   listItNotfallplaene,
 } from "@/lib/regstack/it-risiko";
 import { getBackendSession, canWriteItRisk, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
+import { accessGrantBanner } from "@/components/access-grants/access-gate";
 import { StatCard } from "@/components/ui/stat-card";
 import { ItStrategiePanel } from "@/components/it-risiko/strategie-panel";
 import { AssetPanel } from "@/components/it-risiko/asset-panel";
@@ -30,6 +31,9 @@ function isWithinLast30Days(iso: string): boolean {
 export default async function ItRisikoPage() {
   const session = await getBackendSession();
   if (!session) return null; // layout.tsx already renders the "nicht verknüpft" state
+
+  const gateBanner = await accessGrantBanner(session.role, "IT_RISIKO");
+  if (gateBanner) return gateBanner;
 
   const [strategien, assets, risiken, vorfaelle, berechtigungen, projekte, aenderungen, betriebsstoerungen, notfallplaene] = await Promise.all([
     listItStrategien(),

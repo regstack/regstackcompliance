@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -17,6 +17,7 @@ const router = Router();
 router.get(
   "/plaene",
   requirePermission("itContingencyRecord", "read"),
+  requireAccessGrant("IT_RISIKO"),
   asyncHandler(async (req, res) => {
     const plaene = await prisma.itNotfallplan.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -108,6 +109,7 @@ router.post(
 router.get(
   "/plaene/:planId/tests",
   requirePermission("itContingencyRecord", "read"),
+  requireAccessGrant("IT_RISIKO"),
   asyncHandler(async (req, res) => {
     const plan = await prisma.itNotfallplan.findFirst({ where: { id: req.params.planId, institutionId: req.user!.institutionId } });
     if (!plan) throw new NotFoundError("IT-Notfallplan nicht gefunden");

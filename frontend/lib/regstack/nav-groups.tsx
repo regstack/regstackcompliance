@@ -210,6 +210,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
           { href: "/buchhaltung/lagebericht", label: "Lagebericht" },
         ],
       },
+      {
+        title: "Zugriff Interne Revision",
+        icon: <UsersIcon {...iconProps} />,
+        items: [{ href: "/buchhaltung/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" }],
+      },
     ],
   },
   iks: {
@@ -229,6 +234,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
           { href: "/iks/matrix", label: "Kontrollmatrix" },
           { href: "/iks/richtlinien", label: "Richtlinien & Workflow-Dokumente" },
         ],
+      },
+      {
+        title: "Zugriff Interne Revision",
+        icon: <UsersIcon {...iconProps} />,
+        items: [{ href: "/iks/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" }],
       },
     ],
   },
@@ -265,6 +275,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         title: "Modellrisiko · AT 4.3.4",
         icon: <CpuIcon {...iconProps} />,
         items: [{ href: "/risikomanagement#modelle", label: "Modellregister" }],
+      },
+      {
+        title: "Zugriff Interne Revision",
+        icon: <UsersIcon {...iconProps} />,
+        items: [{ href: "/risikomanagement/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" }],
       },
     ],
   },
@@ -314,6 +329,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         title: "IT-Notfallmanagement · Kap. 10",
         icon: <FlagIcon {...iconProps} />,
         items: [{ href: "/it-risiko#notfallmanagement", label: "Notfallpläne" }],
+      },
+      {
+        title: "Zugriff Interne Revision",
+        icon: <UsersIcon {...iconProps} />,
+        items: [{ href: "/it-risiko/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" }],
       },
     ],
   },

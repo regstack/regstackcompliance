@@ -1,9 +1,18 @@
-import { listAccessGrants, findAccessGrant, resolveUserName } from "@/lib/regstack/access-grants";
+import { listAccessGrants, findAccessGrant, resolveUserName, type AccessGrantModule } from "@/lib/regstack/access-grants";
 import { getBackendSession, isInterneRevision } from "@/lib/regstack/backend-session";
 import { Banner } from "@/components/ui/banner";
 import { Card, CardBody } from "@/components/ui/card";
 import { GrantCard } from "@/components/access-grants/grant-card";
 import { requestAccessGrant } from "./actions";
+
+const MODULES: { module: AccessGrantModule; title: string; basis: string }[] = [
+  { module: "OUTSOURCING", title: "Zugriff auf Outsourcing", basis: "AT 9 — Auslagerungsregister, Verträge, Berichte" },
+  { module: "COMPLIANCE", title: "Zugriff auf Compliance", basis: "AT 4.4.2 — Rechtsnormenkataster, Risiken & Kontrollen, Feststellungen" },
+  { module: "ACCOUNTING", title: "Zugriff auf Buchhaltung", basis: "Bilanz, GuV, Anhang, Lagebericht" },
+  { module: "IKS", title: "Zugriff auf IKS", basis: "Geschäftsprozesse, Kontrollen, Richtlinien-Bibliothek" },
+  { module: "RISIKOMANAGEMENT", title: "Zugriff auf Risikomanagement", basis: "AT 4 — Risikoinventur, Strategien, Risikotragfähigkeit, Stresstests" },
+  { module: "IT_RISIKO", title: "Zugriff auf IT-Risiko / BAIT", basis: "IT-Strategie, Informationsrisiko, Sicherheitsvorfälle, Berechtigungen" },
+];
 
 export default async function ZugriffsanfragenPage() {
   const session = await getBackendSession();
@@ -16,25 +25,27 @@ export default async function ZugriffsanfragenPage() {
   }
 
   const grants = await listAccessGrants();
-  const outsourcingGrant = findAccessGrant(grants, "OUTSOURCING");
-  const complianceGrant = findAccessGrant(grants, "COMPLIANCE");
-  const [outsourcingRequestedBy, outsourcingDecidedBy, complianceRequestedBy, complianceDecidedBy] = await Promise.all([
-    resolveUserName(outsourcingGrant?.requestedByUserId ?? null),
-    resolveUserName(outsourcingGrant?.decidedByUserId ?? null),
-    resolveUserName(complianceGrant?.requestedByUserId ?? null),
-    resolveUserName(complianceGrant?.decidedByUserId ?? null),
-  ]);
-
   const canRequest = isInterneRevision(session.role);
+
+  const cards = await Promise.all(
+    MODULES.map(async ({ module, title, basis }) => {
+      const grant = findAccessGrant(grants, module);
+      const [requestedByName, decidedByName] = await Promise.all([
+        resolveUserName(grant?.requestedByUserId ?? null),
+        resolveUserName(grant?.decidedByUserId ?? null),
+      ]);
+      return { module, title, basis, grant, requestedByName, decidedByName };
+    })
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Zugriffsanfragen</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Die Interne Revision liest Outsourcing- und Compliance-Daten nicht mehr implizit über die
-          Rollenmatrix — der jeweilige Fachbereich (Auslagerungsbeauftragte:r bzw. Compliance) muss
-          den Zugriff aktiv freigeben. Diese Freigabe ist jederzeit widerruflich.
+          Die Interne Revision liest die Daten anderer Module nicht mehr implizit über die
+          Rollenmatrix — der jeweilige Fachbereich muss den Zugriff je Modul aktiv freigeben. Diese
+          Freigabe ist jederzeit widerruflich.
         </p>
       </div>
 
@@ -45,36 +56,24 @@ export default async function ZugriffsanfragenPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <GrantCard
-          title="Zugriff auf Outsourcing"
-          basis="AT 9 — Auslagerungsregister, Verträge, Berichte"
-          grant={outsourcingGrant}
-          requestedByName={outsourcingRequestedBy}
-          decidedByName={outsourcingDecidedBy}
-          onRequest={
-            canRequest
-              ? async (reason: string) => {
-                  "use server";
-                  await requestAccessGrant("OUTSOURCING", reason);
-                }
-              : undefined
-          }
-        />
-        <GrantCard
-          title="Zugriff auf Compliance"
-          basis="AT 4.4.2 — Rechtsnormenkataster, Risiken & Kontrollen, Feststellungen"
-          grant={complianceGrant}
-          requestedByName={complianceRequestedBy}
-          decidedByName={complianceDecidedBy}
-          onRequest={
-            canRequest
-              ? async (reason: string) => {
-                  "use server";
-                  await requestAccessGrant("COMPLIANCE", reason);
-                }
-              : undefined
-          }
-        />
+        {cards.map(({ module, title, basis, grant, requestedByName, decidedByName }) => (
+          <GrantCard
+            key={module}
+            title={title}
+            basis={basis}
+            grant={grant}
+            requestedByName={requestedByName}
+            decidedByName={decidedByName}
+            onRequest={
+              canRequest
+                ? async (reason: string) => {
+                    "use server";
+                    await requestAccessGrant(module, reason);
+                  }
+                : undefined
+            }
+          />
+        ))}
       </div>
 
       <Card>

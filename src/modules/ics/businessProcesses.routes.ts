@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -12,6 +12,7 @@ const router = Router();
 router.get(
   "/",
   requirePermission("icsProcess", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const processes = await prisma.icsBusinessProcess.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -27,6 +28,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("icsProcess", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const process = await prisma.icsBusinessProcess.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },

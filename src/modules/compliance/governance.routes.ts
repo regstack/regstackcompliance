@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { ValidationError } from "../../utils/errors";
 
@@ -11,6 +11,7 @@ const router = Router();
 router.get(
   "/",
   requirePermission("complianceGovernance", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const settings = await prisma.complianceGovernanceSettings.findUnique({ where: { institutionId: req.user!.institutionId } });
     res.json(settings);

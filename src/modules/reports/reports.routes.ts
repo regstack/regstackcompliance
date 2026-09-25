@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { pdfHeading, pdfSection, renderPdf } from "../../utils/pdf";
@@ -13,6 +13,7 @@ const router = Router();
 router.get(
   "/",
   requirePermission("report", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const reports = await prisma.report.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -79,6 +80,7 @@ router.post(
 router.get(
   "/:id/pdf",
   requirePermission("report", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const report = await prisma.report.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
     if (!report) throw new NotFoundError("Bericht nicht gefunden");

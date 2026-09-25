@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 
@@ -15,6 +15,7 @@ const VALIDIERUNG_ERGEBNIS = ["bestaetigt", "rekalibrierung_erforderlich", "auss
 router.get(
   "/",
   requirePermission("modelGovernanceRecord", "read"),
+  requireAccessGrant("RISIKOMANAGEMENT"),
   asyncHandler(async (req, res) => {
     const modelle = await prisma.rmModell.findMany({
       where: { institutionId: req.user!.institutionId },

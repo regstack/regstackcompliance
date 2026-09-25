@@ -100,11 +100,19 @@ export function isInterneRevision(role: BackendRole): boolean {
 }
 
 // Mirrors src/modules/accessGrants/accessGrants.routes.ts's APPROVER_ROLES.
-const OUTSOURCING_ACCESS_GRANT_APPROVER_ROLES: BackendRole[] = ["AUSLAGERUNGSBEAUFTRAGTER", "GESCHAEFTSLEITUNG", "ADMIN"];
-const COMPLIANCE_ACCESS_GRANT_APPROVER_ROLES: BackendRole[] = ["COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"];
+export type AccessGrantModule = "OUTSOURCING" | "COMPLIANCE" | "ACCOUNTING" | "IKS" | "RISIKOMANAGEMENT" | "IT_RISIKO";
 
-export function canApproveAccessGrant(role: BackendRole, accessModule: "OUTSOURCING" | "COMPLIANCE"): boolean {
-  return (accessModule === "OUTSOURCING" ? OUTSOURCING_ACCESS_GRANT_APPROVER_ROLES : COMPLIANCE_ACCESS_GRANT_APPROVER_ROLES).includes(role);
+const ACCESS_GRANT_APPROVER_ROLES: Record<AccessGrantModule, BackendRole[]> = {
+  OUTSOURCING: ["AUSLAGERUNGSBEAUFTRAGTER", "GESCHAEFTSLEITUNG", "ADMIN"],
+  COMPLIANCE: ["COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"],
+  ACCOUNTING: ["BUCHHALTUNG", "GESCHAEFTSLEITUNG", "ADMIN"],
+  IKS: ["RISIKOCONTROLLING", "COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"],
+  RISIKOMANAGEMENT: ["RISIKOCONTROLLING", "GESCHAEFTSLEITUNG", "ADMIN"],
+  IT_RISIKO: ["RISIKOCONTROLLING", "GESCHAEFTSLEITUNG", "ADMIN"],
+};
+
+export function canApproveAccessGrant(role: BackendRole, accessModule: AccessGrantModule): boolean {
+  return ACCESS_GRANT_APPROVER_ROLES[accessModule].includes(role);
 }
 
 // Mirrors src/middleware/rbac.ts's PRUEFER read-only role: never a "canWrite*" true, read-only +

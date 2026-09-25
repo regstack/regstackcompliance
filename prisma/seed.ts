@@ -48,7 +48,7 @@ async function main() {
   // genehmigt, damit die Demo-Logins sofort nutzbar sind; der Anfrage/Genehmigung-Zyklus selbst
   // bleibt über /access-grants voll funktionsfähig (z.B. nach einem Entzug erneut anfragen).
   await Promise.all(
-    (["OUTSOURCING", "COMPLIANCE"] as const).map((accessModule) =>
+    (["OUTSOURCING", "COMPLIANCE", "ACCOUNTING", "IKS", "RISIKOMANAGEMENT", "IT_RISIKO"] as const).map((accessModule) =>
       prisma.moduleAccessGrant.upsert({
         where: { institutionId_module: { institutionId: institution.id, module: accessModule } },
         update: {},

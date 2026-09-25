@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { listBusinessProcesses, listControls, listControlTests, controlsDueForTesting } from "@/lib/regstack/ics";
 import { getBackendSession, canWriteIcs } from "@/lib/regstack/backend-session";
+import { accessGrantBanner } from "@/components/access-grants/access-gate";
 import { Card, CardBody } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProcessForm } from "@/components/iks/process-form";
 
 export default async function IksPage() {
-  const [session, processes, controls, tests] = await Promise.all([
-    getBackendSession(),
+  const session = await getBackendSession();
+
+  const gateBanner = await accessGrantBanner(session?.role, "IKS");
+  if (gateBanner) return gateBanner;
+
+  const [processes, controls, tests] = await Promise.all([
     listBusinessProcesses(),
     listControls(),
     listControlTests(),

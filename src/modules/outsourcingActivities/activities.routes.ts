@@ -66,6 +66,7 @@ router.post(
 router.get(
   "/monitoring/escalations",
   requirePermission("monitoring", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const records = await prisma.monitoringRecord.findMany({
       where: {
@@ -86,6 +87,7 @@ router.get(
 router.get(
   "/monitoring/kpis",
   requirePermission("monitoring", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const records = await prisma.monitoringRecord.findMany({
       where: {

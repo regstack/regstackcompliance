@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { assertIcsKeyBelongsToInstitution, buildIcsEvidenceKey, createIcsUploadUrl } from "./objectStorage";
@@ -22,6 +22,7 @@ const MAX_EVIDENCE_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 router.get(
   "/",
   requirePermission("icsTesting", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const controlId = typeof req.query.controlId === "string" ? req.query.controlId : undefined;
     const tests = await prisma.icsControlTest.findMany({
@@ -36,6 +37,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("icsTesting", "read"),
+  requireAccessGrant("IKS"),
   asyncHandler(async (req, res) => {
     const test = await prisma.icsControlTest.findFirst({
       where: { id: req.params.id, control: { institutionId: req.user!.institutionId } },

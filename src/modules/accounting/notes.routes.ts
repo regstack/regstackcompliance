@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
 import { acknowledgeAccountingDocument, listSignOffs } from "./signoff";
@@ -31,6 +31,7 @@ const notesSchema = z.object({
 router.get(
   "/",
   requirePermission("accountingRecord", "read"),
+  requireAccessGrant("ACCOUNTING"),
   asyncHandler(async (req, res) => {
     const fiscalYear = typeof req.query.fiscalYear === "string" ? Number(req.query.fiscalYear) : undefined;
     const notes = await prisma.accountingNotes.findMany({
@@ -55,6 +56,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("accountingRecord", "read"),
+  requireAccessGrant("ACCOUNTING"),
   asyncHandler(async (req, res) => {
     const notes = await prisma.accountingNotes.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },
