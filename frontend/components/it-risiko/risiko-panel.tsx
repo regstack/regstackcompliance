@@ -1,19 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
-import { addItRisiko, acceptItRisiko } from "@/app/(app)/it-risiko/actions";
+import { addItRisiko, acceptItRisiko, updateItRisiko } from "@/app/(app)/it-risiko/actions";
 import type { ItAsset, ItRisiko } from "@/lib/regstack/it-risiko";
 
-function RisikoForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onDone: () => void; onCancel: () => void }) {
-  const [assetId, setAssetId] = useState("");
-  const [bedrohung, setBedrohung] = useState("");
-  const [eintritt, setEintritt] = useState("");
-  const [auswirkung, setAuswirkung] = useState("");
-  const [restrisiko, setRestrisiko] = useState("");
-  const [massnahme, setMassnahme] = useState("");
+function RisikoForm({
+  assets, initial, onDone, onCancel,
+}: {
+  assets: ItAsset[];
+  initial?: ItRisiko;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [assetId, setAssetId] = useState(initial?.assetId ?? "");
+  const [bedrohung, setBedrohung] = useState(initial?.bedrohung ?? "");
+  const [eintritt, setEintritt] = useState(initial?.eintrittswahrscheinlichkeit ?? "");
+  const [auswirkung, setAuswirkung] = useState(initial?.auswirkung ?? "");
+  const [restrisiko, setRestrisiko] = useState(initial?.restrisiko ?? "");
+  const [massnahme, setMassnahme] = useState(initial?.massnahme ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +28,12 @@ function RisikoForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onDone: (
     setError(null);
     startTransition(async () => {
       try {
-        await addItRisiko({ assetId, bedrohung, eintrittswahrscheinlichkeit: eintritt, auswirkung, restrisiko, massnahme });
+        const fields = { assetId, bedrohung, eintrittswahrscheinlichkeit: eintritt, auswirkung, restrisiko, massnahme };
+        if (initial) {
+          await updateItRisiko(initial.id, fields);
+        } else {
+          await addItRisiko(fields);
+        }
         onDone();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
@@ -59,7 +71,9 @@ function RisikoForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onDone: (
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
-        <Button className="px-2.5 py-1 text-xs" disabled={pending || !bedrohung.trim()} onClick={submit}>{pending ? "Speichert…" : "Speichern"}</Button>
+        <Button className="px-2.5 py-1 text-xs" disabled={pending || !bedrohung.trim()} onClick={submit}>
+          {pending ? "Speichert…" : initial ? "Änderungen speichern" : "Speichern"}
+        </Button>
         <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={pending} onClick={onCancel}>Abbrechen</Button>
       </div>
     </div>
@@ -103,12 +117,13 @@ export function RisikoPanel({
   canAccept: boolean;
 }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <Card id="risiken">
       <CardHeader>
         <CardTitle>IT-Risikoregister</CardTitle>
-        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => setAdding(true)}>+ Risiko</Button>}
+        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => { setEditingId(null); setAdding(true); }}>+ Risiko</Button>}
       </CardHeader>
       <CardBody>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -128,17 +143,33 @@ export function RisikoPanel({
             </thead>
             <tbody>
               {items.map((r) => (
-                <tr key={r.id} className="border-b border-border-subtle last:border-0">
-                  <td className="px-3 py-2 font-medium text-foreground">{r.bedrohung}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{r.asset?.bezeichnung ?? "—"}</td>
-                  <td className="px-3 py-2">{r.restrisiko ? <StatusPill status={r.restrisiko} /> : "—"}</td>
-                  <td className="px-3 py-2"><StatusPill status={r.status} /></td>
-                  <td className="px-3 py-2 text-right">
-                    {canAccept && r.restrisiko === "hoch" && r.status !== "akzeptiert_von_gl" && r.status !== "geschlossen" && (
-                      <AcceptButton id={r.id} />
-                    )}
-                  </td>
-                </tr>
+                <Fragment key={r.id}>
+                  <tr className="border-b border-border-subtle last:border-0">
+                    <td className="px-3 py-2 font-medium text-foreground">{r.bedrohung}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{r.asset?.bezeichnung ?? "—"}</td>
+                    <td className="px-3 py-2">{r.restrisiko ? <StatusPill status={r.restrisiko} /> : "—"}</td>
+                    <td className="px-3 py-2"><StatusPill status={r.status} /></td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {canWrite && r.status !== "akzeptiert_von_gl" && (
+                          <Button variant="ghost" className="px-2 py-1 text-[11px]" disabled={adding} onClick={() => { setAdding(false); setEditingId(editingId === r.id ? null : r.id); }}>
+                            Bearbeiten
+                          </Button>
+                        )}
+                        {canAccept && r.restrisiko === "hoch" && r.status !== "akzeptiert_von_gl" && r.status !== "geschlossen" && (
+                          <AcceptButton id={r.id} />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {editingId === r.id && (
+                    <tr className="border-b border-border-subtle last:border-0">
+                      <td colSpan={5} className="px-3 py-2">
+                        <RisikoForm assets={assets} initial={r} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               {items.length === 0 && (
                 <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Noch keine IT-Risiken erfasst.</td></tr>

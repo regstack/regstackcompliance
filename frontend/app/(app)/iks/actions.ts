@@ -103,6 +103,11 @@ export async function createPolicyDocument(input: PolicyInput) {
   return created.id;
 }
 
+export async function updatePolicyDocument(id: string, input: Partial<PolicyInput>) {
+  await apiFetch(`/ics/policies/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  revalidatePath(REVALIDATE);
+}
+
 export async function getPolicyDocumentDownloadUrl(id: string) {
   const res = await apiFetch<{ downloadUrl: string }>(`/ics/policies/${id}/download-url`);
   return res.downloadUrl;

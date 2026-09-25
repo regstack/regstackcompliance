@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getTwoFactorStatus } from "./actions";
-import { getBackendSession } from "@/lib/regstack/backend-session";
+import { getBackendSession, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
 import { TwoFactorSettings } from "@/components/konto/two-factor-settings";
 
 export default async function KontoPage() {
@@ -38,6 +38,20 @@ export default async function KontoPage() {
           </p>
           <Link href="/konto/nutzerverwaltung" className="mt-2 inline-block text-sm text-copper-300 hover:underline">
             Zur Nutzerverwaltung →
+          </Link>
+        </div>
+      )}
+
+      {session && (
+        <div className="rounded-[10px] border border-border-subtle bg-surface p-4">
+          <p className="text-sm font-medium text-foreground">Institutseinstellungen</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isGeschaeftsleitung(session.role)
+              ? "Größenklasse, Berechnungsmodell und Revisionsbeauftragter bearbeiten."
+              : "Größenklasse, Berechnungsmodell und Revisionsbeauftragter einsehen (nur lesend)."}
+          </p>
+          <Link href="/konto/institut" className="mt-2 inline-block text-sm text-copper-300 hover:underline">
+            Zu den Institutseinstellungen →
           </Link>
         </div>
       )}

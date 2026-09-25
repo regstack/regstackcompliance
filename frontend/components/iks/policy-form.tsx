@@ -3,7 +3,8 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createPolicyDocument, getIcsPolicyUploadUrl } from "@/app/(app)/iks/actions";
+import { createPolicyDocument, updatePolicyDocument, getIcsPolicyUploadUrl } from "@/app/(app)/iks/actions";
+import type { PolicyDocument } from "@/lib/regstack/ics-utils";
 
 const inputCls = "rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground";
 const labelCls = "flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
@@ -13,23 +14,39 @@ export function PolicyForm({
   controlOptions,
   preselectedProcessId,
   preselectedControlId,
+  editing,
+  onDone,
 }: {
   businessProcessOptions: { id: string; name: string }[];
   controlOptions: { id: string; name: string }[];
   preselectedProcessId?: string;
   preselectedControlId?: string;
+  /** When set, the form edits this existing document instead of creating a new one. */
+  editing?: PolicyDocument;
+  /** Called after a successful edit save/cancel — lets the parent close the edit slot. Only used
+   *  in edit mode; create mode keeps its own "+ Dokument hinzufügen" toggle. */
+  onDone?: () => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [documentType, setDocumentType] = useState("");
-  const [description, setDescription] = useState("");
-  const [processIds, setProcessIds] = useState<string[]>(preselectedProcessId ? [preselectedProcessId] : []);
-  const [controlIds, setControlIds] = useState<string[]>(preselectedControlId ? [preselectedControlId] : []);
+  const [open, setOpen] = useState(!!editing);
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [documentType, setDocumentType] = useState(editing?.documentType ?? "");
+  const [description, setDescription] = useState(editing?.description ?? "");
+  const [processIds, setProcessIds] = useState<string[]>(
+    editing ? (editing.businessProcesses ?? []).map((p) => p.id) : preselectedProcessId ? [preselectedProcessId] : []
+  );
+  const [controlIds, setControlIds] = useState<string[]>(
+    editing ? (editing.controls ?? []).map((c) => c.id) : preselectedControlId ? [preselectedControlId] : []
+  );
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  function close() {
+    setOpen(false);
+    onDone?.();
+  }
 
   if (!open) {
     return (
@@ -61,19 +78,24 @@ export function PolicyForm({
           fileFields = { fileObjectKey: objectKey, fileName: file.name, fileSize: file.size, fileMime: file.type };
           setUploading(false);
         }
-        await createPolicyDocument({
+        const payload = {
           title,
           description: description || undefined,
           documentType: documentType || undefined,
           businessProcessIds: processIds,
           controlIds,
           ...fileFields,
-        });
-        setOpen(false);
+        };
+        if (editing) {
+          await updatePolicyDocument(editing.id, payload);
+        } else {
+          await createPolicyDocument(payload);
+        }
+        close();
         router.refresh();
       } catch (e) {
         setUploading(false);
-        setError(e instanceof Error ? e.message : "Anlage fehlgeschlagen.");
+        setError(e instanceof Error ? e.message : editing ? "Speichern fehlgeschlagen." : "Anlage fehlgeschlagen.");
       }
     });
   }
@@ -95,7 +117,7 @@ export function PolicyForm({
         <textarea className={inputCls} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
       <label className={labelCls}>
-        Datei
+        Datei{editing?.fileName ? ` (aktuell: ${editing.fileName} — leer lassen, um sie zu behalten)` : ""}
         <input ref={fileInput} type="file" className="text-sm text-muted-foreground" />
       </label>
 
@@ -141,13 +163,49 @@ export function PolicyForm({
 
       <div className="flex items-center gap-3">
         <Button variant="primary" disabled={pending || uploading} onClick={save}>
-          {uploading ? "Lädt hoch…" : "Anlegen"}
+          {uploading ? "Lädt hoch…" : editing ? "Speichern" : "Anlegen"}
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>
+        <Button variant="ghost" onClick={close}>
           Abbrechen
         </Button>
         {error && <span className="text-xs text-status-danger">{error}</span>}
       </div>
     </div>
+  );
+}
+
+/** Per-card "Bearbeiten" entry point for the richtlinien overview (a Server Component, so it
+ *  cannot hold the open/closed edit state itself) — toggles PolicyForm into edit mode for one
+ *  document. Sits alongside PolicyDownloadButton, which it does not touch. */
+export function PolicyEditButton({
+  policy,
+  businessProcessOptions,
+  controlOptions,
+}: {
+  policy: PolicyDocument;
+  businessProcessOptions: { id: string; name: string }[];
+  controlOptions: { id: string; name: string }[];
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="text-xs text-foreground underline decoration-dotted hover:text-primary"
+      >
+        Bearbeiten
+      </button>
+    );
+  }
+
+  return (
+    <PolicyForm
+      businessProcessOptions={businessProcessOptions}
+      controlOptions={controlOptions}
+      editing={policy}
+      onDone={() => setEditing(false)}
+    />
   );
 }

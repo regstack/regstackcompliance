@@ -168,6 +168,21 @@ export async function addRmKapitalplanung(fields: RmKapitalplanungInput) {
   revalidatePath("/risikomanagement");
 }
 
+// Nur solange nicht verabschiedet möglich — die Route lehnt eine verabschiedete Kapitalplanung
+// selbst ab (422), siehe kapitalplanung.routes.ts.
+export async function updateRmKapitalplanung(id: string, fields: RmKapitalplanungInput) {
+  await apiFetch(`/risikomanagement/kapitalplanung/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      planungshorizontJahre: fields.planungshorizontJahre,
+      adverseSzenarienBeruecksichtigt: fields.adverseSzenarienBeruecksichtigt,
+      konsistenzGeschaeftsplanung: fields.konsistenzGeschaeftsplanung || undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
 // Geschäftsleitung/Admin-only ("riskCapitalPlanning.approve"), serverseitig erzwungen — analog
 // verabschiedeRisikostrategie.
 export async function verabschiedeRmKapitalplanung(id: string) {
@@ -294,6 +309,26 @@ export type RmStresstestInput = {
 export async function addRmStresstest(fields: RmStresstestInput) {
   await apiFetch("/risikomanagement/stresstests", {
     method: "POST",
+    body: JSON.stringify({
+      jahr: fields.jahr,
+      typ: fields.typ,
+      ebene: fields.ebene,
+      betroffeneRisikoarten: fields.betroffeneRisikoarten,
+      szenariobeschreibung: fields.szenariobeschreibung,
+      risikofaktoren: fields.risikofaktoren || undefined,
+      wechselwirkungenBeruecksichtigt: fields.wechselwirkungenBeruecksichtigt,
+      ergebnis: fields.ergebnis || undefined,
+      rtfBeruecksichtigt: fields.rtfBeruecksichtigt,
+      handlungsbedarf: fields.handlungsbedarf || undefined,
+      durchgefuehrtAm: fields.durchgefuehrtAm ? new Date(fields.durchgefuehrtAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/risikomanagement");
+}
+
+export async function updateRmStresstest(id: string, fields: RmStresstestInput) {
+  await apiFetch(`/risikomanagement/stresstests/${id}`, {
+    method: "PUT",
     body: JSON.stringify({
       jahr: fields.jahr,
       typ: fields.typ,

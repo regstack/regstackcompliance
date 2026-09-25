@@ -1,24 +1,32 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
   addItBerechtigung,
+  updateItBerechtigung,
   rezertifizierenItBerechtigung,
   deaktivierenItBerechtigung,
   entziehenItBerechtigung,
 } from "@/app/(app)/it-risiko/actions";
 import type { ItAsset, ItBerechtigung } from "@/lib/regstack/it-risiko";
 
-function BerechtigungForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onDone: () => void; onCancel: () => void }) {
-  const [assetId, setAssetId] = useState("");
-  const [benutzerBezeichnung, setBenutzerBezeichnung] = useState("");
-  const [istTechnischerBenutzer, setIstTechnischerBenutzer] = useState(false);
-  const [istPrivilegiert, setIstPrivilegiert] = useState(false);
-  const [berechtigungsart, setBerechtigungsart] = useState("");
-  const [needToKnowBegruendung, setNeedToKnowBegruendung] = useState("");
+function BerechtigungForm({
+  assets, initial, onDone, onCancel,
+}: {
+  assets: ItAsset[];
+  initial?: ItBerechtigung;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [assetId, setAssetId] = useState(initial?.assetId ?? "");
+  const [benutzerBezeichnung, setBenutzerBezeichnung] = useState(initial?.benutzerBezeichnung ?? "");
+  const [istTechnischerBenutzer, setIstTechnischerBenutzer] = useState(initial?.istTechnischerBenutzer ?? false);
+  const [istPrivilegiert, setIstPrivilegiert] = useState(initial?.istPrivilegiert ?? false);
+  const [berechtigungsart, setBerechtigungsart] = useState(initial?.berechtigungsart ?? "");
+  const [needToKnowBegruendung, setNeedToKnowBegruendung] = useState(initial?.needToKnowBegruendung ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +34,12 @@ function BerechtigungForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onD
     setError(null);
     startTransition(async () => {
       try {
-        await addItBerechtigung({ assetId, benutzerBezeichnung, istTechnischerBenutzer, istPrivilegiert, berechtigungsart, needToKnowBegruendung });
+        const fields = { assetId, benutzerBezeichnung, istTechnischerBenutzer, istPrivilegiert, berechtigungsart, needToKnowBegruendung };
+        if (initial) {
+          await updateItBerechtigung(initial.id, fields);
+        } else {
+          await addItBerechtigung(fields);
+        }
         onDone();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
@@ -60,7 +73,7 @@ function BerechtigungForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onD
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
         <Button className="px-2.5 py-1 text-xs" disabled={pending || !benutzerBezeichnung.trim() || !berechtigungsart.trim()} onClick={submit}>
-          {pending ? "Speichert…" : "Speichern"}
+          {pending ? "Speichert…" : initial ? "Änderungen speichern" : "Speichern"}
         </Button>
         <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={pending} onClick={onCancel}>Abbrechen</Button>
       </div>
@@ -68,7 +81,7 @@ function BerechtigungForm({ assets, onDone, onCancel }: { assets: ItAsset[]; onD
   );
 }
 
-function LifecycleActions({ item }: { item: ItBerechtigung }) {
+function LifecycleActions({ item, canWrite, onEdit }: { item: ItBerechtigung; canWrite: boolean; onEdit: () => void }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +101,11 @@ function LifecycleActions({ item }: { item: ItBerechtigung }) {
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex gap-1.5">
+        {canWrite && (
+          <Button variant="ghost" className="px-2 py-1 text-[11px]" disabled={pending} onClick={onEdit}>
+            Bearbeiten
+          </Button>
+        )}
         <Button variant="secondary" className="px-2 py-1 text-[11px]" disabled={pending} onClick={() => run(rezertifizierenItBerechtigung)}>
           Rezertifizieren
         </Button>
@@ -107,12 +125,13 @@ function LifecycleActions({ item }: { item: ItBerechtigung }) {
 
 export function BerechtigungPanel({ items, assets, canWrite }: { items: ItBerechtigung[]; assets: ItAsset[]; canWrite: boolean }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <Card id="berechtigungen">
       <CardHeader>
         <CardTitle>Berechtigungsmanagement</CardTitle>
-        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => setAdding(true)}>+ Berechtigung</Button>}
+        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => { setEditingId(null); setAdding(true); }}>+ Berechtigung</Button>}
       </CardHeader>
       <CardBody>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -132,19 +151,32 @@ export function BerechtigungPanel({ items, assets, canWrite }: { items: ItBerech
             </thead>
             <tbody>
               {items.map((b) => (
-                <tr key={b.id} className="border-b border-border-subtle last:border-0">
-                  <td className="px-3 py-2 font-medium text-foreground">
-                    {b.benutzerBezeichnung}
-                    {b.istTechnischerBenutzer && <span className="ml-1.5 text-[10.5px] font-normal text-muted-foreground">(technisch)</span>}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {b.berechtigungsart}
-                    {b.istPrivilegiert && <span className="ml-1.5"><StatusPill status="hoch" label="privilegiert" /></span>}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">{b.naechsteRezertifizierung?.slice(0, 10) ?? "—"}</td>
-                  <td className="px-3 py-2"><StatusPill status={b.status} /></td>
-                  {canWrite && <td className="px-3 py-2 text-right"><LifecycleActions item={b} /></td>}
-                </tr>
+                <Fragment key={b.id}>
+                  <tr className="border-b border-border-subtle last:border-0">
+                    <td className="px-3 py-2 font-medium text-foreground">
+                      {b.benutzerBezeichnung}
+                      {b.istTechnischerBenutzer && <span className="ml-1.5 text-[10.5px] font-normal text-muted-foreground">(technisch)</span>}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {b.berechtigungsart}
+                      {b.istPrivilegiert && <span className="ml-1.5"><StatusPill status="hoch" label="privilegiert" /></span>}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{b.naechsteRezertifizierung?.slice(0, 10) ?? "—"}</td>
+                    <td className="px-3 py-2"><StatusPill status={b.status} /></td>
+                    {canWrite && (
+                      <td className="px-3 py-2 text-right">
+                        <LifecycleActions item={b} canWrite={canWrite} onEdit={() => { setAdding(false); setEditingId(editingId === b.id ? null : b.id); }} />
+                      </td>
+                    )}
+                  </tr>
+                  {editingId === b.id && (
+                    <tr className="border-b border-border-subtle last:border-0">
+                      <td colSpan={canWrite ? 5 : 4} className="px-3 py-2">
+                        <BerechtigungForm assets={assets} initial={b} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               {items.length === 0 && (
                 <tr><td colSpan={canWrite ? 5 : 4} className="px-3 py-6 text-center text-muted-foreground">Noch keine Berechtigungen erfasst.</td></tr>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listPolicyDocuments, listBusinessProcesses, listControls } from "@/lib/regstack/ics";
 import { getBackendSession, canWriteIcsPolicy } from "@/lib/regstack/backend-session";
 import { Card, CardBody } from "@/components/ui/card";
-import { PolicyForm } from "@/components/iks/policy-form";
+import { PolicyForm, PolicyEditButton } from "@/components/iks/policy-form";
 import { PolicyDownloadButton } from "@/components/iks/policy-download-button";
 
 export default async function RichtlinienPage() {
@@ -41,7 +41,16 @@ export default async function RichtlinienPage() {
               <CardBody className="p-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-foreground">{p.title}</p>
-                  {p.documentType && <span className="text-xs text-muted-foreground">{p.documentType}</span>}
+                  <div className="flex items-center gap-3">
+                    {p.documentType && <span className="text-xs text-muted-foreground">{p.documentType}</span>}
+                    {canWrite && (
+                      <PolicyEditButton
+                        policy={p}
+                        businessProcessOptions={processes.map((bp) => ({ id: bp.id, name: bp.name }))}
+                        controlOptions={controls.map((c) => ({ id: c.id, name: c.name }))}
+                      />
+                    )}
+                  </div>
                 </div>
                 {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
                 {p.fileName && (

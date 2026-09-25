@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
-import { addItStrategie, verabschiedeItStrategie } from "@/app/(app)/it-risiko/actions";
+import { addItStrategie, updateItStrategie, verabschiedeItStrategie } from "@/app/(app)/it-risiko/actions";
 import type { ItStrategie } from "@/lib/regstack/it-risiko";
 
-function StrategieForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
-  const [jahr, setJahr] = useState(new Date().getFullYear());
-  const [konsistenz, setKonsistenz] = useState("");
+function StrategieForm({ initial, onDone, onCancel }: { initial?: ItStrategie; onDone: () => void; onCancel: () => void }) {
+  const [jahr, setJahr] = useState(initial?.jahr ?? new Date().getFullYear());
+  const [konsistenz, setKonsistenz] = useState(initial?.konsistenzpruefungGeschaeftsstrategie ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,11 @@ function StrategieForm({ onDone, onCancel }: { onDone: () => void; onCancel: () 
     setError(null);
     startTransition(async () => {
       try {
-        await addItStrategie(jahr, konsistenz);
+        if (initial) {
+          await updateItStrategie(initial.id, konsistenz);
+        } else {
+          await addItStrategie(jahr, konsistenz);
+        }
         onDone();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
@@ -28,7 +32,7 @@ function StrategieForm({ onDone, onCancel }: { onDone: () => void; onCancel: () 
   return (
     <div className="rounded-md border border-border-strong bg-graphite-950 p-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <input type="number" placeholder="Jahr" value={jahr} disabled={pending} onChange={(e) => setJahr(Number(e.target.value))}
+        <input type="number" placeholder="Jahr" value={jahr} disabled={pending || !!initial} onChange={(e) => setJahr(Number(e.target.value))}
           className="rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-foreground disabled:opacity-50" />
         <input placeholder="Konsistenzprüfung zur Geschäftsstrategie" value={konsistenz} disabled={pending}
           onChange={(e) => setKonsistenz(e.target.value)}
@@ -36,7 +40,9 @@ function StrategieForm({ onDone, onCancel }: { onDone: () => void; onCancel: () 
       </div>
       {error && <p className="mt-2 text-xs text-status-danger">{error}</p>}
       <div className="mt-2 flex gap-2">
-        <Button className="px-2.5 py-1 text-xs" disabled={pending} onClick={submit}>{pending ? "Speichert…" : "Als Entwurf anlegen"}</Button>
+        <Button className="px-2.5 py-1 text-xs" disabled={pending} onClick={submit}>
+          {pending ? "Speichert…" : initial ? "Änderungen speichern" : "Als Entwurf anlegen"}
+        </Button>
         <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={pending} onClick={onCancel}>Abbrechen</Button>
       </div>
     </div>
@@ -72,12 +78,13 @@ function VerabschiedenButton({ id }: { id: string }) {
 
 export function ItStrategiePanel({ items, canWrite, canApprove }: { items: ItStrategie[]; canWrite: boolean; canApprove: boolean }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <Card id="strategie">
       <CardHeader>
         <CardTitle>IT-Strategie</CardTitle>
-        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => setAdding(true)}>+ IT-Strategie</Button>}
+        {canWrite && !adding && <Button variant="secondary" className="px-2.5 py-1 text-xs" onClick={() => { setEditingId(null); setAdding(true); }}>+ IT-Strategie</Button>}
       </CardHeader>
       <CardBody>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -86,18 +93,28 @@ export function ItStrategiePanel({ items, canWrite, canApprove }: { items: ItStr
         {adding && <div className="mb-3"><StrategieForm onDone={() => setAdding(false)} onCancel={() => setAdding(false)} /></div>}
         <div className="flex flex-col gap-3">
           {items.map((s) => (
-            <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle p-4">
-              <div>
-                <div className="text-sm font-semibold text-foreground">IT-Strategie {s.jahr}</div>
-                <div className="mt-1 text-[11.5px] text-muted-foreground">
-                  {s.status === "verabschiedet" && s.verabschiedetAm ? `Verabschiedet ${s.verabschiedetAm.slice(0, 10)}` : "Noch nicht verabschiedet"}
-                  {s.konsistenzpruefungGeschaeftsstrategie && <><br />{s.konsistenzpruefungGeschaeftsstrategie}</>}
+            <div key={s.id} className="flex flex-col gap-3 rounded-lg border border-border-subtle p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">IT-Strategie {s.jahr}</div>
+                  <div className="mt-1 text-[11.5px] text-muted-foreground">
+                    {s.status === "verabschiedet" && s.verabschiedetAm ? `Verabschiedet ${s.verabschiedetAm.slice(0, 10)}` : "Noch nicht verabschiedet"}
+                    {s.konsistenzpruefungGeschaeftsstrategie && <><br />{s.konsistenzpruefungGeschaeftsstrategie}</>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StatusPill status={s.status} />
+                  {canWrite && s.status === "entwurf" && (
+                    <Button variant="ghost" className="px-2.5 py-1 text-xs" disabled={adding} onClick={() => { setAdding(false); setEditingId(editingId === s.id ? null : s.id); }}>
+                      Bearbeiten
+                    </Button>
+                  )}
+                  {s.status === "entwurf" && canApprove && <VerabschiedenButton id={s.id} />}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <StatusPill status={s.status} />
-                {s.status === "entwurf" && canApprove && <VerabschiedenButton id={s.id} />}
-              </div>
+              {editingId === s.id && (
+                <StrategieForm initial={s} onDone={() => setEditingId(null)} onCancel={() => setEditingId(null)} />
+              )}
             </div>
           ))}
           {items.length === 0 && <p className="text-sm text-muted-foreground">Noch keine IT-Strategie erfasst.</p>}

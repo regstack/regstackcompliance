@@ -4,10 +4,12 @@ import {
   listErleichterungen, listStellenbeschreibungen, naechsteFaelligkeit, isOverdue,
   governanceWarnings,
 } from "@/lib/regstack/compliance";
+import { getBackendSession, canWriteCompliance } from "@/lib/regstack/backend-session";
 import { Card, CardBody } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
+import { RatingForm } from "@/components/compliance/rating-form";
 
 const WALKTHROUGH_STEPS: WalkthroughStep[] = [
   {
@@ -43,12 +45,14 @@ const AT442_MAPPING = [
 ];
 
 export default async function CompliancePage() {
-  const [normen, risiken, kontrollen, quellen, aenderungen, handshakes, feststellungen, ratings, beauftragte, erleichterungen, stellenbeschreibungen] =
+  const [session, normen, risiken, kontrollen, quellen, aenderungen, handshakes, feststellungen, ratings, beauftragte, erleichterungen, stellenbeschreibungen] =
     await Promise.all([
+      getBackendSession(),
       listNormen(), listRisiken(), listKontrollen(), listQuellen(), listAenderungen(),
       listNormZuweisungHandshakes(), listFeststellungen(), listRatings(), listBeauftragte(),
       listErleichterungen(), listStellenbeschreibungen(),
     ]);
+  const canWrite = session ? canWriteCompliance(session.role) : false;
 
   const wesentlich = normen.filter((n) => n.wesentlichkeit === "wesentlich").length;
   const relevantNichtWesentlich = normen.filter((n) => n.relevanz === "relevant" && n.wesentlichkeit === "nicht_wesentlich").length;
@@ -96,7 +100,10 @@ export default async function CompliancePage() {
       </div>
 
       <section>
-        <h2 className="mb-1 text-base font-semibold text-foreground">Compliance-Rating je Periode</h2>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-foreground">Compliance-Rating je Periode</h2>
+          {canWrite && <RatingForm />}
+        </div>
         <p className="mb-3 text-xs text-muted-foreground">Jede Änderung des Ratings verlangt eine dokumentierte Begründung. Tz. 6</p>
         <div className="flex flex-wrap gap-2.5">
           {ratings.map((r) => (

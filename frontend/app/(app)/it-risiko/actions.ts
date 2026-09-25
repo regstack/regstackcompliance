@@ -12,6 +12,16 @@ export async function addItStrategie(jahr: number, konsistenzpruefungGeschaeftss
   revalidatePath("/it-risiko");
 }
 
+// Jahr ist beim Update nicht mehr änderbar (PUT-Schema nimmt nur den Konsistenzvermerk an);
+// verabschiedete Strategien lehnt das Backend ohnehin ab.
+export async function updateItStrategie(id: string, konsistenzpruefungGeschaeftsstrategie: string) {
+  await apiFetch(`/it-risiko/strategie/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ konsistenzpruefungGeschaeftsstrategie: konsistenzpruefungGeschaeftsstrategie || undefined }),
+  });
+  revalidatePath("/it-risiko");
+}
+
 // Geschäftsleitung/Admin-only ("itStrategy.approve").
 export async function verabschiedeItStrategie(id: string) {
   await apiFetch(`/it-risiko/strategie/${id}/verabschieden`, { method: "POST" });
@@ -42,6 +52,21 @@ export async function addItAsset(fields: ItAssetInput) {
   revalidatePath("/it-risiko");
 }
 
+export async function updateItAsset(id: string, fields: ItAssetInput) {
+  await apiFetch(`/it-risiko/assets/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      bezeichnung: fields.bezeichnung,
+      kategorie: fields.kategorie,
+      schutzbedarfVertraulichkeit: fields.schutzbedarfVertraulichkeit || undefined,
+      schutzbedarfIntegritaet: fields.schutzbedarfIntegritaet || undefined,
+      schutzbedarfVerfuegbarkeit: fields.schutzbedarfVerfuegbarkeit || undefined,
+      begruendung: fields.begruendung || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
 export type ItRisikoInput = {
   assetId: string;
   bedrohung: string;
@@ -54,6 +79,22 @@ export type ItRisikoInput = {
 export async function addItRisiko(fields: ItRisikoInput) {
   await apiFetch("/it-risiko/risiken", {
     method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      bedrohung: fields.bedrohung,
+      eintrittswahrscheinlichkeit: fields.eintrittswahrscheinlichkeit || undefined,
+      auswirkung: fields.auswirkung || undefined,
+      restrisiko: fields.restrisiko || undefined,
+      massnahme: fields.massnahme || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Ein von der GL akzeptiertes Restrisiko lehnt das Backend beim PUT ab (siehe risiken.routes.ts).
+export async function updateItRisiko(id: string, fields: ItRisikoInput) {
+  await apiFetch(`/it-risiko/risiken/${id}`, {
+    method: "PUT",
     body: JSON.stringify({
       assetId: fields.assetId || undefined,
       bedrohung: fields.bedrohung,
@@ -94,6 +135,22 @@ export async function addItVorfall(fields: ItVorfallInput) {
   revalidatePath("/it-risiko");
 }
 
+// Datum ist beim Update nicht mehr änderbar (PUT-Schema nimmt es nicht an).
+export type ItVorfallUpdateInput = Omit<ItVorfallInput, "datum">;
+
+export async function updateItVorfall(id: string, fields: ItVorfallUpdateInput) {
+  await apiFetch(`/it-risiko/vorfaelle/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      schweregrad: fields.schweregrad,
+      beschreibung: fields.beschreibung,
+      betroffeneSysteme: fields.betroffeneSysteme || undefined,
+      meldepflichtBaFin: fields.meldepflichtBaFin,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
 export async function abschliessenItVorfall(id: string) {
   await apiFetch(`/it-risiko/vorfaelle/${id}/abschliessen`, { method: "POST" });
   revalidatePath("/it-risiko");
@@ -113,6 +170,22 @@ export type ItBerechtigungInput = {
 export async function addItBerechtigung(fields: ItBerechtigungInput) {
   await apiFetch("/it-risiko/berechtigungen", {
     method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      benutzerBezeichnung: fields.benutzerBezeichnung,
+      istTechnischerBenutzer: fields.istTechnischerBenutzer,
+      istPrivilegiert: fields.istPrivilegiert,
+      berechtigungsart: fields.berechtigungsart,
+      needToKnowBegruendung: fields.needToKnowBegruendung || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Eine entzogene Berechtigung lehnt das Backend beim PUT ab (siehe berechtigungen.routes.ts).
+export async function updateItBerechtigung(id: string, fields: ItBerechtigungInput) {
+  await apiFetch(`/it-risiko/berechtigungen/${id}`, {
+    method: "PUT",
     body: JSON.stringify({
       assetId: fields.assetId || undefined,
       benutzerBezeichnung: fields.benutzerBezeichnung,
@@ -168,6 +241,22 @@ export async function addItProjekt(fields: ItProjektInput) {
   revalidatePath("/it-risiko");
 }
 
+// Abgeschlossene/abgebrochene Projekte lehnt das Backend beim PUT ab (siehe projekte.routes.ts).
+export async function updateItProjekt(id: string, fields: ItProjektInput) {
+  await apiFetch(`/it-risiko/projekte/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      bezeichnung: fields.bezeichnung,
+      ziel: fields.ziel || undefined,
+      vorgehensmodell: fields.vorgehensmodell || undefined,
+      risikobewertung: fields.risikobewertung || undefined,
+      startAm: fields.startAm ? new Date(fields.startAm).toISOString() : undefined,
+      geplantesEndeAm: fields.geplantesEndeAm ? new Date(fields.geplantesEndeAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
 // Tz. 7.2 — Lessons Learned sind Pflichtbestandteil des Projektabschlusses.
 export async function abschliessenItProjekt(id: string, lessonsLearned: string) {
   await apiFetch(`/it-risiko/projekte/${id}/abschliessen`, {
@@ -196,6 +285,22 @@ export type ItAenderungInput = {
 export async function addItAenderung(fields: ItAenderungInput) {
   await apiFetch("/it-risiko/aenderungen", {
     method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      bezeichnung: fields.bezeichnung,
+      art: fields.art || undefined,
+      risikobewertung: fields.risikobewertung || undefined,
+      rueckabwicklungsplan: fields.rueckabwicklungsplan || undefined,
+      geplantAm: fields.geplantAm ? new Date(fields.geplantAm).toISOString() : undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+// Eine bereits umgesetzte Änderung lehnt das Backend beim PUT ab (siehe aenderungen.routes.ts).
+export async function updateItAenderung(id: string, fields: ItAenderungInput) {
+  await apiFetch(`/it-risiko/aenderungen/${id}`, {
+    method: "PUT",
     body: JSON.stringify({
       assetId: fields.assetId || undefined,
       bezeichnung: fields.bezeichnung,
@@ -250,6 +355,23 @@ export async function addItBetriebsstoerung(fields: ItBetriebsstoerungInput) {
   revalidatePath("/it-risiko");
 }
 
+// Datum ist beim Update nicht mehr änderbar (PUT-Schema nimmt es nicht an).
+export type ItBetriebsstoerungUpdateInput = Omit<ItBetriebsstoerungInput, "datum">;
+
+export async function updateItBetriebsstoerung(id: string, fields: ItBetriebsstoerungUpdateInput) {
+  await apiFetch(`/it-risiko/betriebsstoerungen/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      beschreibung: fields.beschreibung,
+      betroffeneSysteme: fields.betroffeneSysteme || undefined,
+      ursache: fields.ursache || undefined,
+      prioritaet: fields.prioritaet,
+      geschaeftsleitungInformiert: fields.geschaeftsleitungInformiert,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
 export async function abschliessenItBetriebsstoerung(id: string) {
   await apiFetch(`/it-risiko/betriebsstoerungen/${id}/abschliessen`, { method: "POST" });
   revalidatePath("/it-risiko");
@@ -268,6 +390,20 @@ export type ItNotfallplanInput = {
 export async function addItNotfallplan(fields: ItNotfallplanInput) {
   await apiFetch("/it-risiko/notfallmanagement/plaene", {
     method: "POST",
+    body: JSON.stringify({
+      assetId: fields.assetId || undefined,
+      bezeichnung: fields.bezeichnung,
+      rto: fields.rto || undefined,
+      rpo: fields.rpo || undefined,
+      konfigurationNotbetrieb: fields.konfigurationNotbetrieb || undefined,
+    }),
+  });
+  revalidatePath("/it-risiko");
+}
+
+export async function updateItNotfallplan(id: string, fields: ItNotfallplanInput) {
+  await apiFetch(`/it-risiko/notfallmanagement/plaene/${id}`, {
+    method: "PUT",
     body: JSON.stringify({
       assetId: fields.assetId || undefined,
       bezeichnung: fields.bezeichnung,
