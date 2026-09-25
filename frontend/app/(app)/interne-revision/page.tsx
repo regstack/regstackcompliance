@@ -8,6 +8,26 @@ import { StatCard } from "@/components/ui/stat-card";
 import { DashboardBanners } from "@/components/revisions/dashboard/dashboard-banners";
 import { NextDueTable, type NextDueRow } from "@/components/revisions/dashboard/next-due-table";
 import { RecentActivity } from "@/components/revisions/dashboard/recent-activity";
+import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
+
+const WALKTHROUGH_STEPS: WalkthroughStep[] = [
+  {
+    title: "Revisions-Dashboard",
+    body: "Prüfungsplan-Abdeckung, überfällige Prüfobjekte und wesentliche Feststellungen mit Eskalationsstufen auf einen Blick.",
+  },
+  {
+    title: "Prüfungsuniversum & Plan",
+    body: "Zyklen, Fälligkeiten und der Jahresplan der Revision — Tz. 6.",
+  },
+  {
+    title: "Prüfungen & Feststellungen",
+    body: "Prüfungen, Feststellungen & Nachverfolgung sowie externe Prüfungen finden Sie in der Seitenleiste — Tz. 7–12.",
+  },
+  {
+    title: "Berichte, QS & Einstellungen",
+    body: "Quartals- und Jahresbericht, Governance/QS/Projekte sowie Audit-Trail, Export und Einstellungen runden das Modul ab.",
+  },
+];
 
 export default async function RevisionDashboardPage() {
   const [universum, plans, pruefungen, feststellungen, qs, incidents, auditLog, einstellungen] = await Promise.all([
@@ -78,6 +98,7 @@ export default async function RevisionDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <Walkthrough id="interne-revision-dashboard" steps={WALKTHROUGH_STEPS} />
       <div>
         <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
         <p className="mt-1 text-sm text-muted-foreground">Stand: {today()}</p>

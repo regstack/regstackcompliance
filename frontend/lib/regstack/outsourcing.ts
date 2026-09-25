@@ -163,6 +163,14 @@ export async function getWeiterverlagerungskette(activityId: string): Promise<We
   return apiFetch<WeiterverlagerungNode[]>(`/activities/${activityId}/weiterverlagerung`);
 }
 
+export type MonitoringKpiRecord = MonitoringRecord & { activity: { id: string; name: string } };
+
+// Institution-wide KPI/KRI feed — mirrors the /monitoring/escalations cross-activity pattern,
+// since the plain activities list deliberately doesn't include monitoringRecords.
+export async function listMonitoringKpis(): Promise<MonitoringKpiRecord[]> {
+  return apiFetch<MonitoringKpiRecord[]>("/activities/monitoring/kpis");
+}
+
 const HANDLUNGSOPTION_STATUS_TO_FRONTEND: Record<string, Handlungsoption["status"]> = {
   ADOPTED_OPTIONS: "adopted_options",
   EXIT_STRATEGY: "exit_strategy",

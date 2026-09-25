@@ -61,6 +61,14 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
     dashboardLabel: "Auslagerungsregister",
     groups: [
       {
+        title: "Risiko & Monitoring",
+        icon: <GaugeIcon {...iconProps} />,
+        items: [
+          { href: "/outsourcing/risikoanalysen", label: "Risikoanalysen" },
+          { href: "/outsourcing/kpi-monitoring", label: "KPI/KRI-Monitoring" },
+        ],
+      },
+      {
         title: "Bericht · Tz. 13",
         icon: <FileBarChartIcon {...iconProps} />,
         items: [{ href: "/outsourcing/bericht", label: "Bericht über die Auslagerungen" }],
@@ -305,10 +313,10 @@ export const MODULE_ORDER: NavModuleKey[] = [
   "outsourcing",
   "compliance",
   "internal_audit",
-  "accounting",
-  "iks",
   "risikomanagement",
   "it_risiko",
+  "iks",
+  "accounting",
 ];
 
 export function moduleForPathname(pathname: string): NavModuleKey | null {

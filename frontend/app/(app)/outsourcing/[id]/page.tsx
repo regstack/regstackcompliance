@@ -16,6 +16,7 @@ import { WesentlichkeitPanel } from "@/components/outsourcing/wesentlichkeit-pan
 import { MonitoringPanel } from "@/components/outsourcing/monitoring-panel";
 import { WeiterverlagerungTree } from "@/components/outsourcing/weiterverlagerung-tree";
 import { StammdatenPanel } from "@/components/outsourcing/stammdaten-panel";
+import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
 
 export default async function AuslagerungDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,8 +40,24 @@ export default async function AuslagerungDetailPage({ params }: { params: Promis
   const canApproveHandlungsoption = isGeschaeftsleitung(session.role);
   const offenCount = openClauseCount(activity);
 
+  const walkthroughSteps: WalkthroughStep[] = [
+    {
+      title: "Stammdaten, Wesentlichkeit & Vertrag",
+      body: "Erfassen Sie zunächst die Stammdaten, führen Sie die Wesentlichkeitseinstufung durch und hinterlegen Sie den Vertrag samt Checkliste.",
+    },
+    {
+      title: "Handlungsoption & Weiterverlagerung",
+      body: "Dokumentieren Sie die gewählte Handlungsoption und — bei Unterauslagerung — die Weiterverlagerungskette.",
+    },
+    {
+      title: "Monitoring",
+      body: "Im Reiter „Monitoring“ erfassen Sie laufende Überwachungsmaßnahmen zu dieser Auslagerung.",
+    },
+  ];
+
   return (
     <div>
+      <Walkthrough id="outsourcing-detail" steps={walkthroughSteps} />
       <Link href="/outsourcing" className="text-xs text-muted-foreground hover:text-copper-300">
         ← Auslagerungsregister
       </Link>
