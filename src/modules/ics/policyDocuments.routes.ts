@@ -6,7 +6,12 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
-import { assertIcsKeyBelongsToInstitution, buildIcsPolicyKey, createIcsUploadUrl } from "./objectStorage";
+import {
+  assertIcsKeyBelongsToInstitution,
+  buildIcsPolicyKey,
+  createIcsDownloadUrl,
+  createIcsUploadUrl,
+} from "./objectStorage";
 
 const router = Router();
 
@@ -56,6 +61,19 @@ router.get(
       businessProcesses: policy.businessProcesses.map((bp) => bp.businessProcess),
       controls: policy.controls.map((c) => c.control),
     });
+  })
+);
+
+router.get(
+  "/:id/download-url",
+  requirePermission("icsPolicy", "read"),
+  asyncHandler(async (req, res) => {
+    const policy = await prisma.icsPolicyDocument.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
+    if (!policy) throw new NotFoundError("Dokument nicht gefunden");
+    if (!policy.fileObjectKey) throw new NotFoundError("Kein Dokument hinterlegt");
+
+    const downloadUrl = await createIcsDownloadUrl(policy.fileObjectKey);
+    res.json({ downloadUrl });
   })
 );
 

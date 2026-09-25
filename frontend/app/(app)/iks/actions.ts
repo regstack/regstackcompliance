@@ -73,6 +73,11 @@ export async function addControlTestEvidence(
   revalidatePath(REVALIDATE);
 }
 
+export async function getControlTestEvidenceDownloadUrl(testId: string, evidenceId: string) {
+  const res = await apiFetch<{ downloadUrl: string }>(`/ics/control-tests/${testId}/evidence/${evidenceId}/download-url`);
+  return res.downloadUrl;
+}
+
 export type PolicyInput = {
   title: string;
   description?: string;
@@ -96,4 +101,9 @@ export async function createPolicyDocument(input: PolicyInput) {
   const created = await apiFetch<{ id: string }>("/ics/policies", { method: "POST", body: JSON.stringify(input) });
   revalidatePath(REVALIDATE);
   return created.id;
+}
+
+export async function getPolicyDocumentDownloadUrl(id: string) {
+  const res = await apiFetch<{ downloadUrl: string }>(`/ics/policies/${id}/download-url`);
+  return res.downloadUrl;
 }

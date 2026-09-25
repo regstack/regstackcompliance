@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, hasPermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { canReportMassnahmeErledigt } from "./ownership";
@@ -163,8 +163,7 @@ router.patch(
 
     if (parsed.data.action === "massnahme_erledigt") {
       if (before.status !== "offen") throw new ValidationError("Nur offene Feststellungen können als erledigt gemeldet werden.");
-      const role = req.user!.role;
-      const isWriteRole = role === "INTERNE_REVISION" || role === "ADMIN";
+      const isWriteRole = hasPermission(req.user!.role, "revisionRecord", "write");
       const isOwner = canReportMassnahmeErledigt(before.pruefungsobjekt?.verantwortlichUserId, req.user!.userId);
       if (!isWriteRole && !isOwner) {
         throw new ForbiddenError("Nur die/der Verantwortliche des Prüfungsobjekts oder die Interne Revision kann dies melden.");
@@ -183,7 +182,7 @@ router.patch(
     // geschlossen — Interne Revision confirms effectiveness; a separate, deliberate step from
     // the Fachbereich's "erledigt" report, never the same action. Same write-role gate as every
     // other revisionRecord mutation (not ownership-based, unlike the branch above).
-    if (req.user!.role !== "INTERNE_REVISION" && req.user!.role !== "ADMIN") {
+    if (!hasPermission(req.user!.role, "revisionRecord", "write")) {
       throw new ForbiddenError(`Rolle "${req.user!.role}" darf eine Feststellung nicht schließen.`);
     }
     if (before.status === "geschlossen") throw new ValidationError("Feststellung ist bereits geschlossen.");

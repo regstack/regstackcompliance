@@ -28,11 +28,13 @@ export default async function KontoPage() {
         </p>
       )}
 
-      {session?.role === "ADMIN" && (
+      {(session?.role === "ADMIN" || session?.role === "GESCHAEFTSLEITUNG") && (
         <div className="rounded-[10px] border border-border-subtle bg-surface p-4">
           <p className="text-sm font-medium text-foreground">Nutzerverwaltung</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Konten für dieses Institut anlegen, Rollen ändern oder deaktivieren.
+            {session.role === "ADMIN"
+              ? "Konten für dieses Institut anlegen, Rollen ändern oder deaktivieren."
+              : "Konten für dieses Institut einsehen (nur lesend)."}
           </p>
           <Link href="/konto/nutzerverwaltung" className="mt-2 inline-block text-sm text-copper-300 hover:underline">
             Zur Nutzerverwaltung →

@@ -6,7 +6,12 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
-import { assertIcsKeyBelongsToInstitution, buildIcsEvidenceKey, createIcsUploadUrl } from "./objectStorage";
+import {
+  assertIcsKeyBelongsToInstitution,
+  buildIcsEvidenceKey,
+  createIcsDownloadUrl,
+  createIcsUploadUrl,
+} from "./objectStorage";
 
 const router = Router();
 
@@ -180,6 +185,21 @@ router.post(
         })
     );
     res.status(201).json(created);
+  })
+);
+
+router.get(
+  "/:id/evidence/:evidenceId/download-url",
+  requirePermission("icsTesting", "read"),
+  asyncHandler(async (req, res) => {
+    const test = await prisma.icsControlTest.findFirst({ where: { id: req.params.id, control: { institutionId: req.user!.institutionId } } });
+    if (!test) throw new NotFoundError("Kontrolltest nicht gefunden");
+
+    const evidence = await prisma.icsControlTestEvidence.findFirst({ where: { id: req.params.evidenceId, testId: test.id } });
+    if (!evidence) throw new NotFoundError("Nachweis nicht gefunden");
+
+    const downloadUrl = await createIcsDownloadUrl(evidence.fileObjectKey);
+    res.json({ downloadUrl });
   })
 );
 

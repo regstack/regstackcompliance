@@ -25,9 +25,11 @@ const selectCls = `${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`;
 export function UserManagementPanel({
   initialUsers,
   currentUserId,
+  canWrite,
 }: {
   initialUsers: AdminUser[];
   currentUserId: string;
+  canWrite: boolean;
 }) {
   const [users, setUsers] = useState(initialUsers);
   const [creating, setCreating] = useState(false);
@@ -51,12 +53,14 @@ export function UserManagementPanel({
       <Card>
         <CardHeader>
           <CardTitle>Nutzer ({users.length})</CardTitle>
-          <Button onClick={() => setCreating((v) => !v)} disabled={pending}>
-            {creating ? "Abbrechen" : "Neuer Nutzer"}
-          </Button>
+          {canWrite && (
+            <Button onClick={() => setCreating((v) => !v)} disabled={pending}>
+              {creating ? "Abbrechen" : "Neuer Nutzer"}
+            </Button>
+          )}
         </CardHeader>
         <CardBody className="space-y-4">
-          {creating && (
+          {canWrite && creating && (
             <CreateUserForm
               onCreated={(user) => {
                 setUsers((prev) => [...prev, user].sort((a, b) => a.name.localeCompare(b.name)));
@@ -77,7 +81,7 @@ export function UserManagementPanel({
                   <th className="py-2 pr-3">Rolle</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">2FA</th>
-                  <th className="py-2" />
+                  {canWrite && <th className="py-2" />}
                 </tr>
               </thead>
               <tbody>
@@ -91,18 +95,22 @@ export function UserManagementPanel({
                       </td>
                       <td className="py-2 pr-3 text-muted-foreground">{u.email}</td>
                       <td className="py-2 pr-3">
-                        <select
-                          value={u.role}
-                          disabled={pending}
-                          onChange={(e) => saveUser(u.id, { role: e.target.value as BackendRole })}
-                          className={selectCls}
-                        >
-                          {ROLE_VALUES.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_LABELS[r]}
-                            </option>
-                          ))}
-                        </select>
+                        {canWrite ? (
+                          <select
+                            value={u.role}
+                            disabled={pending}
+                            onChange={(e) => saveUser(u.id, { role: e.target.value as BackendRole })}
+                            className={selectCls}
+                          >
+                            {ROLE_VALUES.map((r) => (
+                              <option key={r} value={r}>
+                                {ROLE_LABELS[r]}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          ROLE_LABELS[u.role]
+                        )}
                       </td>
                       <td className="py-2 pr-3">
                         <span
@@ -114,16 +122,18 @@ export function UserManagementPanel({
                         </span>
                       </td>
                       <td className="py-2 pr-3 text-muted-foreground">{u.totpEnabled ? "Ja" : "—"}</td>
-                      <td className="py-2 text-right">
-                        <Button
-                          variant={u.active ? "danger" : "secondary"}
-                          disabled={pending || isSelf}
-                          title={isSelf ? "Sie können Ihr eigenes Konto nicht deaktivieren." : undefined}
-                          onClick={() => saveUser(u.id, { active: !u.active })}
-                        >
-                          {u.active ? "Deaktivieren" : "Aktivieren"}
-                        </Button>
-                      </td>
+                      {canWrite && (
+                        <td className="py-2 text-right">
+                          <Button
+                            variant={u.active ? "danger" : "secondary"}
+                            disabled={pending || isSelf}
+                            title={isSelf ? "Sie können Ihr eigenes Konto nicht deaktivieren." : undefined}
+                            onClick={() => saveUser(u.id, { active: !u.active })}
+                          >
+                            {u.active ? "Deaktivieren" : "Aktivieren"}
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

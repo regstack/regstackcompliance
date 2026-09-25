@@ -23,6 +23,8 @@ export type Resource =
   | "complianceReference" // read-only Register: Risiken, Kontrollen, Beratung, Beauftragte, ...
   | "revisionRecord" // Pruefungsobjekt, Pruefung, Feststellung, Personal, Governance-Register CRUD
   | "revisionGovernance" // Einstellungen/Org-Form (Singleton)
+  | "revisionGovernance.glNotice" // GL-Mitteilungen — abweichend schreibbar durch INTERNE_REVISION oder GESCHAEFTSLEITUNG
+  | "revisionGovernance.sonderauftrag" // Sonderaufträge — dieselbe abweichende Schreibrolle wie glNotice
   | "revisionReport"
   | "revisionReport.acknowledge" // Geschäftsleitung-Kenntnisnahme eines finalen Berichts
   | "revisionPlan.approve" // Geschäftsleitung genehmigt den Jahres-Prüfungsplan
@@ -139,6 +141,15 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   revisionGovernance: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
     write: ["INTERNE_REVISION", "ADMIN"],
+  },
+  // GL-Mitteilungen und Sonderaufträge sind bewusst auch von der Geschäftsleitung selbst erfassbar
+  // (nicht nur von der Revision) — daher eigene write-Listen statt der allgemeinen
+  // revisionGovernance-Rolle.
+  "revisionGovernance.glNotice": {
+    write: ["INTERNE_REVISION", "GESCHAEFTSLEITUNG", "ADMIN"],
+  },
+  "revisionGovernance.sonderauftrag": {
+    write: ["INTERNE_REVISION", "GESCHAEFTSLEITUNG", "ADMIN"],
   },
   revisionReport: {
     read: ["GESCHAEFTSLEITUNG", "COMPLIANCE", "RISIKOCONTROLLING", "INTERNE_REVISION", "AUSLAGERUNGSBEAUFTRAGTER", "ADMIN", "VIEWER"],
@@ -269,13 +280,20 @@ const MATRIX: Record<Resource, Partial<Record<Action, Role[]>>> = {
   },
 };
 
+// Same MATRIX lookup requirePermission uses, exposed as a plain predicate for the handful of
+// routes (Revisionsfeststellung/ExternePruefungFeststellung status transitions) whose
+// authorization is a mix of role AND ownership decided inside the handler — those can't gate on
+// role alone via middleware, but still shouldn't hand-duplicate a role list that can drift from
+// this MATRIX. Prefer requirePermission() as middleware wherever the check is role-only.
+export function hasPermission(role: Role | undefined, resource: Resource, action: Action): boolean {
+  return !!role && !!MATRIX[resource][action]?.includes(role);
+}
+
 export function requirePermission(resource: Resource, action: Action) {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    const role = req.user?.role;
-    const allowed = role && MATRIX[resource][action]?.includes(role);
-    if (!allowed) {
+    if (!hasPermission(req.user?.role, resource, action)) {
       throw new ForbiddenError(
-        `Rolle "${role ?? "unbekannt"}" darf "${action}" auf "${resource}" nicht ausführen.`
+        `Rolle "${req.user?.role ?? "unbekannt"}" darf "${action}" auf "${resource}" nicht ausführen.`
       );
     }
     next();

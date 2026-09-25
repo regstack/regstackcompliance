@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, hasPermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { canReportMassnahmeErledigt } from "./ownership";
@@ -257,7 +257,7 @@ router.patch(
       throw new ValidationError(`Übergang zu "${parsed.data.action}" ist aus Status "${before.status}" nicht zulässig.`);
     }
 
-    const isWriteRole = req.user!.role === "INTERNE_REVISION" || req.user!.role === "ADMIN";
+    const isWriteRole = hasPermission(req.user!.role, "externalAuditRecord", "write");
     if (parsed.data.action === "fachbereich_erledigt") {
       const isOwner = canReportMassnahmeErledigt(before.verantwortlichUserId, req.user!.userId);
       if (!isWriteRole && !isOwner) {

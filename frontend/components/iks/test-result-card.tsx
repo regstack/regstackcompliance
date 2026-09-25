@@ -6,7 +6,12 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TEST_STATUS_LABELS, TEST_RESULT_LABELS, type ControlTest } from "@/lib/regstack/ics-utils";
-import { updateControlTest, addControlTestEvidence, getIcsEvidenceUploadUrl } from "@/app/(app)/iks/actions";
+import {
+  updateControlTest,
+  addControlTestEvidence,
+  getIcsEvidenceUploadUrl,
+  getControlTestEvidenceDownloadUrl,
+} from "@/app/(app)/iks/actions";
 
 const inputCls = "rounded-md border border-border-strong bg-surface px-2 py-1 text-sm text-foreground";
 
@@ -17,8 +22,22 @@ export function TestResultCard({ test, canWrite }: { test: ControlTest; canWrite
   const [resultNotes, setResultNotes] = useState(test.resultNotes ?? "");
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  async function onDownload(evidenceId: string) {
+    setError(null);
+    setDownloadingId(evidenceId);
+    try {
+      const url = await getControlTestEvidenceDownloadUrl(test.id, evidenceId);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download fehlgeschlagen.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   function save() {
     setError(null);
@@ -108,9 +127,15 @@ export function TestResultCard({ test, canWrite }: { test: ControlTest; canWrite
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Nachweise</p>
           {test.evidence.length === 0 && <p className="text-xs text-muted-foreground">Keine Nachweise hinterlegt.</p>}
           {test.evidence.map((ev) => (
-            <div key={ev.id} className="text-xs text-foreground">
-              📎 {ev.fileName}
-            </div>
+            <button
+              key={ev.id}
+              type="button"
+              onClick={() => onDownload(ev.id)}
+              disabled={downloadingId === ev.id}
+              className="block text-xs text-foreground underline decoration-dotted hover:text-primary disabled:opacity-60"
+            >
+              📎 {downloadingId === ev.id ? "Öffnet…" : ev.fileName}
+            </button>
           ))}
           {canWrite && (
             <div>

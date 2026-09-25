@@ -3,6 +3,7 @@ import { listPolicyDocuments, listBusinessProcesses, listControls } from "@/lib/
 import { getBackendSession, canWriteIcsPolicy } from "@/lib/regstack/backend-session";
 import { Card, CardBody } from "@/components/ui/card";
 import { PolicyForm } from "@/components/iks/policy-form";
+import { PolicyDownloadButton } from "@/components/iks/policy-download-button";
 
 export default async function RichtlinienPage() {
   const [session, policies, processes, controls] = await Promise.all([
@@ -43,6 +44,11 @@ export default async function RichtlinienPage() {
                   {p.documentType && <span className="text-xs text-muted-foreground">{p.documentType}</span>}
                 </div>
                 {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
+                {p.fileName && (
+                  <div className="mt-2">
+                    <PolicyDownloadButton policyId={p.id} fileName={p.fileName} />
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {p.businessProcesses?.map((bp) => (
                     <Link

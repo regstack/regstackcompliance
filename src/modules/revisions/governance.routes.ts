@@ -259,11 +259,8 @@ const glMitteilungSchema = z.object({ date: z.string().datetime(), decision: z.s
 
 router.post(
   "/gl-mitteilungen",
+  requirePermission("revisionGovernance.glNotice", "write"),
   asyncHandler(async (req, res) => {
-    const role = req.user!.role;
-    if (role !== "INTERNE_REVISION" && role !== "GESCHAEFTSLEITUNG" && role !== "ADMIN") {
-      throw new ValidationError(`Rolle "${role}" darf keine GL-Mitteilung erfassen.`);
-    }
     const parsed = glMitteilungSchema.safeParse(req.body);
     if (!parsed.success) throw new ValidationError(parsed.error.message);
 
@@ -295,11 +292,8 @@ const sonderauftragSchema = z.object({ date: z.string().datetime(), orderedBy: z
 
 router.post(
   "/sonderauftraege",
+  requirePermission("revisionGovernance.sonderauftrag", "write"),
   asyncHandler(async (req, res) => {
-    const role = req.user!.role;
-    if (role !== "INTERNE_REVISION" && role !== "GESCHAEFTSLEITUNG" && role !== "ADMIN") {
-      throw new ValidationError(`Rolle "${role}" darf keinen Sonderauftrag erfassen.`);
-    }
     const parsed = sonderauftragSchema.safeParse(req.body);
     if (!parsed.success) throw new ValidationError(parsed.error.message);
 
