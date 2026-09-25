@@ -1,8 +1,10 @@
+import Link from "next/link";
 import {
   getRevisionEinstellungen, listQualitaetssicherung, listProjektbegleitung, listZugriffsvorfaelle,
   listGlMitteilungen, listSonderauftraege, listAllPersons,
 } from "@/lib/regstack/revisions";
 import { getBackendSession, canWriteRevisions, isGeschaeftsleitung } from "@/lib/regstack/backend-session";
+import { getInstitutionSettings, SIZE_CLASS_LABEL } from "@/lib/regstack/institution";
 import { Banner } from "@/components/ui/banner";
 import { Card, CardBody } from "@/components/ui/card";
 import { OrgFormForm } from "@/components/revisions/governance/org-form-form";
@@ -13,9 +15,9 @@ import { GlPanel } from "@/components/revisions/governance/gl-panel";
 
 export default async function RevisionGovernancePage() {
   const session = await getBackendSession();
-  const [einstellungen, qs, projekte, vorfaelle, mitteilungen, sonderauftraege, personen] = await Promise.all([
+  const [einstellungen, qs, projekte, vorfaelle, mitteilungen, sonderauftraege, personen, institution] = await Promise.all([
     getRevisionEinstellungen(), listQualitaetssicherung(), listProjektbegleitung(), listZugriffsvorfaelle(),
-    listGlMitteilungen(), listSonderauftraege(), listAllPersons(),
+    listGlMitteilungen(), listSonderauftraege(), listAllPersons(), getInstitutionSettings(),
   ]);
 
   const canWrite = session ? canWriteRevisions(session.role) : false;
@@ -42,6 +44,17 @@ export default async function RevisionGovernancePage() {
           Vermeidung von Interessenkonflikten.
         </Banner>
       )}
+
+      <Banner title="Verwandte, aber eigenständige Einstellung: Revisionsbeauftragter = Geschäftsleiter (Tz. 10)">
+        Die Organisationsform hier (eigene Einheit / Geschäftsleiter führt die Interne Revision, Tz. 1)
+        ist von der Frage getrennt, ob der institutsseitig benannte Revisionsbeauftragte ein
+        Geschäftsleiter sein darf (Tz. 10) — Letzteres ist an die Institutsgröße gekoppelt (nur „Sehr
+        klein“) und wird auf{" "}
+        <Link href="/interne-revision/institutsgroesse" className="underline hover:text-copper-300">
+          Institutsgröße &amp; Erleichterungen
+        </Link>{" "}
+        gepflegt. Aktuelle Größenklasse: {SIZE_CLASS_LABEL[institution.sizeClass]}.
+      </Banner>
 
       <Card>
         <CardBody>

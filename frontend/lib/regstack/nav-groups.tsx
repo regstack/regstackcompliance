@@ -78,6 +78,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         icon: <AlertTriangleIcon {...iconProps} />,
         items: [{ href: "/outsourcing/ict-register", label: "DORA-Register" }],
       },
+      {
+        title: "Zugriff Interne Revision",
+        icon: <UsersIcon {...iconProps} />,
+        items: [{ href: "/outsourcing/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" }],
+      },
     ],
   },
   compliance: {
@@ -116,6 +121,7 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
         items: [
           { href: "/compliance/governance", label: "Governance & Beauftragte" },
           { href: "/compliance/zugriff", label: "Informationsrechte" },
+          { href: "/compliance/zugriffsanfragen", label: "Zugriffsanfragen Interne Revision" },
         ],
       },
       {
@@ -168,7 +174,11 @@ export const MODULE_NAV: Record<NavModuleKey, ModuleNav> = {
       {
         title: "Governance, QS & Projekte · Tz. 1–2",
         icon: <ShieldIcon {...iconProps} />,
-        items: [{ href: "/interne-revision/governance", label: "Governance, QS & Projekte" }],
+        items: [
+          { href: "/interne-revision/governance", label: "Governance, QS & Projekte" },
+          { href: "/interne-revision/institutsgroesse", label: "Institutsgröße & Erleichterungen" },
+          { href: "/interne-revision/zugriffsanfragen", label: "Zugriffsanfragen" },
+        ],
       },
       {
         title: "Audit-Trail, Export & Einstellungen",

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { Card, CardHeader, CardTitle, CardBody } from "@/components/ui/card";
+import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { saveRiskAnalysis, type RiskAnalysisInput } from "@/app/(app)/outsourcing/actions";
 import type { RiskAnalysis } from "@/lib/regstack/outsourcing";
@@ -114,8 +115,17 @@ export function WesentlichkeitPanel({
     });
   }
 
+  const sizeReliefActive = institution.sizeClass === "SEHR_KLEIN" || institution.sizeClass === "KLEIN";
+
   return (
     <div className="space-y-6">
+      {sizeReliefActive && (
+        <Banner title="Erleichterung aktiv (Tz. 2)">
+          Qualitativer Ansatz statt Szenariorechnung zulässig — Institutsgröße{" "}
+          {institution.sizeClass === "SEHR_KLEIN" ? "sehr klein" : "klein"}.
+        </Banner>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Quick-Check Hard-Trigger (Tz. 4/5)</CardTitle>

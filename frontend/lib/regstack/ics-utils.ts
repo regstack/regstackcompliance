@@ -33,6 +33,15 @@ export const TEST_RESULT_LABELS: Record<"EFFECTIVE" | "DEFICIENT" | "NOT_TESTED"
   NOT_TESTED: "nicht getestet",
 };
 
+// Mirrors prisma's PolicyDocumentScope — distinguishes the institution's own policy documents from
+// documentation of how RegStack itself meets MaRisk (for prospect/audit due-diligence asks).
+export type PolicyDocumentScope = "KUNDENRICHTLINIE" | "SOFTWARE_MARISK_NACHWEIS";
+
+export const POLICY_SCOPE_LABELS: Record<PolicyDocumentScope, string> = {
+  KUNDENRICHTLINIE: "Kundenrichtlinie",
+  SOFTWARE_MARISK_NACHWEIS: "Software & MaRisk-Nachweis",
+};
+
 export type BusinessProcess = {
   id: string;
   name: string;
@@ -86,6 +95,7 @@ export type PolicyDocument = {
   title: string;
   description: string | null;
   documentType: string | null;
+  scope: PolicyDocumentScope;
   fileObjectKey: string | null;
   fileName: string | null;
   uploadedAt: string | null;

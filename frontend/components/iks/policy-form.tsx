@@ -4,6 +4,9 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createPolicyDocument, getIcsPolicyUploadUrl } from "@/app/(app)/iks/actions";
+import { POLICY_SCOPE_LABELS, type PolicyDocumentScope } from "@/lib/regstack/ics-utils";
+
+const SCOPE_OPTIONS: PolicyDocumentScope[] = ["KUNDENRICHTLINIE", "SOFTWARE_MARISK_NACHWEIS"];
 
 const inputCls = "rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-sm text-foreground";
 const labelCls = "flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
@@ -24,6 +27,7 @@ export function PolicyForm({
   const [title, setTitle] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [description, setDescription] = useState("");
+  const [scope, setScope] = useState<PolicyDocumentScope>("KUNDENRICHTLINIE");
   const [processIds, setProcessIds] = useState<string[]>(preselectedProcessId ? [preselectedProcessId] : []);
   const [controlIds, setControlIds] = useState<string[]>(preselectedControlId ? [preselectedControlId] : []);
   const [pending, startTransition] = useTransition();
@@ -65,6 +69,7 @@ export function PolicyForm({
           title,
           description: description || undefined,
           documentType: documentType || undefined,
+          scope,
           businessProcessIds: processIds,
           controlIds,
           ...fileFields,
@@ -90,6 +95,16 @@ export function PolicyForm({
           <input className={inputCls} placeholder="Richtlinie / Arbeitsanweisung" value={documentType} onChange={(e) => setDocumentType(e.target.value)} />
         </label>
       </div>
+      <label className={labelCls}>
+        Ablage-Zweck
+        <select className={inputCls} value={scope} onChange={(e) => setScope(e.target.value as PolicyDocumentScope)}>
+          {SCOPE_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {POLICY_SCOPE_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className={labelCls}>
         Beschreibung
         <textarea className={inputCls} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />

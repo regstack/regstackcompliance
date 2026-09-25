@@ -1,10 +1,14 @@
+import Link from "next/link";
 import {
   listNormen, listRisiken, listKontrollen, listQuellen, listAenderungen,
   listNormZuweisungHandshakes, listFeststellungen, listRatings, listBeauftragte,
   listErleichterungen, listStellenbeschreibungen, naechsteFaelligkeit, isOverdue,
   governanceWarnings,
 } from "@/lib/regstack/compliance";
+import { getBackendSession } from "@/lib/regstack/backend-session";
+import { listAccessGrants, findAccessGrant } from "@/lib/regstack/access-grants";
 import { Card, CardBody } from "@/components/ui/card";
+import { Banner } from "@/components/ui/banner";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Walkthrough, type WalkthroughStep } from "@/components/ui/walkthrough";
@@ -43,6 +47,28 @@ const AT442_MAPPING = [
 ];
 
 export default async function CompliancePage() {
+  const session = await getBackendSession();
+
+  // Same 403-avoidance as outsourcing/page.tsx: Interne Revision now needs an APPROVED
+  // ModuleAccessGrant for COMPLIANCE before the module's own listXxx() calls below are allowed to
+  // succeed server-side; check that first instead of letting them 403 into the generic error card.
+  if (session?.role === "INTERNE_REVISION") {
+    const grants = await listAccessGrants();
+    const grant = findAccessGrant(grants, "COMPLIANCE");
+    if (grant?.status !== "APPROVED") {
+      return (
+        <Banner title="Zugriff noch nicht freigegeben">
+          Die Interne Revision benötigt eine aktive Freigabe der Compliance-Funktion, um dieses
+          Dashboard einzusehen.{" "}
+          <Link href="/interne-revision/zugriffsanfragen" className="underline hover:text-copper-300">
+            Zugriff anfragen
+          </Link>
+          .
+        </Banner>
+      );
+    }
+  }
+
   const [normen, risiken, kontrollen, quellen, aenderungen, handshakes, feststellungen, ratings, beauftragte, erleichterungen, stellenbeschreibungen] =
     await Promise.all([
       listNormen(), listRisiken(), listKontrollen(), listQuellen(), listAenderungen(),

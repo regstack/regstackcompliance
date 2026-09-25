@@ -55,6 +55,9 @@ function ReportCard({ r, canWrite, canAck }: { r: Report; canWrite: boolean; can
           <div className="flex items-center gap-2">
             {r.frozen && <StatusPill status="entwurf" label="eingefroren" />}
             <StatusPill status={r.status === "final" ? "final" : "entwurf"} label={r.status === "final" ? "final" : "Entwurf"} />
+            <a href={`/interne-revision/quartalsbericht/${r.id}/pdf`} className="text-xs text-copper-300 hover:underline">
+              PDF herunterladen
+            </a>
           </div>
         </div>
         <p className="mb-3 text-xs text-muted-foreground">Erstellt am {r.created_at?.slice(0, 10)}</p>

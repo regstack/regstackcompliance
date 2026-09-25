@@ -77,6 +77,7 @@ export type PolicyInput = {
   title: string;
   description?: string;
   documentType?: string;
+  scope?: "KUNDENRICHTLINIE" | "SOFTWARE_MARISK_NACHWEIS";
   fileObjectKey?: string;
   fileName?: string;
   fileSize?: number;
@@ -96,4 +97,9 @@ export async function createPolicyDocument(input: PolicyInput) {
   const created = await apiFetch<{ id: string }>("/ics/policies", { method: "POST", body: JSON.stringify(input) });
   revalidatePath(REVALIDATE);
   return created.id;
+}
+
+export async function updatePolicyDocument(id: string, input: Partial<PolicyInput>) {
+  await apiFetch(`/ics/policies/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+  revalidatePath(REVALIDATE);
 }

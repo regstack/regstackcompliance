@@ -50,9 +50,14 @@ function ReportRow({
           )}
         </td>
         <td className="px-3 py-2.5">
-          <button type="button" className="text-xs text-copper-300 hover:underline" onClick={() => setOpen((v) => !v)}>
-            {open ? "Details ausblenden" : "Details"}
-          </button>
+          <div className="flex flex-col items-start gap-1">
+            <button type="button" className="text-xs text-copper-300 hover:underline" onClick={() => setOpen((v) => !v)}>
+              {open ? "Details ausblenden" : "Details"}
+            </button>
+            <a href={`/outsourcing/bericht/${r.id}/pdf`} className="text-xs text-copper-300 hover:underline">
+              PDF herunterladen
+            </a>
+          </div>
         </td>
         <td className="px-3 py-2.5">
           {canApprove && r.status === "ENTWURF" && (

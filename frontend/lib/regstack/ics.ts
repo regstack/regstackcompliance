@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/regstack/backend-client";
 // depends on next/headers and cannot be bundled for the client.
 export * from "@/lib/regstack/ics-utils";
 
-import type { BusinessProcess, Control, ControlTest, PolicyDocument } from "@/lib/regstack/ics-utils";
+import type { BusinessProcess, Control, ControlTest, PolicyDocument, PolicyDocumentScope } from "@/lib/regstack/ics-utils";
 
 export async function listBusinessProcesses(): Promise<BusinessProcess[]> {
   return apiFetch<BusinessProcess[]>("/ics/processes");
@@ -25,10 +25,15 @@ export async function listControlTests(controlId?: string): Promise<ControlTest[
   const qs = controlId ? `?controlId=${controlId}` : "";
   return apiFetch<ControlTest[]>(`/ics/control-tests${qs}`);
 }
-export async function listPolicyDocuments(filter?: { businessProcessId?: string; controlId?: string }): Promise<PolicyDocument[]> {
+export async function listPolicyDocuments(filter?: {
+  businessProcessId?: string;
+  controlId?: string;
+  scope?: PolicyDocumentScope;
+}): Promise<PolicyDocument[]> {
   const params = new URLSearchParams();
   if (filter?.businessProcessId) params.set("businessProcessId", filter.businessProcessId);
   if (filter?.controlId) params.set("controlId", filter.controlId);
+  if (filter?.scope) params.set("scope", filter.scope);
   const qs = params.toString() ? `?${params.toString()}` : "";
   return apiFetch<PolicyDocument[]>(`/ics/policies${qs}`);
 }
