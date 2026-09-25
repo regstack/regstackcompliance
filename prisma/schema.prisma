@@ -717,6 +717,7 @@ model RegulatorischeAenderung {
   createdAt       DateTime @default(now())
 
   @@index([institutionId])
+  @@index([quelleId])
   @@map("compliance_aenderungen")
 }
 
@@ -942,6 +943,7 @@ model NormRisiko {
   risiko   Risiko @relation(fields: [risikoId], references: [id])
 
   @@id([normId, risikoId])
+  @@index([risikoId])
   @@map("compliance_norm_risiken")
 }
 
@@ -952,6 +954,7 @@ model RisikoKontrolle {
   kontrolle   Kontrolle @relation(fields: [kontrolleId], references: [id])
 
   @@id([risikoId, kontrolleId])
+  @@index([kontrolleId])
   @@map("compliance_risiko_kontrollen")
 }
 
@@ -1002,6 +1005,7 @@ model Funktionswechsel {
   anzeigeAufsicht Boolean               @default(false)
 
   @@index([institutionId])
+  @@index([funktionId])
   @@map("compliance_funktionswechsel")
 }
 
@@ -1095,6 +1099,7 @@ model Nachweis {
   uploadedAt       DateTime @default(now())
 
   @@index([institutionId, module])
+  @@index([previousVersionId])
   @@map("nachweise")
 }
 
@@ -1403,6 +1408,7 @@ model RevisionSonderwissen {
   updatedAt       DateTime @updatedAt
 
   @@index([institutionId])
+  @@index([pruefungId])
   @@map("revision_sonderwissen")
 }
 
@@ -1615,6 +1621,7 @@ model BalanceSheet {
   lineItems BalanceSheetLineItem[]
 
   @@index([institutionId, fiscalYear])
+  @@index([previousVersionId])
   @@map("accounting_balance_sheets")
 }
 
@@ -1655,6 +1662,7 @@ model IncomeStatement {
   lineItems IncomeStatementLineItem[]
 
   @@index([institutionId, fiscalYear])
+  @@index([previousVersionId])
   @@map("accounting_income_statements")
 }
 
@@ -1696,6 +1704,7 @@ model AccountingNotes {
   sections AccountingNotesSection[]
 
   @@index([institutionId, fiscalYear])
+  @@index([previousVersionId])
   @@map("accounting_notes")
 }
 
@@ -1733,6 +1742,7 @@ model ManagementReport {
   sections ManagementReportSection[]
 
   @@index([institutionId, fiscalYear])
+  @@index([previousVersionId])
   @@map("accounting_management_reports")
 }
 
@@ -1877,6 +1887,7 @@ model IcsControlProcess {
   businessProcess   IcsBusinessProcess @relation(fields: [businessProcessId], references: [id])
 
   @@id([controlId, businessProcessId])
+  @@index([businessProcessId])
   @@map("ics_control_processes")
 }
 
@@ -1957,6 +1968,7 @@ model IcsPolicyProcess {
   businessProcess   IcsBusinessProcess @relation(fields: [businessProcessId], references: [id])
 
   @@id([policyDocumentId, businessProcessId])
+  @@index([businessProcessId])
   @@map("ics_policy_processes")
 }
 
@@ -1967,6 +1979,7 @@ model IcsPolicyControl {
   control          IcsControl        @relation(fields: [controlId], references: [id])
 
   @@id([policyDocumentId, controlId])
+  @@index([controlId])
   @@map("ics_policy_controls")
 }
 
