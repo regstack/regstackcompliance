@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { classify } from "./classify";
@@ -14,6 +14,7 @@ const router = Router();
 router.get(
   "/",
   requirePermission("outsourcingActivity", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const activities = await prisma.outsourcingActivity.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -101,6 +102,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("outsourcingActivity", "read"),
+  requireAccessGrant("OUTSOURCING"),
   asyncHandler(async (req, res) => {
     const activity = await prisma.outsourcingActivity.findFirst({
       where: { id: req.params.id, institutionId: req.user!.institutionId },

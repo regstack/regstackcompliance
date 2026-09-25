@@ -31,6 +31,7 @@ async function main() {
       { email: "risikocontrolling@beispiel-leasing.de", name: "T. Neumann", role: "RISIKOCONTROLLING" as const },
       { email: "buchhaltung@beispiel-leasing.de", name: "S. Krüger", role: "BUCHHALTUNG" as const },
       { email: "admin@regstack.de", name: "RegStack Admin", role: "ADMIN" as const },
+      { email: "pruefer@beispiel-leasing.de", name: "Dr. A. Holm (Wirtschaftsprüfung)", role: "PRUEFER" as const },
     ].map((u) =>
       prisma.user.upsert({
         where: { email: u.email },
@@ -40,6 +41,31 @@ async function main() {
     )
   );
   const geschaeftsleitung = users[0];
+  const revisionUser = users[2];
+
+  // Interne Revision braucht Lesezugriff auf Outsourcing/Compliance nicht implizit über die
+  // Rollenmatrix, sondern muss ihn anfragen (ModuleAccessGrant) — für die Musterdaten bereits
+  // genehmigt, damit die Demo-Logins sofort nutzbar sind; der Anfrage/Genehmigung-Zyklus selbst
+  // bleibt über /access-grants voll funktionsfähig (z.B. nach einem Entzug erneut anfragen).
+  await Promise.all(
+    (["OUTSOURCING", "COMPLIANCE"] as const).map((accessModule) =>
+      prisma.moduleAccessGrant.upsert({
+        where: { institutionId_module: { institutionId: institution.id, module: accessModule } },
+        update: {},
+        create: {
+          institutionId: institution.id,
+          module: accessModule,
+          status: "APPROVED",
+          requestedByUserId: revisionUser.id,
+          requestedAt: new Date("2026-01-05"),
+          reason: "Standardzugriff für die laufende Jahresprüfung.",
+          decidedByUserId: geschaeftsleitung.id,
+          decidedAt: new Date("2026-01-06"),
+          decisionNote: "Freigegeben im Rahmen der Prüfungsplanung 2026.",
+        },
+      })
+    )
+  );
 
   // 1) Cloud-Hosting Kernanwendungen — CSC-Modell, beide Schwellen überschritten, kein Hard-Trigger
   const cloudHosting = await prisma.outsourcingActivity.create({
@@ -167,7 +193,14 @@ async function main() {
         },
       },
       handlungsoption: {
-        create: { status: "ADOPTED_OPTIONS", ersetzbarkeit: "LEICHT", transitionMonths: 3, reviewDate: new Date("2027-04-01") },
+        create: {
+          status: "EXIT_STRATEGY",
+          ersetzbarkeit: "LEICHT",
+          transitionMonths: 3,
+          reviewDate: new Date("2027-04-01"),
+          strategyDescription:
+            "Transitionsplan: Rückverlagerung auf zwei alternative Lohnbüros (Angebote vorliegend) oder Insourcing über bestehende HR-Software; Datenübergabe vertraglich in 4 Wochen zugesichert, jährlich getestet (zuletzt 03/2026).",
+        },
       },
       contract: { create: { clauseChecklist: {} } },
     },
@@ -1260,6 +1293,46 @@ async function main() {
     },
   });
 
+  // Zwei getrennte Ablage-Zwecke derselben Richtlinien-Bibliothek: die eigene Auslagerungsrichtlinie
+  // des Instituts (Kundenrichtlinie) und der Nachweis, wie RegStack selbst die MaRisk-Anforderungen
+  // erfüllt (Software-MaRisk-Nachweis, siehe docs/marisk-control-matrix.md).
+  await prisma.icsPolicyDocument.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000403" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000403",
+      institutionId: institution.id,
+      createdByUserId: geschaeftsleitung.id,
+      title: "Auslagerungsrichtlinie",
+      description: "Institutseigene Richtlinie zu Risikoanalyse, Vertragsgestaltung, Steuerung und Beendigung von Auslagerungen (MaRisk AT 9).",
+      documentType: "Richtlinie",
+      scope: "KUNDENRICHTLINIE",
+      fileObjectKey: "ics-policies/auslagerungsrichtlinie-v2.pdf",
+      fileName: "Auslagerungsrichtlinie_v2.pdf",
+      fileMime: "application/pdf",
+      uploadedByUserId: geschaeftsleitung.id,
+      uploadedAt: new Date("2026-01-15"),
+    },
+  });
+  await prisma.icsPolicyDocument.upsert({
+    where: { id: "30000000-0000-0000-0000-000000000404" },
+    update: {},
+    create: {
+      id: "30000000-0000-0000-0000-000000000404",
+      institutionId: institution.id,
+      createdByUserId: geschaeftsleitung.id,
+      title: "RegStack MaRisk-Kontrollmatrix",
+      description: "Nachweis, wie RegStack als Software die MaRisk-Anforderungen (Audit-Trail, RBAC, Mandantentrennung) technisch umsetzt — Grundlage für Auslagerungs-Due-Diligence des Instituts.",
+      documentType: "Kontrollmatrix",
+      scope: "SOFTWARE_MARISK_NACHWEIS",
+      fileObjectKey: "docs/marisk-control-matrix.md",
+      fileName: "RegStack_MaRisk_Kontrollmatrix.md",
+      fileMime: "text/markdown",
+      uploadedByUserId: geschaeftsleitung.id,
+      uploadedAt: new Date("2026-01-15"),
+    },
+  });
+
   // --- Risikomanagement (MaRisk AT 4) demo data -------------------------------------------------
   // Story und Zahlen sind bewusst deckungsgleich mit dem UI-Prototyp aus
   // Risikomanagement_BAIT_MVP_Spezifikation.md, damit Cockpit-Mockup und API dieselbe Demo erzählen.
@@ -1951,6 +2024,8 @@ async function main() {
       dataCategories: "Vertrags-, Kunden- und Zahlungsdaten",
       hasSubcontracting: true,
       subcontractingNote: "Rechenzentrumsbetrieb über regionale Tochtergesellschaften des Hyperscalers (EU-Region).",
+      exitStrategyNote:
+        "Portabilität vertraglich zugesichert (strukturierte Datenexporte, offene Schnittstellen); Ausweichanbieter identifiziert, Migrationsdauer geschätzt 9 Monate; Exit-Test zuletzt 11/2025.",
       status: "AKTIV",
     },
   });

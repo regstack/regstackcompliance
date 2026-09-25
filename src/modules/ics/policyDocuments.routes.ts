@@ -23,9 +23,12 @@ router.get(
   asyncHandler(async (req, res) => {
     const businessProcessId = typeof req.query.businessProcessId === "string" ? req.query.businessProcessId : undefined;
     const controlId = typeof req.query.controlId === "string" ? req.query.controlId : undefined;
+    const scope =
+      req.query.scope === "KUNDENRICHTLINIE" || req.query.scope === "SOFTWARE_MARISK_NACHWEIS" ? req.query.scope : undefined;
     const policies = await prisma.icsPolicyDocument.findMany({
       where: {
         institutionId: req.user!.institutionId,
+        scope,
         businessProcesses: businessProcessId ? { some: { businessProcessId } } : undefined,
         controls: controlId ? { some: { controlId } } : undefined,
       },
@@ -84,6 +87,7 @@ const policySchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   documentType: z.string().optional(),
+  scope: z.enum(["KUNDENRICHTLINIE", "SOFTWARE_MARISK_NACHWEIS"]).optional(),
   fileObjectKey: z.string().optional(),
   fileName: z.string().optional(),
   fileSize: z.number().int().optional(),

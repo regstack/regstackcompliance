@@ -30,6 +30,29 @@ enum Role {
   BUCHHALTUNG
   ADMIN
   VIEWER
+  PRUEFER // externer/interner Prüfer (Wirtschaftsprüfer, Aufsicht, Sonderprüfer) — ausschließlich lesend + Export, siehe rbac.ts
+}
+
+// Zugriffsfreigabe: Interne Revision muss sich Lesezugriff auf Outsourcing- bzw.
+// Compliance-Daten aktiv freigeben lassen, statt ihn implizit über die Rollenmatrix zu haben —
+// siehe requireAccessGrant() in rbac.ts.
+enum AccessModule {
+  OUTSOURCING
+  COMPLIANCE
+}
+
+enum AccessGrantStatus {
+  PENDING
+  APPROVED
+  DENIED
+  REVOKED
+}
+
+// Richtlinien-Bibliothek (IcsPolicyDocument) unterscheidet zwei Ablage-Zwecke: die eigene
+// Richtlinie des Instituts vs. den Nachweis, wie RegStack selbst die MaRisk-Anforderungen erfüllt.
+enum PolicyDocumentScope {
+  KUNDENRICHTLINIE
+  SOFTWARE_MARISK_NACHWEIS
 }
 
 enum SizeClass {
@@ -284,6 +307,7 @@ model InstitutionProfile {
   users      User[]
   activities OutsourcingActivity[]
   reports    Report[]
+  moduleAccessGrants ModuleAccessGrant[]
 
   complianceQuellen               Quelle[]
   complianceAenderungen           RegulatorischeAenderung[]
@@ -1931,6 +1955,8 @@ model IcsPolicyDocument {
   description  String?
   documentType String?
 
+  scope PolicyDocumentScope @default(KUNDENRICHTLINIE)
+
   fileObjectKey String?
   fileName      String?
   fileSize      Int?
@@ -1948,6 +1974,34 @@ model IcsPolicyDocument {
 
   @@index([institutionId])
   @@map("ics_policy_documents")
+}
+
+// Interne Revision braucht Lesezugriff auf Outsourcing- bzw. Compliance-Daten nicht implizit über
+// die Rollenmatrix (rbac.ts MATRIX), sondern muss ihn aktiv anfragen; der jeweilige Fachbereich
+// (AUSLAGERUNGSBEAUFTRAGTER bzw. COMPLIANCE) genehmigt/entzieht ihn. Ein Datensatz pro
+// Institution+Modul, wiederverwendet über den vollen Anfrage/Genehmigung/Entzug-Zyklus (Historie
+// steht im Audit-Log, siehe withAudit in den Routen).
+model ModuleAccessGrant {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   InstitutionProfile @relation(fields: [institutionId], references: [id])
+
+  module AccessModule
+  status AccessGrantStatus @default(PENDING)
+
+  requestedByUserId String?
+  requestedAt       DateTime?
+  reason            String?
+
+  decidedByUserId String?
+  decidedAt       DateTime?
+  decisionNote    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([institutionId, module])
+  @@map("module_access_grants")
 }
 
 model IcsPolicyProcess {

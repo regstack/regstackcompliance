@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError, ForbiddenError } from "../../utils/errors";
 import { canRespondToHandshake } from "./handshake";
@@ -13,6 +13,7 @@ const router = Router();
 router.get(
   "/",
   requirePermission("complianceRecord", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const normen = await prisma.norm.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -55,6 +56,7 @@ router.post(
 router.get(
   "/handshakes",
   requirePermission("complianceRecord", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const handshakes = await prisma.normAssignmentHandshake.findMany({
       where: { institutionId: req.user!.institutionId },
@@ -69,6 +71,7 @@ router.get(
 router.get(
   "/handshakes/disputed",
   requirePermission("complianceRecord", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const disputed = await prisma.normAssignmentHandshake.findMany({
       where: { institutionId: req.user!.institutionId, status: "widersprochen" },
@@ -82,6 +85,7 @@ router.get(
 router.get(
   "/:id",
   requirePermission("complianceRecord", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const norm = await prisma.norm.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
     if (!norm) throw new NotFoundError("Regelung nicht gefunden");
@@ -117,6 +121,7 @@ router.patch(
 router.get(
   "/:normId/handshake",
   requirePermission("complianceRecord", "read"),
+  requireAccessGrant("COMPLIANCE"),
   asyncHandler(async (req, res) => {
     const norm = await prisma.norm.findFirst({ where: { id: req.params.normId, institutionId: req.user!.institutionId } });
     if (!norm) throw new NotFoundError("Regelung nicht gefunden");

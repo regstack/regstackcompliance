@@ -6,8 +6,24 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { requirePermission } from "../../middleware/rbac";
 import { withAudit } from "../../middleware/auditTrail";
 import { NotFoundError, ValidationError } from "../../utils/errors";
+import { pdfHeading, pdfSection, renderPdf } from "../../utils/pdf";
 
 const router = Router();
+
+interface ResolvedAudit {
+  subject?: string;
+  overall_rating?: string;
+  report_date?: string;
+}
+interface ResolvedFinding {
+  titel?: string;
+  schweregrad?: string;
+  status?: string;
+}
+interface ResolvedPlanItem {
+  bezeichnung?: string;
+  materiality?: string;
+}
 
 router.get(
   "/",
@@ -140,6 +156,67 @@ router.post(
         })
     );
     res.json(updated);
+  })
+);
+
+// Rendert Quartals-/Jahresbericht als PDF aus dem bereits im Content-Feld denormalisierten Stand
+// (siehe frontend/app/(app)/interne-revision/{quartalsbericht,jahresbericht}/actions.ts, das
+// resolvedAudits/resolvedCarryover/resolvedPlan vor dem Finalisieren dort hineinschreibt).
+router.get(
+  "/:id/pdf",
+  requirePermission("revisionReport", "read"),
+  asyncHandler(async (req, res) => {
+    const report = await prisma.revisionReport.findFirst({ where: { id: req.params.id, institutionId: req.user!.institutionId } });
+    if (!report) throw new NotFoundError("Bericht nicht gefunden");
+
+    const content = (report.content ?? {}) as {
+      resolvedAudits?: ResolvedAudit[];
+      resolvedCarryover?: ResolvedFinding[];
+      resolvedPlan?: ResolvedPlanItem[];
+      planAdherence?: string;
+    };
+
+    const title = report.reportType === "jahresbericht" ? "Jahresbericht der Internen Revision" : "Quartalsbericht der Internen Revision";
+    const period = `${report.periodFrom?.toISOString().slice(0, 10) ?? "–"} – ${report.periodTo?.toISOString().slice(0, 10) ?? "–"}`;
+
+    const buffer = await renderPdf((doc) => {
+      pdfHeading(doc, title, `Zeitraum ${period} · Status: ${report.status === "final" ? "final" : "Entwurf"}`);
+
+      if (content.planAdherence) pdfSection(doc, "Planeinhaltung", content.planAdherence);
+
+      const audits = content.resolvedAudits ?? [];
+      doc.fontSize(13).text(`Abgeschlossene Prüfungen (${audits.length})`);
+      doc.moveDown(0.3);
+      if (!audits.length) doc.fontSize(11).text("Keine Prüfung in diesem Berichtszeitraum.");
+      audits.forEach((a) => doc.fontSize(10).text(`•  ${a.subject ?? "—"} — Gesamturteil: ${a.overall_rating ?? "–"} (${a.report_date ?? "–"})`));
+      doc.moveDown(1);
+
+      const findings = content.resolvedCarryover ?? [];
+      doc.fontSize(13).text(`Offene Feststellungen (${findings.length})`);
+      doc.moveDown(0.3);
+      if (!findings.length) doc.fontSize(11).text("Keine offene Feststellung.");
+      findings.forEach((f) => doc.fontSize(10).text(`•  ${f.titel ?? "—"} — Schweregrad: ${f.schweregrad ?? "–"} (${f.status ?? "–"})`));
+      doc.moveDown(1);
+
+      const plan = content.resolvedPlan ?? [];
+      doc.fontSize(13).text(`Prüfungsplan / -universum (${plan.length})`);
+      doc.moveDown(0.3);
+      if (!plan.length) doc.fontSize(11).text("Kein Prüfungsobjekt zugeordnet.");
+      plan.forEach((p) => doc.fontSize(10).text(`•  ${p.bezeichnung ?? "—"}${p.materiality ? ` (${p.materiality})` : ""}`));
+      doc.moveDown(1);
+
+      doc.fontSize(9).fillColor("#777").text(
+        report.status === "final" && report.kenntnisnahmeAt
+          ? `Kenntnisnahme durch die Geschäftsleitung am ${report.kenntnisnahmeAt.toISOString().slice(0, 10)}.`
+          : report.status === "final"
+            ? "Final — noch keine Kenntnisnahme durch die Geschäftsleitung."
+            : "Entwurf — noch nicht finalisiert."
+      );
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${report.reportType}-${period.replace(/[^a-z0-9]+/gi, "-")}.pdf"`);
+    res.send(buffer);
   })
 );
 

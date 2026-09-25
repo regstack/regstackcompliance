@@ -14,7 +14,8 @@ export type BackendRole =
   | "AUSLAGERUNGSBEAUFTRAGTER"
   | "BUCHHALTUNG"
   | "ADMIN"
-  | "VIEWER";
+  | "VIEWER"
+  | "PRUEFER";
 
 export type BackendSession = {
   userId: string;
@@ -92,6 +93,24 @@ const REVISION_WRITE_ROLES: BackendRole[] = ["INTERNE_REVISION", "ADMIN"];
 
 export function canWriteRevisions(role: BackendRole): boolean {
   return REVISION_WRITE_ROLES.includes(role);
+}
+
+export function isInterneRevision(role: BackendRole): boolean {
+  return role === "INTERNE_REVISION" || role === "ADMIN";
+}
+
+// Mirrors src/modules/accessGrants/accessGrants.routes.ts's APPROVER_ROLES.
+const OUTSOURCING_ACCESS_GRANT_APPROVER_ROLES: BackendRole[] = ["AUSLAGERUNGSBEAUFTRAGTER", "GESCHAEFTSLEITUNG", "ADMIN"];
+const COMPLIANCE_ACCESS_GRANT_APPROVER_ROLES: BackendRole[] = ["COMPLIANCE", "GESCHAEFTSLEITUNG", "ADMIN"];
+
+export function canApproveAccessGrant(role: BackendRole, accessModule: "OUTSOURCING" | "COMPLIANCE"): boolean {
+  return (accessModule === "OUTSOURCING" ? OUTSOURCING_ACCESS_GRANT_APPROVER_ROLES : COMPLIANCE_ACCESS_GRANT_APPROVER_ROLES).includes(role);
+}
+
+// Mirrors src/middleware/rbac.ts's PRUEFER read-only role: never a "canWrite*" true, read-only +
+// export everywhere.
+export function isPruefer(role: BackendRole): boolean {
+  return role === "PRUEFER";
 }
 
 // Mirrors src/middleware/rbac.ts's MATRIX.accountingRecord.write (and accountingReport.write).

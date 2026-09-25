@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../../db/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { requirePermission } from "../../middleware/rbac";
+import { requirePermission, requireAccessGrant } from "../../middleware/rbac";
 
 // Read-only reference registers — no write UI exists in the frontend today (see Phase 2 plan),
 // so these are GET-only. Every route shares the same "complianceReference" read permission.
 const router = Router();
 router.use(requirePermission("complianceReference", "read"));
+router.use(requireAccessGrant("COMPLIANCE"));
 
 router.get(
   "/risiken",

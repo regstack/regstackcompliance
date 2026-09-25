@@ -4,6 +4,7 @@ import usersRoutes from "../modules/users/users.routes";
 import userAdminRoutes from "../modules/users/userAdmin.routes";
 import twoFactorRoutes from "../modules/users/twoFactor.routes";
 import institutionRoutes from "../modules/institutions/institutions.routes";
+import accessGrantsRoutes from "../modules/accessGrants/accessGrants.routes";
 import activityRoutes from "../modules/outsourcingActivities/activities.routes";
 import contractRoutes from "../modules/contracts/contracts.routes";
 import handlungsoptionRoutes from "../modules/handlungsoptionen/handlungsoptionen.routes";
@@ -66,6 +67,7 @@ router.use("/auth", authRoutes);
 // requirePermission() check and every withAudit() call downstream depends on.
 router.use(requireAuth);
 router.use("/institutions", institutionRoutes);
+router.use("/access-grants", accessGrantsRoutes);
 router.use("/activities", activityRoutes);
 router.use("/activities/:activityId/contract", contractRoutes);
 router.use("/activities/:activityId/handlungsoption", handlungsoptionRoutes);

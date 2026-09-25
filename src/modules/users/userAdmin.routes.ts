@@ -30,6 +30,7 @@ const ROLE_VALUES = [
   "BUCHHALTUNG",
   "ADMIN",
   "VIEWER",
+  "PRUEFER",
 ] as const;
 
 router.get(

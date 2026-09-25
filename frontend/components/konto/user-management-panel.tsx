@@ -15,6 +15,7 @@ const ROLE_LABELS: Record<BackendRole, string> = {
   BUCHHALTUNG: "Buchhaltung",
   ADMIN: "Admin",
   VIEWER: "Viewer (nur lesend)",
+  PRUEFER: "Prüfer (nur lesend + Export)",
 };
 const ROLE_VALUES = Object.keys(ROLE_LABELS) as BackendRole[];
 
